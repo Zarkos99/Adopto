@@ -1,6 +1,7 @@
 package sweng894.project.adopto
 
 import android.os.Bundle
+import android.util.Log
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -19,18 +20,21 @@ class NavigationBaseActivity : AppCompatActivity() {
         binding = NavigationBaseActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val navView: BottomNavigationView = binding.navView
+        binding.root.post {
+            val navView: BottomNavigationView = binding.navView
 
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.navigation_preferences, R.id.navigation_geo, R.id.navigation_gallery
+            val navController = findNavController(R.id.nav_host_fragment_activity_main)
+            
+            // Passing each menu ID as a set of Ids because each
+            // menu should be considered as top level destinations.
+            val appBarConfiguration = AppBarConfiguration(
+                setOf(
+                    R.id.navigation_preferences, R.id.navigation_geo, R.id.navigation_gallery
+                )
             )
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
-        supportActionBar?.hide()
+            setupActionBarWithNavController(navController, appBarConfiguration)
+            navView.setupWithNavController(navController)
+            supportActionBar?.hide()
+        }
     }
 }

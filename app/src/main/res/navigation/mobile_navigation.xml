@@ -7,19 +7,19 @@
 
     <fragment
         android:id="@+id/navigation_preferences"
-        android:name="sweng888.project.sunsetscout.preferences.PreferencesFragment"
+        android:name="sweng894.project.adopto.preferences.PreferencesFragment"
         android:label="@string/title_preferences"
         tools:layout="@layout/preferences_fragment" />
 
     <fragment
         android:id="@+id/navigation_geo"
-        android:name="sweng888.project.sunsetscout.geo.GeoMapFragment"
+        android:name="sweng894.project.adopto.geo.GeoMapFragment"
         android:label="@string/title_geo"
         tools:layout="@layout/geo_map_fragment" />
 
     <fragment
         android:id="@+id/navigation_gallery"
-        android:name="sweng888.project.sunsetscout.gallery.GalleryFragment"
+        android:name="sweng894.project.adopto.gallery.GalleryFragment"
         android:label="@string/title_gallery"
         tools:layout="@layout/gallery_fragment" />
 </navigation>
