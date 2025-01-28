@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "841195563762",
+    "project_id": "adopto-61044",
+    "storage_bucket": "adopto-61044.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841195563762:android:0ae210f995da0bc7843e6b",
+        "android_client_info": {
+          "package_name": "sweng894.project.adopto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANWl4LnOEtqlPqJUdzN14XR2yHD1OTfpg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
