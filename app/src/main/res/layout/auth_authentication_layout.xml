@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:background="@color/primary_background"
-    tools:context=".AuthenticationActivity">
+    tools:context=".authentication.AuthenticationActivity">
 
     <TextView
         android:layout_width="wrap_content"

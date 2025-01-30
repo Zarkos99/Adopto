@@ -1,4 +1,4 @@
-package sweng894.project.adopto.gallery
+package sweng894.project.adopto.profile
 
 import android.content.ComponentName
 import android.content.Context
@@ -23,20 +23,19 @@ import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
-import sweng894.project.adopto.data.SunsetPostCreationActivity
+import sweng894.project.adopto.data.AnimalProfileCreationActivity
 import sweng894.project.adopto.database.*
-import sweng894.project.adopto.databinding.GalleryFragmentBinding
+import sweng894.project.adopto.databinding.ProfileFragmentBinding
 
 
-class GalleryFragment : Fragment() {
-    private var _binding: GalleryFragmentBinding? = null
+class ProfileFragment : Fragment() {
+    private var _binding: ProfileFragmentBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var m_sunset_list_adaptor: GallerySunsetPostsAdapter
+    private lateinit var m_sunset_list_adaptor: ProfileSavedAnimalsAdapter
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_firebase_data_service: FirebaseDataService
     private lateinit var m_profile_image_view: ImageView
@@ -88,7 +87,7 @@ class GalleryFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = GalleryFragmentBinding.inflate(inflater, container, false)
+        _binding = ProfileFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         // Create intent to open device storage for image selection
@@ -154,9 +153,10 @@ class GalleryFragment : Fragment() {
 
     fun initializeRecyclerViewAdapter() {
         m_add_or_remove_sunset_button_view = binding.addSunsetButton
-        val sunsets_recycler_view = binding.gallerySunsets
+        val sunsets_recycler_view = binding.savedAnimals
         // Initialize recyclerview adaptor
-        m_sunset_list_adaptor = GallerySunsetPostsAdapter(requireContext(), m_firebase_data_service)
+        m_sunset_list_adaptor =
+            ProfileSavedAnimalsAdapter(requireContext(), m_firebase_data_service)
         m_sunset_list_adaptor.registerItemSelectedCallback {
             val selected_sunsets = m_sunset_list_adaptor.getSelectedSunsets()
             // If some sunsets are selected and button is pressed we want to show option to
@@ -177,7 +177,7 @@ class GalleryFragment : Fragment() {
                 //Change add sunset button to remove sunset functionality when sunsets are selected
                 deleteImagesAndPosts(selected_sunsets)
             } else {
-                val intent = Intent(activity, SunsetPostCreationActivity::class.java)
+                val intent = Intent(activity, AnimalProfileCreationActivity::class.java)
                 startActivity(intent)
                 // Not calling finish() here so that SunsetPostCreationActivity will come back to this fragment
             }
@@ -185,7 +185,7 @@ class GalleryFragment : Fragment() {
     }
 
     fun initializeRecyclerViewLayoutManager() {
-        val sunsets_recycler_view = binding.gallerySunsets
+        val sunsets_recycler_view = binding.savedAnimals
         // Initialize FlexBox Layout Manager for recyclerview to allow wrapping items to next line
         val layout_manager = FlexboxLayoutManager(requireContext())
         layout_manager.apply {
@@ -228,17 +228,11 @@ class GalleryFragment : Fragment() {
         val current_user = FirebaseAuth.getInstance().currentUser
         val current_database_user_info = m_firebase_data_service.current_user_data
         val public_username_text_view = binding.publicUsername
-        val num_posts_text_view = binding.numPosts
         val biography_text_view = binding.biographyInputField
 
         public_username_text_view.text =
             if (!current_user?.displayName.isNullOrEmpty()) current_user?.displayName else current_user?.email
         biography_text_view.setText(current_database_user_info?.biography)
-        num_posts_text_view.text =
-            Strings.get(
-                R.string.num_posts,
-                if (current_database_user_info?.posts?.size != null) current_database_user_info.posts.size else 0
-            )
     }
 
     private fun enableButton(button: Button) {

@@ -14,7 +14,7 @@ import androidx.core.widget.doAfterTextChanged
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.userProfileChangeRequest
-import sweng894.project.adopto.AuthenticationActivity
+import sweng894.project.adopto.authentication.AuthenticationActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.databinding.PreferencesFragmentBinding
 

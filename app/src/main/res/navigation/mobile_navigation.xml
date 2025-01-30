@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_geo">
+    app:startDestination="@+id/navigation_explore">
 
     <fragment
-        android:id="@+id/navigation_preferences"
-        android:name="sweng894.project.adopto.preferences.PreferencesFragment"
-        android:label="@string/title_preferences"
-        tools:layout="@layout/preferences_fragment" />
+        android:id="@+id/navigation_explore"
+        android:name="sweng894.project.adopto.explore.ExploreFragment"
+        android:label="@string/title_explore"
+        tools:layout="@layout/explore_fragment" />
 
     <fragment
         android:id="@+id/navigation_geo"
@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/navigation_gallery"
-        android:name="sweng894.project.adopto.gallery.GalleryFragment"
+        android:name="sweng894.project.adopto.profile.ProfileFragment"
         android:label="@string/title_gallery"
-        tools:layout="@layout/gallery_fragment" />
+        tools:layout="@layout/profile_fragment" />
 </navigation>

@@ -7,7 +7,7 @@ import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
-import sweng894.project.adopto.data.SunsetData
+import sweng894.project.adopto.data.Animal
 
 fun uploadProfileImage(file: Uri) {
     val m_firebase_storage = Firebase.storage
@@ -33,7 +33,7 @@ fun uploadProfileImage(file: Uri) {
     }
 }
 
-fun uploadImageAndCreateNewPost(post: SunsetData, file: Uri) {
+fun uploadAnimalImageAndUpdateAnimal(animal: Animal, file: Uri, is_profile_image: Boolean = false) {
     val m_firebase_storage = Firebase.storage
     if (file.path == null) {
         Log.w("uploadImage Failure", "Local image uri is null.")
@@ -43,7 +43,10 @@ fun uploadImageAndCreateNewPost(post: SunsetData, file: Uri) {
     // Create a storage reference from our app
     val storage_ref = m_firebase_storage.reference
 
-    val storage_path_to_image = "${getCurrentUserId()}/post_images/Sunset_${post.unique_id}"
+    val hash_id = Int.hashCode()
+    val image_name = "image_${hash_id}"
+    val storage_path_to_image =
+        "${getCurrentUserId()}/post_images/Animal_${animal.animal_id}/${image_name}"
     val image_ref = storage_ref.child(storage_path_to_image)
     val upload_task = image_ref.putFile(file)
 
@@ -53,19 +56,24 @@ fun uploadImageAndCreateNewPost(post: SunsetData, file: Uri) {
         Log.e("Image Storage Upload Error", "Unable to upload image: $it")
     }.addOnSuccessListener {
         // Set the image path to where it exists on the cloud storage
-        post.cloud_image_path = storage_path_to_image
-        addSunsetPostToDatabase(post)
+        if (is_profile_image) {
+            animal.profile_image_path = storage_path_to_image
+        } else {
+            animal.supplementary_image_paths.add(storage_path_to_image)
+        }
+
+        updateShelterDataField(animal)
     }
 }
 
-fun deleteImagesAndPosts(posts_to_remove: ArrayList<SunsetData>) {
+fun deleteImagesAndPosts(items_to_remove: ArrayList<Animal>) {
     val m_firebase_storage = Firebase.storage
     // Create a storage reference from our app
     val storage_ref = m_firebase_storage.reference
 
     // Delete images from cloud storage
-    posts_to_remove.forEach { post_to_remove ->
-        if (!post_to_remove.cloud_image_path.isNullOrEmpty()) {
+    items_to_remove.forEach { item_to_remove ->
+        if (!item_to_remove.path.isNullOrEmpty()) {
             val image_ref = storage_ref.child(post_to_remove.cloud_image_path!!)
             image_ref.delete().addOnFailureListener {
                 // Handle unsuccessful deletion

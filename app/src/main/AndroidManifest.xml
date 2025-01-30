@@ -20,41 +20,41 @@
         android:theme="@style/Theme.Adopto"
         tools:targetApi="31">
 
-    <!-- Add the Google Maps API key -->
-    <meta-data
-        android:name="com.google.android.geo.API_KEY"
-        android:value="AIzaSyAeOVmkx58Imyud3xX5wmR_GUM_fNqDbV0"/>
+        <!-- Add the Google Maps API key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAeOVmkx58Imyud3xX5wmR_GUM_fNqDbV0" />
 
-    <service android:name=".database.FirebaseDataService" />
+        <service android:name=".database.FirebaseDataService" />
 
-    <activity
-        android:name=".AuthenticationActivity"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
+        <activity
+            android:name=".authentication.AuthenticationActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-    <activity
-        android:name=".NavigationBaseActivity"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.DEFAULT" />
-        </intent-filter>
-    </activity>
+        <activity
+            android:name=".NavigationBaseActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
-    <activity
-        android:name=".data.SunsetPostCreationActivity"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.DEFAULT" />
-        </intent-filter>
-    </activity>
-</application>
+        <activity
+            android:name=".data.AnimalProfileCreationActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
 
 
 </manifest>

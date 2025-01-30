@@ -7,7 +7,7 @@
     android:gravity="top"
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
-    tools:context=".data.SunsetPostCreationActivity">
+    tools:context=".data.AnimalProfileCreationActivity">
 
     <TextView
         android:layout_width="wrap_content"

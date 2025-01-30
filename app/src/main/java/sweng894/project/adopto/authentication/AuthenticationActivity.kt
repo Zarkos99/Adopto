@@ -1,4 +1,4 @@
-package sweng894.project.adopto
+package sweng894.project.adopto.authentication
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,6 +8,8 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import sweng894.project.adopto.NavigationBaseActivity
+import sweng894.project.adopto.R
 import sweng894.project.adopto.database.addUser
 
 class AuthenticationActivity : AppCompatActivity() {
@@ -17,7 +19,7 @@ class AuthenticationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.authentication_layout)
+        setContentView(R.layout.auth_authentication_layout)
 
         auth = FirebaseAuth.getInstance()
 
@@ -56,7 +58,7 @@ class AuthenticationActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(username, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Sign in success, display Geo View - enlarged map
+                        // Sign in success, display navigation default View - enlarged map
                         val intent =
                             Intent(this@AuthenticationActivity, NavigationBaseActivity::class.java)
                         startActivity(intent)
@@ -102,10 +104,10 @@ class AuthenticationActivity : AppCompatActivity() {
             auth.createUserWithEmailAndPassword(username, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Registration success, display Geo View - enlarged map
+                        // Registration success, display navigation default View - enlarged map
                         addUser()
                         val intent =
-                            Intent(this@AuthenticationActivity, NavigationBaseActivity::class.java)
+                            Intent(this@AuthenticationActivity, NewAccountInfoActivity::class.java)
                         startActivity(intent)
                         finish()
                     } else {

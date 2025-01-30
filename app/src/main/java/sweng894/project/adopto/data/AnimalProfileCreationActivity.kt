@@ -17,7 +17,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 
-class SunsetPostCreationActivity : AppCompatActivity() {
+class AnimalProfileCreationActivity : AppCompatActivity() {
 
     private lateinit var m_title_input_edit_text: EditText
     private lateinit var m_latitude_input_edit_text: EditText
@@ -36,7 +36,7 @@ class SunsetPostCreationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.sunset_creation_layout)
+        setContentView(R.layout.animal_profile_creation_layout)
 
         m_title_input_edit_text = findViewById(R.id.title_input_field)
         m_latitude_input_edit_text = findViewById(R.id.latitude_input_field)

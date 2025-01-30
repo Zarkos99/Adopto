@@ -1,4 +1,4 @@
-package sweng894.project.adopto.gallery
+package sweng894.project.adopto.profile
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -15,11 +15,11 @@ import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
 /**
  * The adaptor for a recyclerview of sunset posts with the capability to have selectable items or not
  */
-class GallerySunsetPostsAdapter(
+class ProfileSavedAnimalsAdapter(
     private val context: Context,
     private val firebase_data_service: FirebaseDataService
 ) :
-    RecyclerView.Adapter<GallerySunsetPostsAdapter.ViewHolder>() {
+    RecyclerView.Adapter<ProfileSavedAnimalsAdapter.ViewHolder>() {
 
     // Array of product names
     var selected_sunsets = ArrayList<SunsetData>()
@@ -31,7 +31,7 @@ class GallerySunsetPostsAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         // create new view
         val view = LayoutInflater.from(context)
-            .inflate(R.layout.sunset_gallery_item, parent, false)
+            .inflate(R.layout.saved_animals_item, parent, false)
 
         unselectDeletedSunsets()
         return ViewHolder(view)
@@ -129,7 +129,7 @@ class GallerySunsetPostsAdapter(
      */
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view),
         View.OnClickListener {
-        val sunset_image_view: ImageView = view.findViewById(R.id.gallery_sunset_image_view)
+        val sunset_image_view: ImageView = view.findViewById(R.id.saved_animal_image_view)
         val sunset_checkbox: FloatingActionButton = view.findViewById(R.id.checkbox_button)
 
         lateinit var sunset_click_listener: ItemClickListener

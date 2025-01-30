@@ -7,13 +7,14 @@
     android:gravity="top"
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
-    tools:context=".gallery.GalleryFragment">
+    tools:context=".profile.ProfileFragment">
 
     <!--    User Details  -->
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="120sp"
+        android:layout_marginTop="25sp"
         android:gravity="top"
         android:background="@color/primary_background"
         android:fitsSystemWindows="true">
@@ -38,7 +39,7 @@
             android:gravity="top"
             android:background="@color/primary_background"
             android:fitsSystemWindows="true">
-            <!--        public username display -->
+            <!-- public username display -->
             <TextView
                 android:id="@+id/public_username"
                 android:layout_width="wrap_content"
@@ -47,13 +48,8 @@
                 android:textColor="@color/white"
                 android:textSize="30sp" />
 
-            <TextView
-                android:id="@+id/num_posts"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:gravity="start"
-                android:textColor="@color/white"
-                android:textSize="25sp" />
+            <!-- TODO: Preferences button -->
+
         </LinearLayout>
     </LinearLayout>
 
@@ -92,23 +88,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
-                android:contentDescription="Add sunset post to gallery"
+                android:contentDescription="Add sunset post to profile"
                 android:textColor="@color/white"
                 android:textSize="@android:dimen/app_icon_size"
                 android:text="+" />
         </LinearLayout>
     </LinearLayout>
 
-    <!--    Gallery of Sunset Posts-->
+    <!--    Gallery of Saved Animals-->
     <!--    2D RecyclerView of personal user posted sunsets-->
     <!--    Combination of layout_height = 0dp and layout_weight = 1 allows
     recyclerview to adapt in height to take up only unused space  -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/gallery_sunsets"
+        android:id="@+id/saved_animals"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_gravity="top|start"
         android:orientation="horizontal"
-        tools:listitem="@layout/sunset_gallery_item" />
+        tools:listitem="@layout/saved_animals_item" />
 </LinearLayout>

@@ -8,7 +8,7 @@
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
     android:theme="@style/Theme.Adopto"
-    tools:context=".preferences.PreferencesFragment">
+    tools:context=".preferences.ExploreFragment">
 
     <TextView
         android:id="@+id/preferences_title"
