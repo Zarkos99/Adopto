@@ -12,6 +12,8 @@ import sweng894.project.adopto.databinding.NavigationBaseActivityBinding
 
 class NavigationBaseActivity : AppCompatActivity() {
 
+    // This property is only valid between onCreateView and
+    // onDestroyView.
     private lateinit var binding: NavigationBaseActivityBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {

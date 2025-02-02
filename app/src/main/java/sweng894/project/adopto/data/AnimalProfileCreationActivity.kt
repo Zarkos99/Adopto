@@ -12,7 +12,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import sweng894.project.adopto.R
-import sweng894.project.adopto.database.uploadImageAndCreateNewPost
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
@@ -127,17 +126,17 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         }
 
         //Create SunsetPost with real or fake data if empty
-        val sunset_data = SunsetData(
-            title = new_title,
-            latitude = new_latitude,
-            longitude = new_longitude,
-            post_time = DateTimeFormatter.ISO_INSTANT.format(
-                Instant.now()
-            ),
-            description = new_description
-        )
-
-        uploadImageAndCreateNewPost(sunset_data, m_new_image_uri)
+//        val sunset_data = SunsetData(
+//            title = new_title,
+//            latitude = new_latitude,
+//            longitude = new_longitude,
+//            post_time = DateTimeFormatter.ISO_INSTANT.format(
+//                Instant.now()
+//            ),
+//            description = new_description
+//        )
+//
+//        uploadImageAndCreateNewPost(sunset_data, m_new_image_uri)
         finish()
     }
 

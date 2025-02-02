@@ -2,31 +2,42 @@ package sweng894.project.adopto.authentication
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
+import android.util.Log
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
-import sweng894.project.adopto.database.addUser
+import sweng894.project.adopto.Strings
+import sweng894.project.adopto.data.User
+import sweng894.project.adopto.database.addUserToDatabase
+import sweng894.project.adopto.database.getCurrentUserId
+import sweng894.project.adopto.database.getUserData
+import sweng894.project.adopto.database.updateDataField
+import sweng894.project.adopto.databinding.AuthAuthenticationLayoutBinding
 
 class AuthenticationActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
 
+    // This property is only valid between onCreateView and
+    // onDestroyView.
+    private lateinit var binding: AuthAuthenticationLayoutBinding
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.auth_authentication_layout)
+        binding = AuthAuthenticationLayoutBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
 
-        val usernameEditTextView = findViewById<EditText>(R.id.username_field)
-        val passwordEditTextView = findViewById<EditText>(R.id.password_field)
-        val loginButtonView = findViewById<Button>(R.id.login_button)
-        val registerButtonView = findViewById<Button>(R.id.register_button)
+        val usernameEditTextView = binding.usernameField
+        val passwordEditTextView = binding.passwordField
+        val loginButtonView = binding.loginButton
+        val registerButtonView = binding.registerButton
 
         loginButtonView.setOnClickListener {
             val username = usernameEditTextView.text.toString()
@@ -58,11 +69,32 @@ class AuthenticationActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(username, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Sign in success, display navigation default View - enlarged map
-                        val intent =
-                            Intent(this@AuthenticationActivity, NavigationBaseActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                        lifecycleScope.launch {
+                            try {
+                                val user_data = getUserData(getCurrentUserId())
+                                if (user_data != null) {
+                                    Log.d("TRACE", "User fetched: ${user_data.user_id}")
+                                    if (user_data.need_info) {
+                                        // Sign in success, need additional account info, display account information View
+                                        openActivity(NewAccountInfoActivity::class.java)
+                                    } else {
+                                        // Sign in success, display navigation default View
+                                        openActivity(NavigationBaseActivity::class.java)
+                                    }
+                                } else {
+                                    Log.w("TRACE", "User not found")
+                                }
+                            } catch (e: Exception) {
+                                Log.w("TRACE", "Error fetching user: ${e.message}")
+
+                                // If db query fails, display a message to the user
+                                Toast.makeText(
+                                    this@AuthenticationActivity,
+                                    "Database Query error: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
                     } else {
                         // If sign in fails, display a message to the user
                         Toast.makeText(
@@ -103,15 +135,20 @@ class AuthenticationActivity : AppCompatActivity() {
             // Firebase Authentication for user registration
             auth.createUserWithEmailAndPassword(username, password)
                 .addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        // Registration success, display navigation default View - enlarged map
-                        addUser()
-                        val intent =
-                            Intent(this@AuthenticationActivity, NewAccountInfoActivity::class.java)
-                        startActivity(intent)
-                        finish()
-                    } else {
-                        // If registration fails, display a message to the user
+                    if (task.isSuccessful) { // Registration success
+                        // Display navigation default View - enlarged map
+                        addUserToDatabase()
+                        // Require additional info
+                        updateDataField(
+                            Strings.get(R.string.firebase_collection_users),
+                            getCurrentUserId(),
+                            User::need_info,
+                            true
+                        )
+
+                        openActivity(NewAccountInfoActivity::class.java)
+                    } else { // Failed Registration
+                        // Display a message to the user
                         Toast.makeText(
                             this@AuthenticationActivity,
                             "Registration failed: ${task.exception?.message}",
@@ -120,5 +157,11 @@ class AuthenticationActivity : AppCompatActivity() {
                     }
                 }
         }
+    }
+
+    private fun openActivity(activity_class: Class<out AppCompatActivity>) {
+        val intent = Intent(this, activity_class)
+        startActivity(intent)
+        finish()
     }
 }

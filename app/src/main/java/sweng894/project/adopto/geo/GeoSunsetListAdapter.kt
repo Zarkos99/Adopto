@@ -8,17 +8,17 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import sweng894.project.adopto.R
-import sweng894.project.adopto.data.SunsetData
+import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
 
 
 /**
  * The adaptor for a recyclerview of sunset posts
  */
-class GeoSunsetListAdapter(
+class GeoListAdapter(
     private val context: Context,
-    var sunset_posts: ArrayList<SunsetData> = ArrayList()
-) : RecyclerView.Adapter<GeoSunsetListAdapter.ViewHolder>() {
+    var sunset_posts: ArrayList<User> = ArrayList()
+) : RecyclerView.Adapter<GeoListAdapter.ViewHolder>() {
 
     /**
      * Handles creation of the view holder for each item in the recyclerview
@@ -34,15 +34,15 @@ class GeoSunsetListAdapter(
      * Handles binding of the view holder for each item in the recyclerview
      */
     override fun onBindViewHolder(holder: ViewHolder, dont_use: Int) {
-        val sunset = sunset_posts[holder.adapterPosition]
-        holder.title_text_view.text = sunset.title
-        holder.latitude_text_view.text = "Latitude: ${sunset.latitude}"
-        holder.longitude_text_view.text = "Longitude: ${sunset.longitude}"
-        loadCloudStoredImageIntoImageView(
-            context,
-            sunset.cloud_image_path,
-            holder.sunset_image_view
-        )
+//        val sunset = sunset_posts[holder.adapterPosition]
+//        holder.title_text_view.text = sunset.title
+//        holder.latitude_text_view.text = "Latitude: ${sunset.latitude}"
+//        holder.longitude_text_view.text = "Longitude: ${sunset.longitude}"
+//        loadCloudStoredImageIntoImageView(
+//            context,
+//            sunset.cloud_image_path,
+//            holder.sunset_image_view
+//        )
     }
 
     /**

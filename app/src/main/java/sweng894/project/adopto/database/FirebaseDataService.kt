@@ -52,7 +52,7 @@ class FirebaseDataService : Service() {
     override fun onBind(intent: Intent): IBinder {
         val user_ref =
             m_firebase_database.collection(
-                Strings.get(R.string.firebase_collection_name)
+                Strings.get(R.string.firebase_collection_users)
             ).document(getCurrentUserId())
 
         user_ref.addSnapshotListener { snapshot, e ->
@@ -66,7 +66,7 @@ class FirebaseDataService : Service() {
                 callCallbacks()
             } else {
                 Log.d("Firebase Database", "Snapshot listener data: null")
-                addUser()
+                addUserToDatabase()
             }
         }
 

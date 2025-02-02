@@ -8,7 +8,7 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sweng894.project.adopto.R
-import sweng894.project.adopto.data.SunsetData
+import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.database.FirebaseDataService
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
 
@@ -22,7 +22,7 @@ class ProfileSavedAnimalsAdapter(
     RecyclerView.Adapter<ProfileSavedAnimalsAdapter.ViewHolder>() {
 
     // Array of product names
-    var selected_sunsets = ArrayList<SunsetData>()
+    var selected_animal_ids = ArrayList<String>()
     var item_selected_callbacks = ArrayList<(() -> Unit)>()
 
     /**
@@ -31,9 +31,9 @@ class ProfileSavedAnimalsAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         // create new view
         val view = LayoutInflater.from(context)
-            .inflate(R.layout.saved_animals_item, parent, false)
+            .inflate(R.layout.profile_saved_animals_item, parent, false)
 
-        unselectDeletedSunsets()
+        unselectDeletedAnimals()
         return ViewHolder(view)
     }
 
@@ -42,10 +42,14 @@ class ProfileSavedAnimalsAdapter(
      */
     override fun onBindViewHolder(holder: ViewHolder, dont_use: Int) {
         val user = firebase_data_service.current_user_data
-        val sunset = user?.posts?.get(holder.adapterPosition)
+        val animal = user?.saved_animal_ids?.get(holder.adapterPosition)
+
+        // TODO: Find cloud-stored animal profile picture path
+        val animal_profile_pic = animal
+
         loadCloudStoredImageIntoImageView(
             context,
-            sunset?.cloud_image_path,
+            animal_profile_pic,
             holder.sunset_image_view
         )
 
@@ -57,15 +61,15 @@ class ProfileSavedAnimalsAdapter(
         // Provides logic to track all selected products as the user selects them
         holder.setItemClickListener(object : ViewHolder.ItemClickListener {
             override fun onItemClick(v: View, pos: Int) {
-                val current_sunset =
-                    firebase_data_service.current_user_data?.posts?.get(holder.adapterPosition)
+                val current_animal =
+                    firebase_data_service.current_user_data?.saved_animal_ids?.get(holder.adapterPosition)
 
-                if (selected_sunsets.contains(current_sunset)) {
+                if (selected_animal_ids.contains(current_animal)) {
                     holder.sunset_checkbox.visibility = View.GONE
-                    selected_sunsets.remove(current_sunset)
+                    selected_animal_ids.remove(current_animal)
                 } else {
-                    if (current_sunset != null) {
-                        selected_sunsets.add(current_sunset)
+                    if (current_animal != null) {
+                        selected_animal_ids.add(current_animal)
                     }
                     holder.sunset_checkbox.visibility = View.VISIBLE
                 }
@@ -90,21 +94,21 @@ class ProfileSavedAnimalsAdapter(
     /**
      * Gets all of the selected items
      */
-    fun getSelectedSunsets(): ArrayList<SunsetData> {
-        return selected_sunsets
+    fun getSelectedAnimalIds(): ArrayList<String> {
+        return selected_animal_ids
     }
 
-    fun unselectDeletedSunsets() {
+    fun unselectDeletedAnimals() {
         val user = firebase_data_service.current_user_data
-        val sunset_posts = user?.posts
+        val sunset_posts = user?.saved_animal_ids
 
         if (!sunset_posts.isNullOrEmpty()) {
-            selected_sunsets.removeIf {
-                val selected_sunset = it;
-                !sunset_posts.any { obj -> obj.unique_id == selected_sunset.unique_id }
+            selected_animal_ids.removeIf {
+                val deleted_animal_id = it;
+                !sunset_posts.any { obj -> obj == deleted_animal_id }
             }
         } else {
-            selected_sunsets.clear()
+            selected_animal_ids.clear()
         }
         callItemSelectedCallbacks()
     }
@@ -113,7 +117,7 @@ class ProfileSavedAnimalsAdapter(
      * Gets all of the items in the recyclerview
      */
     fun getSelectedItemCount(): Int {
-        return selected_sunsets.size
+        return selected_animal_ids.size
     }
 
     /**
@@ -121,7 +125,7 @@ class ProfileSavedAnimalsAdapter(
      */
     override fun getItemCount(): Int {
         // Returns 0 if posts array is null else returns current size of posts array
-        return firebase_data_service.current_user_data?.posts?.size ?: return 0
+        return firebase_data_service.current_user_data?.saved_animal_ids?.size ?: return 0
     }
 
     /**

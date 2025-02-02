@@ -6,7 +6,6 @@
     <string name="title_gallery">Gallery</string>
     <string name="num_posts">"Posts: %1$d"</string>
     <string name="firebase_collection_users">"Users"</string>
-    <string name="firebase_collection_shelters">"Shelters"</string>
     <string name="firebase_collection_animals">"Animals"</string>
     <string name="shelter_animals_field_name">"hosted_animals"</string>
 </resources>

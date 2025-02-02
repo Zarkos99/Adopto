@@ -7,13 +7,25 @@ import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
+import sweng894.project.adopto.R
+import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.User
 
-fun uploadProfileImage(file: Uri) {
-    val m_firebase_storage = Firebase.storage
+fun uploadUserProfileImage(
+    firebaseDataService: FirebaseDataService, file: Uri
+) {
     if (file.path == null) {
         Log.w("uploadProfileImage Failure", "Local image uri is null.")
         return
+    }
+
+    val m_firebase_storage = Firebase.storage
+    val current_user = firebaseDataService.current_user_data
+
+    if (!current_user?.profile_image_path.isNullOrEmpty()) {
+        // Delete the previous profile image
+        deleteImagesFromCloudStorage(arrayOf(current_user?.profile_image_path!!))
     }
 
     // Create a storage reference from our app
@@ -29,7 +41,12 @@ fun uploadProfileImage(file: Uri) {
         Log.e("Image Storage Upload Error", "Unable to upload image: $it")
     }.addOnSuccessListener {
         // Set the image path to where it exists on the cloud storage
-        updateUserDataField("profile_image_path", storage_path_to_image)
+        updateDataField(
+            Strings.get(R.string.firebase_collection_users),
+            getCurrentUserId(),
+            User::profile_image_path,
+            storage_path_to_image
+        )
     }
 }
 
@@ -57,32 +74,38 @@ fun uploadAnimalImageAndUpdateAnimal(animal: Animal, file: Uri, is_profile_image
     }.addOnSuccessListener {
         // Set the image path to where it exists on the cloud storage
         if (is_profile_image) {
-            animal.profile_image_path = storage_path_to_image
+            updateDataField(
+                Strings.get(R.string.firebase_collection_animals),
+                animal.animal_id,
+                Animal::profile_image_path,
+                storage_path_to_image
+            )
         } else {
-            animal.supplementary_image_paths.add(storage_path_to_image)
+            appendToDataFieldArray(
+                Strings.get(R.string.firebase_collection_animals),
+                animal.animal_id,
+                Animal::supplementary_image_paths,
+                storage_path_to_image
+            )
         }
-
-        updateShelterDataField(animal)
     }
 }
 
-fun deleteImagesAndPosts(items_to_remove: ArrayList<Animal>) {
+fun deleteImagesFromCloudStorage(image_paths_to_remove: Array<String>) {
     val m_firebase_storage = Firebase.storage
     // Create a storage reference from our app
     val storage_ref = m_firebase_storage.reference
 
     // Delete images from cloud storage
-    items_to_remove.forEach { item_to_remove ->
-        if (!item_to_remove.path.isNullOrEmpty()) {
-            val image_ref = storage_ref.child(post_to_remove.cloud_image_path!!)
+    image_paths_to_remove.forEach { image_path_to_remove ->
+        if (image_path_to_remove.isNotEmpty()) {
+            val image_ref = storage_ref.child(image_path_to_remove)
             image_ref.delete().addOnFailureListener {
                 // Handle unsuccessful deletion
                 Log.e("Image Storage Deletion Error", "Unable to delete image: $it")
             }
         }
     }
-
-    removeSunsetPostsFromDatabase(posts_to_remove)
 }
 
 fun loadCloudStoredImageIntoImageView(context: Context, image_path: String?, view: ImageView) {

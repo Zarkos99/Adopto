@@ -23,7 +23,9 @@ import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
+import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.AnimalProfileCreationActivity
+import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
 
@@ -37,19 +39,17 @@ class ProfileFragment : Fragment() {
 
     private lateinit var m_sunset_list_adaptor: ProfileSavedAnimalsAdapter
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
-    private lateinit var m_firebase_data_service: FirebaseDataService
     private lateinit var m_profile_image_view: ImageView
     private lateinit var m_add_or_remove_sunset_button_view: Button
-    private var m_bound: Boolean = false
+
+    /** Start FirebaseDataService Setup **/
+    private lateinit var m_firebase_data_service: FirebaseDataService
 
     /** Defines callbacks for service binding, passed to bindService().  */
     private val connection = object : ServiceConnection {
-
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
-            val binder = service as FirebaseDataService.LocalBinder
-            m_firebase_data_service = binder.getService()
-            m_bound = true
+            m_firebase_data_service = (service as FirebaseDataService.LocalBinder).getService()
 
             initializeRecyclerViewLayoutManager()
             initializeRecyclerViewAdapter()
@@ -60,26 +60,31 @@ class ProfileFragment : Fragment() {
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
                 populateTextViewsWithUserInfo()
-                m_sunset_list_adaptor.unselectDeletedSunsets()
+                m_sunset_list_adaptor.unselectDeletedAnimals()
                 m_sunset_list_adaptor.notifyDataSetChanged()
 
                 populateProfileImage()
             }
         }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            m_bound = false
-        }
+        override fun onServiceDisconnected(arg0: ComponentName) {}
     }
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Bind to LocalService.
+    private fun bindToFirebaseService() {
         Intent(activity, FirebaseDataService::class.java).also { intent ->
             requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
+    }
+
+    private fun unbindFromFirebaseService() {
+        requireActivity().unbindService(connection)
+    }
+
+    /** End FirebaseDataService Setup **/
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        bindToFirebaseService()
     }
 
     override fun onCreateView(
@@ -95,7 +100,7 @@ class ProfileFragment : Fragment() {
             registerForActivityResult(ActivityResultContracts.GetContent())
             { uri ->
                 if (uri != null) {
-                    uploadProfileImage(uri)
+                    uploadUserProfileImage(m_firebase_data_service, uri)
                     m_profile_image_view.setImageURI(uri)
                 }
             }
@@ -128,7 +133,12 @@ class ProfileFragment : Fragment() {
 
             if (::m_firebase_data_service.isInitialized) {
                 if (m_firebase_data_service.current_user_data?.biography != new_biography) {
-                    updateUserDataField("biography", new_biography)
+                    updateDataField(
+                        Strings.get(R.string.firebase_collection_users),
+                        getCurrentUserId(),
+                        User::biography,
+                        new_biography
+                    )
                 }
 
                 disableButton(save_biography_button)
@@ -140,15 +150,12 @@ class ProfileFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        Intent(activity, FirebaseDataService::class.java).also { intent ->
-            requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        }
+        bindToFirebaseService()
     }
 
     override fun onStop() {
         super.onStop()
-        requireActivity().unbindService(connection)
-        m_bound = false
+        unbindFromFirebaseService()
     }
 
     fun initializeRecyclerViewAdapter() {
@@ -158,7 +165,7 @@ class ProfileFragment : Fragment() {
         m_sunset_list_adaptor =
             ProfileSavedAnimalsAdapter(requireContext(), m_firebase_data_service)
         m_sunset_list_adaptor.registerItemSelectedCallback {
-            val selected_sunsets = m_sunset_list_adaptor.getSelectedSunsets()
+            val selected_sunsets = m_sunset_list_adaptor.getSelectedAnimalIds()
             // If some sunsets are selected and button is pressed we want to show option to
             // delete them, else show option to add sunset
             if (selected_sunsets.size > 0) {
@@ -172,10 +179,16 @@ class ProfileFragment : Fragment() {
 
         // Setup listener for image upload button
         m_add_or_remove_sunset_button_view.setOnClickListener {
-            val selected_sunsets = m_sunset_list_adaptor.getSelectedSunsets()
+            val selected_sunsets = m_sunset_list_adaptor.getSelectedAnimalIds()
             if (selected_sunsets.size > 0) {
                 //Change add sunset button to remove sunset functionality when sunsets are selected
-                deleteImagesAndPosts(selected_sunsets)
+
+//                removeFromDataFieldArray(
+//                    Strings.get(R.string.firebase_collection_users),
+//                    getCurrentUserId(),
+//                    User::saved_animal_ids,
+//                    selected_sunsets
+//                )
             } else {
                 val intent = Intent(activity, AnimalProfileCreationActivity::class.java)
                 startActivity(intent)
