@@ -1,9 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.Adopto" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.Adopto" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary_button</item>
+        <item name="iconTint">@color/primary_text</item>
+    </style>
+
+    <!-- Primary Button Style -->
+    <style name="Widget.Adopto.PrimaryButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/secondary_text</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/button_style_primary</item>
+    </style>
+
+    <!-- Secondary Button Style -->
+    <style name="Widget.Adopto.SecondaryButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/secondary_text</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/button_style_secondary</item>
     </style>
 
     <style name="Theme.Adopto" parent="Base.Theme.Adopto" />
+
 </resources>

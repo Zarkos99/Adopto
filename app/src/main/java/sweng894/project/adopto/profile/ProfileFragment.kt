@@ -24,7 +24,6 @@ import com.google.android.flexbox.JustifyContent
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
-import sweng894.project.adopto.data.AnimalProfileCreationActivity
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
@@ -37,10 +36,10 @@ class ProfileFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var m_sunset_list_adaptor: ProfileSavedAnimalsAdapter
+    private lateinit var m_saved_animals_list_adaptor: ProfileSavedAnimalsAdapter
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_profile_image_view: ImageView
-    private lateinit var m_add_or_remove_sunset_button_view: Button
+    private lateinit var m_add_animal_button_view: Button
 
     /** Start FirebaseDataService Setup **/
     private lateinit var m_firebase_data_service: FirebaseDataService
@@ -60,8 +59,7 @@ class ProfileFragment : Fragment() {
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
                 populateTextViewsWithUserInfo()
-                m_sunset_list_adaptor.unselectDeletedAnimals()
-                m_sunset_list_adaptor.notifyDataSetChanged()
+                m_saved_animals_list_adaptor.notifyDataSetChanged()
 
                 populateProfileImage()
             }
@@ -106,43 +104,10 @@ class ProfileFragment : Fragment() {
             }
 
         m_profile_image_view = binding.profilePictureView
-        val biography_input_field = binding.biographyInputField
-        val save_biography_button = binding.saveBiographyButton
-        disableButton(save_biography_button)
 
         // Profile Image selection listener
         m_profile_image_view.setOnClickListener {
             m_select_profile_image_intent.launch("image/*")
-        }
-
-
-        biography_input_field.doAfterTextChanged { new_biography_editable ->
-            val new_biography = new_biography_editable.toString()
-
-            if (::m_firebase_data_service.isInitialized) {
-                if (m_firebase_data_service.current_user_data?.biography != new_biography) {
-                    enableButton(save_biography_button)
-                } else {
-                    disableButton(save_biography_button)
-                }
-            }
-        }
-
-        save_biography_button.setOnClickListener {
-            val new_biography = biography_input_field.text.toString()
-
-            if (::m_firebase_data_service.isInitialized) {
-                if (m_firebase_data_service.current_user_data?.biography != new_biography) {
-                    updateDataField(
-                        Strings.get(R.string.firebase_collection_users),
-                        getCurrentUserId(),
-                        User::biography,
-                        new_biography
-                    )
-                }
-
-                disableButton(save_biography_button)
-            }
         }
 
         return root
@@ -159,46 +124,29 @@ class ProfileFragment : Fragment() {
     }
 
     fun initializeRecyclerViewAdapter() {
-        m_add_or_remove_sunset_button_view = binding.addSunsetButton
-        val sunsets_recycler_view = binding.savedAnimals
+        m_add_animal_button_view = binding.addAnimalButton
+        val saved_animals_recycler_view = binding.savedAnimals
+
+        // Ensure only shelters have the option to add animals
+        m_add_animal_button_view.visibility =
+            if (m_firebase_data_service.current_user_data?.is_shelter == true) View.VISIBLE else View.GONE
+
         // Initialize recyclerview adaptor
-        m_sunset_list_adaptor =
+        m_saved_animals_list_adaptor =
             ProfileSavedAnimalsAdapter(requireContext(), m_firebase_data_service)
-        m_sunset_list_adaptor.registerItemSelectedCallback {
-            val selected_sunsets = m_sunset_list_adaptor.getSelectedAnimalIds()
-            // If some sunsets are selected and button is pressed we want to show option to
-            // delete them, else show option to add sunset
-            if (selected_sunsets.size > 0) {
-                m_add_or_remove_sunset_button_view.text = "-"
-            } else {
-                m_add_or_remove_sunset_button_view.text = "+"
-            }
-        }
-        sunsets_recycler_view.adapter = m_sunset_list_adaptor
+        saved_animals_recycler_view.adapter = m_saved_animals_list_adaptor
 
 
         // Setup listener for image upload button
-        m_add_or_remove_sunset_button_view.setOnClickListener {
-            val selected_sunsets = m_sunset_list_adaptor.getSelectedAnimalIds()
-            if (selected_sunsets.size > 0) {
-                //Change add sunset button to remove sunset functionality when sunsets are selected
-
-//                removeFromDataFieldArray(
-//                    Strings.get(R.string.firebase_collection_users),
-//                    getCurrentUserId(),
-//                    User::saved_animal_ids,
-//                    selected_sunsets
-//                )
-            } else {
-                val intent = Intent(activity, AnimalProfileCreationActivity::class.java)
-                startActivity(intent)
-                // Not calling finish() here so that SunsetPostCreationActivity will come back to this fragment
-            }
+        m_add_animal_button_view.setOnClickListener {
+            val intent = Intent(activity, AnimalProfileCreationActivity::class.java)
+            startActivity(intent)
+            // Not calling finish() here so that AnimalProfileCreationActivity will come back to this fragment
         }
     }
 
     fun initializeRecyclerViewLayoutManager() {
-        val sunsets_recycler_view = binding.savedAnimals
+        val saved_animals_recycler_view = binding.savedAnimals
         // Initialize FlexBox Layout Manager for recyclerview to allow wrapping items to next line
         val layout_manager = FlexboxLayoutManager(requireContext())
         layout_manager.apply {
@@ -206,7 +154,7 @@ class ProfileFragment : Fragment() {
             justifyContent = JustifyContent.FLEX_START
             flexWrap = FlexWrap.WRAP
         }
-        sunsets_recycler_view.layoutManager = layout_manager
+        saved_animals_recycler_view.layoutManager = layout_manager
     }
 
     /**
@@ -241,28 +189,10 @@ class ProfileFragment : Fragment() {
         val current_user = FirebaseAuth.getInstance().currentUser
         val current_database_user_info = m_firebase_data_service.current_user_data
         val public_username_text_view = binding.publicUsername
-        val biography_text_view = binding.biographyInputField
+        val biography_text_view = binding.biographyField
 
         public_username_text_view.text =
             if (!current_user?.displayName.isNullOrEmpty()) current_user?.displayName else current_user?.email
-        biography_text_view.setText(current_database_user_info?.biography)
-    }
-
-    private fun enableButton(button: Button) {
-        button.isEnabled = true
-        button.isClickable = true
-        if (context != null) {
-            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-            button.background = m_add_or_remove_sunset_button_view.background
-        }
-    }
-
-    private fun disableButton(button: Button) {
-        button.isEnabled = false
-        button.isClickable = false
-        if (context != null) {
-            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_grey))
-            button.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.grey))
-        }
+        biography_text_view.text = current_database_user_info?.biography
     }
 }

@@ -18,7 +18,7 @@
         android:text="Are you a shelter looking to find homes for your animals?"
         android:textSize="35sp"
         android:textStyle="bold"
-        android:textColor="@android:color/holo_orange_dark" />
+        android:textColor="@color/primary_text" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,23 +30,19 @@
             android:id="@+id/yes_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColorHint="@color/primary_background"
             android:textSize="25sp"
             android:layout_gravity="end"
             android:layout_marginEnd="20sp"
             android:text="Yes"
-            android:backgroundTint="@android:color/holo_orange_dark"
             android:height="60sp" />
 
         <Button
             android:id="@+id/no_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColorHint="@color/primary_background"
             android:textSize="25sp"
             android:layout_gravity="end"
             android:text="No"
-            android:backgroundTint="@android:color/holo_orange_dark"
             android:height="60sp" />
 
     </LinearLayout>

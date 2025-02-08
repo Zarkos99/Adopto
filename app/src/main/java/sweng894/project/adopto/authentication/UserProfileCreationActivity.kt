@@ -38,7 +38,6 @@ class UserProfileCreationActivity : AppCompatActivity() {
         val done_button_view = binding.doneButton
 
         done_button_view.setOnClickListener {
-
             updateDataField(
                 Strings.get(R.string.firebase_collection_users),
                 getCurrentUserId(),

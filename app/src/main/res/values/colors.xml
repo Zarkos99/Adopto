@@ -4,9 +4,17 @@
     <color name="grey">#48494a</color>
     <color name="light_grey">#86878a</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primary_input_field">#97BEE4</color>
-    <color name="primary_input_field_text">#FF000000</color>
-    <color name="primary_background">#3A3B3C</color>
-    <color name="dark_accent_background">#FF1A1A1B</color>
+    <color name="primary_background">#1B1B1B</color>
+    <color name="card_background">#2A2A2A</color>
+    <color name="navigation_bar">#3D3D3D</color>
+    <color name="primary_button">#F4A261</color>
+    <color name="primary_button_pressed">#D67F40</color>
+    <color name="secondary_button">#E76F51</color>
+    <color name="secondary_button_pressed">#C75A42</color>
+    <color name="primary_text">#C8B6A6</color>
+    <color name="secondary_text">#F4EDE4</color>
+    <color name="success">#2A9D8F</color>
+    <color name="error">#E63946</color>
+    <color name="notification">#E9C46A</color>
 
 </resources>

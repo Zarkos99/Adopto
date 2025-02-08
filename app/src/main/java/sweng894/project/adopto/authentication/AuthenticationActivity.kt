@@ -78,11 +78,13 @@ class AuthenticationActivity : AppCompatActivity() {
                                         // Sign in success, need additional account info, display account information View
                                         openActivity(NewAccountInfoActivity::class.java)
                                     } else {
-                                        // Sign in success, display navigation default View
+                                        // Sign in successful and no need for additional info, display navigation default view
                                         openActivity(NavigationBaseActivity::class.java)
                                     }
                                 } else {
                                     Log.w("TRACE", "User not found")
+                                    // Sign in successful but no user data
+                                    openActivity(NewAccountInfoActivity::class.java)
                                 }
                             } catch (e: Exception) {
                                 Log.w("TRACE", "Error fetching user: ${e.message}")

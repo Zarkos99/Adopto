@@ -38,14 +38,13 @@ class ShelterProfileCreationActivity : AppCompatActivity() {
         val done_button_view = binding.doneButton
 
         done_button_view.setOnClickListener {
-
             updateDataField(
                 Strings.get(R.string.firebase_collection_users),
                 getCurrentUserId(),
                 User::is_shelter,
                 true
             )
-
+            ++
             // Save biography to database
             updateDataField(
                 Strings.get(R.string.firebase_collection_users),

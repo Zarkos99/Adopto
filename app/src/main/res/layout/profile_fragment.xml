@@ -45,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:gravity="start"
-                android:textColor="@color/white"
+                android:textColor="@color/primary_text"
                 android:textSize="30sp" />
 
             <!-- TODO: Preferences button -->
@@ -58,41 +58,25 @@
         android:layout_height="200sp"
         android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/biography_input_field"
+        <TextView
+            android:id="@+id/biography_field"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
             android:layout_marginTop="10sp"
             android:inputType="text"
-            android:textColor="@color/white"
+            android:textColor="@color/primary_text"
             android:textSize="20sp" />
 
-        <LinearLayout
+        <Button
+            android:id="@+id/add_animal_button"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="10dp"
-            android:gravity="bottom"
-            android:orientation="vertical">
-
-            <Button
-                android:id="@+id/save_biography_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top|end"
-                android:text="Save"
-                android:clickable="false" />
-
-            <Button
-                android:id="@+id/add_sunset_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:contentDescription="Add sunset post to profile"
-                android:textColor="@color/white"
-                android:textSize="@android:dimen/app_icon_size"
-                android:text="+" />
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:contentDescription="Add animal to a shelter profile"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:text="Post\nAnimal" />
     </LinearLayout>
 
     <!--    Gallery of Saved Animals-->
@@ -106,5 +90,5 @@
         android:layout_weight="1"
         android:layout_gravity="top|start"
         android:orientation="horizontal"
-        tools:listitem="@layout/saved_animals_item" />
+        tools:listitem="@layout/profile_saved_animals_item" />
 </LinearLayout>

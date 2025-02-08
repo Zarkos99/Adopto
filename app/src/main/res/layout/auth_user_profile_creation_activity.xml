@@ -17,7 +17,7 @@
         android:layout_gravity="start"
         android:textSize="25sp"
         android:textStyle="bold"
-        android:textColor="@android:color/holo_orange_dark" />
+        android:textColor="@color/primary_text" />
 
     <EditText
         android:id="@+id/biography_field"
@@ -25,9 +25,10 @@
         android:layout_height="80sp"
         android:layout_marginStart="20sp"
         android:layout_marginEnd="22sp"
-        android:background="@color/primary_input_field"
+        android:background="@color/card_background"
         android:gravity="start"
-        android:textColorHint="@color/primary_input_field_text"
+        android:textColorHint="@color/secondary_text"
+        android:textColor="@color/secondary_text"
         android:textSize="20sp" />
 
     <TextView
@@ -40,7 +41,7 @@
         android:layout_gravity="start"
         android:textSize="25sp"
         android:textStyle="bold"
-        android:textColor="@android:color/holo_orange_dark" />
+        android:textColor="@color/primary_text" />
 
     <EditText
         android:id="@+id/zip_code_field"
@@ -48,9 +49,10 @@
         android:layout_height="40sp"
         android:layout_marginStart="20sp"
         android:layout_marginEnd="22sp"
-        android:background="@color/primary_input_field"
+        android:background="@color/card_background"
         android:gravity="start"
-        android:textColorHint="@color/primary_input_field_text"
+        android:textColorHint="@color/secondary_text"
+        android:textColor="@color/secondary_text"
         android:autofillHints="postalCode"
         android:textSize="20sp" />
 
@@ -58,12 +60,10 @@
         android:id="@+id/done_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColorHint="@color/primary_background"
         android:textSize="25sp"
         android:layout_marginTop="15sp"
         android:layout_marginEnd="40sp"
         android:layout_gravity="end"
         android:text="Done"
-        android:backgroundTint="@android:color/holo_orange_dark"
         android:height="60sp" />
 </LinearLayout>

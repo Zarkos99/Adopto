@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Button Pressed State -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/secondary_button_pressed" />  <!-- Darker shade when pressed -->
+            <corners android:radius="12dp" /> <!-- Rounded corners -->
+        </shape>
+    </item>
+
+    <!-- Default Button State -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/secondary_button" /> <!-- Normal color -->
+            <corners android:radius="12dp" /> <!-- Rounded corners -->
+            <padding android:left="16dp" android:right="16dp" android:top="8dp" android:bottom="8dp" />
+        </shape>
+    </item>
+
+
+</selector>
