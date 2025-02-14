@@ -44,7 +44,7 @@ class ShelterProfileCreationActivity : AppCompatActivity() {
                 User::is_shelter,
                 true
             )
-            ++
+
             // Save biography to database
             updateDataField(
                 Strings.get(R.string.firebase_collection_users),

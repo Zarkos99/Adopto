@@ -84,6 +84,7 @@ class AuthenticationActivity : AppCompatActivity() {
                                 } else {
                                     Log.w("TRACE", "User not found")
                                     // Sign in successful but no user data
+                                    addUserToDatabase(User(need_info = true))
                                     openActivity(NewAccountInfoActivity::class.java)
                                 }
                             } catch (e: Exception) {
@@ -139,14 +140,7 @@ class AuthenticationActivity : AppCompatActivity() {
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) { // Registration success
                         // Display navigation default View - enlarged map
-                        addUserToDatabase()
-                        // Require additional info
-                        updateDataField(
-                            Strings.get(R.string.firebase_collection_users),
-                            getCurrentUserId(),
-                            User::need_info,
-                            true
-                        )
+                        addUserToDatabase(User(need_info = true))
 
                         openActivity(NewAccountInfoActivity::class.java)
                     } else { // Failed Registration

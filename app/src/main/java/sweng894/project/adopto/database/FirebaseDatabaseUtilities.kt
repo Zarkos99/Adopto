@@ -1,9 +1,14 @@
 package sweng894.project.adopto.database
 
+import android.content.Context
 import android.util.Log
+import android.widget.ImageView
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.suspendCancellableCoroutine
 import sweng894.project.adopto.R
@@ -49,36 +54,50 @@ suspend fun getUserData(
     }
 }
 
-fun addUserToDatabase(is_shelter: Boolean = false) {
+fun addUserToDatabase(new_user: User) {
     val firebase_database = Firebase.firestore
     val user_id = getCurrentUserId()
 
-    val new_user = User(user_id = user_id)
-    new_user.is_shelter = is_shelter
+    if (new_user.user_id.isEmpty()) {
+        new_user.user_id = user_id
+    }
 
     firebase_database.collection(
         Strings.get(R.string.firebase_collection_users)
     ).document(user_id).set(new_user)
+        .addOnFailureListener {
+            Log.w(
+                "FirebaseDatabaseUtilities ERROR",
+                "Failed to create document"
+            )
+        }
 }
 
 fun addAnimalToDatabase(
-    firebaseDataService: FirebaseDataService,
     new_animal: Animal
 ) {
     val firebase_database = Firebase.firestore
-    val current_user = firebaseDataService.current_user_data
-
-    if (!current_user?.is_shelter!!) {
-        Log.e("FIREBASE", "Cannot add new animal to database. User is not a shelter")
-        return
-    }
-
-    //Ensure shelter id is linked
-    new_animal.associated_shelter_id = current_user.user_id
 
     firebase_database.collection(
         Strings.get(R.string.firebase_collection_animals)
-    ).document(new_animal.animal_id.toString()).set(new_animal)
+    ).document(new_animal.animal_id).set(new_animal).addOnSuccessListener {
+        Log.d(
+            "TRACE",
+            "Successfully pushed animal to database. Adding animal_id to user's hosted_animal_ids"
+        )
+        appendToDataFieldArray(
+            Strings.get(R.string.firebase_collection_users),
+            getCurrentUserId(),
+            User::hosted_animal_ids,
+            new_animal.animal_id
+        )
+    }
+        .addOnFailureListener {
+            Log.w(
+                "FirebaseDatabaseUtilities ERROR",
+                "Failed to create document"
+            )
+        }
 }
 
 fun <T> updateDataField(
@@ -95,11 +114,27 @@ fun <T> updateDataField(
     val document_ref =
         firebase_database.collection(collection).document(document_id)
 
-    document_ref.update(field_name.name, field_value).addOnFailureListener {
-        Log.w(
-            "FirebaseDatabaseUtilities ERROR",
-            "Failed to update ${field_name.name} to $field_value"
-        )
+    document_ref.get().addOnSuccessListener { document ->
+        if (document.exists()) {
+            // If the document exists, update the field
+            document_ref.update(field_name.name, field_value).addOnFailureListener {
+                Log.w(
+                    "FirebaseDatabaseUtilities ERROR",
+                    "Failed to update ${field_name.name} to $field_value"
+                )
+            }
+        } else {
+            // If document does not exist, determine whether it's a User or Animal and create it
+            if (collection == Strings.get(R.string.firebase_collection_users)) {
+                addUserToDatabase(User(user_id = document_id))
+                updateDataField(collection, document_id, field_name, field_value)
+            } else if (collection == Strings.get(R.string.firebase_collection_animals)) {
+                addAnimalToDatabase(Animal(associated_shelter_id = document_id))
+                updateDataField(collection, document_id, field_name, field_value)
+            }
+        }
+    }.addOnFailureListener {
+        Log.w("FirebaseDatabaseUtilities ERROR", "Failed to check if document exists")
     }
 }
 
@@ -120,7 +155,7 @@ fun <T> appendToDataFieldArray(
 
     document_ref.update(field_name.name, FieldValue.arrayUnion(field_value)).addOnFailureListener {
         Log.w(
-            "appendToDataFieldArray Error",
+            "FirebaseDatabaseUtilities ERROR",
             "Failed to update ${field_name.name} to $field_value"
         )
     }
@@ -154,6 +189,40 @@ fun <T> _syncDatabaseForRemovedImages(
     if (field_name.name.contains("image", ignoreCase = true)) {
         deleteImagesFromCloudStorage(values_to_be_removed)
     }
+}
+
+fun fetchAllUserAnimals(
+    user_animal_ids: List<String>,
+    on_complete: (List<Animal>) -> Unit
+) {
+    val firebase_database = Firebase.firestore
+    val animal_list = mutableListOf<Animal>()
+
+    if (user_animal_ids.isEmpty()) {
+        on_complete(emptyList()) // No animals, return an empty list
+        return
+    }
+
+    val batchRequests = user_animal_ids.map { animalId ->
+        firebase_database.collection(Strings.get(R.string.firebase_collection_animals))
+            .document(animalId)
+            .get()
+    }
+
+    Tasks.whenAllSuccess<DocumentSnapshot>(batchRequests)
+        .addOnSuccessListener { results ->
+            results.forEach { document ->
+                val animal = document.toObject(Animal::class.java)
+                if (animal != null) {
+                    animal_list.add(animal)
+                }
+            }
+            on_complete(animal_list) // Return list of animals after all queries complete
+        }
+        .addOnFailureListener { exception ->
+            Log.e("FirebaseDatabaseUtilities ERROR", "Failed to fetch animal data.", exception)
+            on_complete(emptyList()) // Return empty list if an error occurs
+        }
 }
 
 

@@ -14,19 +14,15 @@ import android.widget.Button
 import android.widget.ImageView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
-import com.google.android.flexbox.FlexDirection
-import com.google.android.flexbox.FlexWrap
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
-import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
-import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
+import sweng894.project.adopto.profile.Tabs.MyAnimalsFragment
+import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
+import sweng894.project.adopto.profile.Tabs.SavedAnimalsFragment
 
 
 class ProfileFragment : Fragment() {
@@ -36,40 +32,39 @@ class ProfileFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var m_saved_animals_list_adaptor: ProfileSavedAnimalsAdapter
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_profile_image_view: ImageView
     private lateinit var m_add_animal_button_view: Button
+    private var is_tab_layout_initialized = false
 
     /** Start FirebaseDataService Setup **/
-    private lateinit var m_firebase_data_service: FirebaseDataService
+    private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
+    private var is_firebase_service_bound = false
 
     /** Defines callbacks for service binding, passed to bindService().  */
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            is_firebase_service_bound = true
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
-            m_firebase_data_service = (service as FirebaseDataService.LocalBinder).getService()
-
-            initializeRecyclerViewLayoutManager()
-            initializeRecyclerViewAdapter()
-            // Initial population of user info with existent data
-            populateTextViewsWithUserInfo()
-            populateProfileImage()
+            m_firebase_data_service = (service as FirebaseDataServiceUsers.LocalBinder).getService()
 
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
+                initializeAddAnimalButton()
+                initializeTabLayout()
+                // Initial population of user info with existent data
                 populateTextViewsWithUserInfo()
-                m_saved_animals_list_adaptor.notifyDataSetChanged()
-
                 populateProfileImage()
             }
         }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {}
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            is_firebase_service_bound = false
+        }
     }
 
     private fun bindToFirebaseService() {
-        Intent(activity, FirebaseDataService::class.java).also { intent ->
+        Intent(activity, FirebaseDataServiceUsers::class.java).also { intent ->
             requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
     }
@@ -78,7 +73,29 @@ class ProfileFragment : Fragment() {
         requireActivity().unbindService(connection)
     }
 
+    override fun onStart() {
+        super.onStart()
+        bindToFirebaseService()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unbindFromFirebaseService()
+    }
+
     /** End FirebaseDataService Setup **/
+
+    override fun onResume() {
+        super.onResume()
+
+        if (is_firebase_service_bound) {
+            initializeAddAnimalButton()
+            initializeTabLayout()
+            // Initial population of user info with existent data
+            populateTextViewsWithUserInfo()
+            populateProfileImage()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +115,7 @@ class ProfileFragment : Fragment() {
             registerForActivityResult(ActivityResultContracts.GetContent())
             { uri ->
                 if (uri != null) {
-                    uploadUserProfileImage(m_firebase_data_service, uri)
+                    uploadUserProfileImageAndUpdateUserImagePath(m_firebase_data_service, uri)
                     m_profile_image_view.setImageURI(uri)
                 }
             }
@@ -113,48 +130,85 @@ class ProfileFragment : Fragment() {
         return root
     }
 
-    override fun onStart() {
-        super.onStart()
-        bindToFirebaseService()
-    }
+    fun initializeAddAnimalButton() {
+        val is_user_a_shelter = m_firebase_data_service.current_user_data?.is_shelter
 
-    override fun onStop() {
-        super.onStop()
-        unbindFromFirebaseService()
-    }
-
-    fun initializeRecyclerViewAdapter() {
         m_add_animal_button_view = binding.addAnimalButton
-        val saved_animals_recycler_view = binding.savedAnimals
 
         // Ensure only shelters have the option to add animals
         m_add_animal_button_view.visibility =
-            if (m_firebase_data_service.current_user_data?.is_shelter == true) View.VISIBLE else View.GONE
+            if (is_user_a_shelter == true) View.VISIBLE else View.GONE
 
-        // Initialize recyclerview adaptor
-        m_saved_animals_list_adaptor =
-            ProfileSavedAnimalsAdapter(requireContext(), m_firebase_data_service)
-        saved_animals_recycler_view.adapter = m_saved_animals_list_adaptor
-
-
-        // Setup listener for image upload button
-        m_add_animal_button_view.setOnClickListener {
-            val intent = Intent(activity, AnimalProfileCreationActivity::class.java)
-            startActivity(intent)
-            // Not calling finish() here so that AnimalProfileCreationActivity will come back to this fragment
+        if (m_add_animal_button_view.visibility != View.GONE) {
+            // Setup listener for image upload button
+            m_add_animal_button_view.setOnClickListener {
+                val intent = Intent(activity, AnimalProfileCreationActivity::class.java)
+                startActivity(intent)
+                // Not calling finish() here so that AnimalProfileCreationActivity will come back to this fragment
+            }
         }
     }
 
-    fun initializeRecyclerViewLayoutManager() {
-        val saved_animals_recycler_view = binding.savedAnimals
-        // Initialize FlexBox Layout Manager for recyclerview to allow wrapping items to next line
-        val layout_manager = FlexboxLayoutManager(requireContext())
-        layout_manager.apply {
-            flexDirection = FlexDirection.ROW
-            justifyContent = JustifyContent.FLEX_START
-            flexWrap = FlexWrap.WRAP
-        }
-        saved_animals_recycler_view.layoutManager = layout_manager
+    fun initializeTabLayout() {
+        if (!is_firebase_service_bound || is_tab_layout_initialized) return // Ensure Firebase is ready and prevent re-initialization
+        is_tab_layout_initialized = true
+
+        val tab_layout = binding.tabLayout
+        val view_pager = binding.viewPager
+
+        val is_shelter = m_firebase_data_service.current_user_data?.is_shelter ?: false
+        val tab_count = if (is_shelter) 2 else 1
+
+        val tab_adapter = ProfileTabAdapter(requireActivity(), tab_count)
+        view_pager.adapter = tab_adapter
+        view_pager.offscreenPageLimit = 1 // Ensures fragments are refreshed when switched
+
+        view_pager.adapter = tab_adapter
+
+        // Sync TabLayout with ViewPager2
+        TabLayoutMediator(tab_layout, view_pager) { tab, position ->
+            tab.text = when {
+                position == 0 -> "Saved Animals"
+                is_shelter && position == 1 -> "My Animals"
+                else -> null
+            }
+        }.attach()
+
+        // Listen for tab selection changes
+        tab_layout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                when (tab?.position) {
+                    0 -> { // "Saved Animals" tab
+                        val fragment =
+                            childFragmentManager.findFragmentByTag("f0") as? SavedAnimalsFragment
+                        fragment?.fetchAndDisplayUserSavedAnimals() // Refresh data
+                    }
+
+                    1 -> { // "My Animals" tab
+                        val fragment =
+                            childFragmentManager.findFragmentByTag("f1") as? MyAnimalsFragment
+                        fragment?.fetchAndDisplayUserHostedAnimals() // Refresh data
+                    }
+                }
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {
+                when (tab?.position) {
+                    0 -> {
+                        val fragment =
+                            childFragmentManager.findFragmentByTag("f0") as? SavedAnimalsFragment
+                        fragment?.fetchAndDisplayUserSavedAnimals()
+                    }
+
+                    1 -> {
+                        val fragment =
+                            childFragmentManager.findFragmentByTag("f1") as? MyAnimalsFragment
+                        fragment?.fetchAndDisplayUserHostedAnimals()
+                    }
+                }
+            }
+        })
     }
 
     /**

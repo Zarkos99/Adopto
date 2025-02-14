@@ -16,7 +16,7 @@ import sweng894.project.adopto.data.User
  * A centralized data interface for Firebase User Data which enables listening to firebase data
  * changes and propagating those to interested activities
  */
-class FirebaseDataService : Service() {
+class FirebaseDataServiceUsers : Service() {
     private val m_firebase_database = Firebase.firestore
     private val binder = LocalBinder() // Binder given to clients.
     private var m_user_data_update_callbacks = ArrayList<(() -> Unit)>()
@@ -46,7 +46,7 @@ class FirebaseDataService : Service() {
      */
     inner class LocalBinder : Binder() {
         // Return this instance of LocalService so clients can call public methods.
-        fun getService(): FirebaseDataService = this@FirebaseDataService
+        fun getService(): FirebaseDataServiceUsers = this@FirebaseDataServiceUsers
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -62,11 +62,12 @@ class FirebaseDataService : Service() {
             }
 
             if (snapshot != null && snapshot.exists()) {
+                Log.d("DEBUG", "User data snapshot exists")
                 current_user_data = snapshot.toObject<User>()
                 callCallbacks()
             } else {
                 Log.d("Firebase Database", "Snapshot listener data: null")
-                addUserToDatabase()
+                addUserToDatabase(User())
             }
         }
 

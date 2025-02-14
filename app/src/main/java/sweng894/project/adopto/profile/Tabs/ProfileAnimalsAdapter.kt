@@ -1,4 +1,4 @@
-package sweng894.project.adopto.profile
+package sweng894.project.adopto.profile.Tabs
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -6,20 +6,28 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Animal
-import sweng894.project.adopto.database.FirebaseDataService
+import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
 
 /**
  * The adaptor for a recyclerview of sunset posts with the capability to have selectable items or not
  */
-class ProfileSavedAnimalsAdapter(
+class ProfileAnimalsAdapter(
     private val context: Context,
-    private val firebase_data_service: FirebaseDataService
+    private val firebase_data_service: FirebaseDataServiceUsers,
+    private val is_hosted_animals: Boolean
 ) :
-    RecyclerView.Adapter<ProfileSavedAnimalsAdapter.ViewHolder>() {
+    RecyclerView.Adapter<ProfileAnimalsAdapter.ViewHolder>() {
+
+    private val animalList: MutableList<Animal> = mutableListOf() // Store animals
+
+    fun updateAnimals(new_animals: List<Animal>) {
+        animalList.clear()
+        animalList.addAll(new_animals)
+        notifyDataSetChanged() // Refresh UI when data updates
+    }
 
     /**
      * Handles creation of the view holder for each item in the recyclerview
@@ -27,32 +35,31 @@ class ProfileSavedAnimalsAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         // create new view
         val view = LayoutInflater.from(context)
-            .inflate(R.layout.profile_saved_animals_item, parent, false)
+            .inflate(R.layout.profile_animals_item, parent, false)
         return ViewHolder(view)
     }
 
     /**
      * Handles binding of the view holder for each item in the recyclerview
      */
-    override fun onBindViewHolder(holder: ViewHolder, dont_use: Int) {
-        val user = firebase_data_service.current_user_data
-        val animal = user?.saved_animal_ids?.get(holder.adapterPosition)
-
-        // TODO: Find cloud-stored animal profile picture path
-        val animal_profile_pic = animal
-
-        loadCloudStoredImageIntoImageView(
-            context,
-            animal_profile_pic,
-            holder.saved_animal_image_view
-        )
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val animal = animalList[position]
+        if (!animal.profile_image_path.isNullOrEmpty()) {
+            loadCloudStoredImageIntoImageView(
+                context,
+                animal.profile_image_path,
+                holder.animal_image_view
+            )
+        }
 
         // Provides logic to track all selected products as the user selects them
         holder.setItemClickListener(object : ViewHolder.ItemClickListener {
             override fun onItemClick(v: View, pos: Int) {
-                val current_animal =
+                val current_animal = if (is_hosted_animals) {
+                    firebase_data_service.current_user_data?.hosted_animal_ids?.get(holder.adapterPosition)
+                } else {
                     firebase_data_service.current_user_data?.saved_animal_ids?.get(holder.adapterPosition)
-
+                }
                 //TODO: Go to animal page
             }
         })
@@ -61,19 +68,16 @@ class ProfileSavedAnimalsAdapter(
     /**
      * Gets all of the items in the recyclerview
      */
-    override fun getItemCount(): Int {
-        // Returns 0 if posts array is null else returns current size of posts array
-        return firebase_data_service.current_user_data?.saved_animal_ids?.size ?: return 0
-    }
+    override fun getItemCount(): Int = animalList.size
 
     /**
      * Handles logic for a ViewHolder instance
      */
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view),
         View.OnClickListener {
-        val saved_animal_image_view: ImageView = view.findViewById(R.id.saved_animal_image_view)
+        val animal_image_view: ImageView = view.findViewById(R.id.animal_image_view)
 
-        lateinit var sunset_click_listener: ItemClickListener
+        lateinit var click_listener: ItemClickListener
 
         init {
             // Make the checkbox selectable
@@ -81,14 +85,14 @@ class ProfileSavedAnimalsAdapter(
         }
 
         fun setItemClickListener(ic: ItemClickListener) {
-            this.sunset_click_listener = ic
+            this.click_listener = ic
         }
 
         /**
          * Uses the View.OnClickListener inheritance to allow each list item to have clickable functionality
          */
         override fun onClick(v: View) {
-            this.sunset_click_listener.onItemClick(v, layoutPosition)
+            this.click_listener.onItemClick(v, layoutPosition)
         }
 
         interface ItemClickListener {

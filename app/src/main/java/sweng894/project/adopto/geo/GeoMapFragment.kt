@@ -21,9 +21,8 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import sweng894.project.adopto.R
-import sweng894.project.adopto.database.FirebaseDataService
+import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.databinding.GeoMapFragmentBinding
 
 class GeoMapFragment : Fragment(), OnMapReadyCallback {
@@ -35,7 +34,7 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var m_recycler_view: RecyclerView
     private lateinit var m_recycler_view_container: ConstraintLayout
-    private lateinit var m_firebase_data_service: FirebaseDataService
+    private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
     private lateinit var m_geo_sunset_adapter: GeoListAdapter
     private lateinit var mMap: GoogleMap
     private var m_service_bound: Boolean = false
@@ -47,7 +46,7 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
-            val binder = service as FirebaseDataService.LocalBinder
+            val binder = service as FirebaseDataServiceUsers.LocalBinder
             m_firebase_data_service = binder.getService()
             m_service_bound = true
 
@@ -82,7 +81,7 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         val search_view = binding.geoSunsetsSearchField
 
         // Bind to LocalService.
-        Intent(requireContext(), FirebaseDataService::class.java).also { intent ->
+        Intent(requireContext(), FirebaseDataServiceUsers::class.java).also { intent ->
             requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
 
@@ -120,7 +119,7 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onStart() {
         super.onStart()
-        Intent(requireContext(), FirebaseDataService::class.java).also { intent ->
+        Intent(requireContext(), FirebaseDataServiceUsers::class.java).also { intent ->
             requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
     }

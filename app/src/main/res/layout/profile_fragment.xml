@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -15,6 +16,8 @@
         android:layout_width="match_parent"
         android:layout_height="120sp"
         android:layout_marginTop="25sp"
+        android:layout_marginStart="5sp"
+        android:layout_marginEnd="5sp"
         android:gravity="top"
         android:background="@color/primary_background"
         android:fitsSystemWindows="true">
@@ -27,7 +30,7 @@
             android:padding="1dp"
             android:scaleType="centerCrop"
             android:cropToPadding="true"
-            android:background="@drawable/image_border"
+            android:background="@color/card_background"
             android:contentDescription="Profile Picture" />
 
         <LinearLayout
@@ -47,15 +50,17 @@
                 android:gravity="start"
                 android:textColor="@color/primary_text"
                 android:textSize="30sp" />
-
-            <!-- TODO: Preferences button -->
-
         </LinearLayout>
+
+        <!-- TODO: Preferences button -->
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="200sp"
+        android:layout_marginStart="5sp"
+        android:layout_marginEnd="5sp"
+        android:layout_marginBottom="10sp"
         android:orientation="horizontal">
 
         <TextView
@@ -73,22 +78,37 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
+            android:layout_marginEnd="10sp"
             android:contentDescription="Add animal to a shelter profile"
-            android:textColor="@color/white"
             android:textSize="20sp"
-            android:text="Post\nAnimal" />
+            android:textColor="@color/secondary_text"
+            android:text="Post\nAnimal"
+            android:background="@drawable/button_style_primary" />
     </LinearLayout>
 
-    <!--    Gallery of Saved Animals-->
-    <!--    2D RecyclerView of personal user posted sunsets-->
-    <!--    Combination of layout_height = 0dp and layout_weight = 1 allows
-    recyclerview to adapt in height to take up only unused space  -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/saved_animals"
-        android:layout_width="wrap_content"
+    <!-- TabLayout for switching between Saved Animals and My Animals -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:tabTextColor="@color/secondary_text"
+        android:background="@color/card_background">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Saved Animals" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="My Animals" />
+    </com.google.android.material.tabs.TabLayout>
+
+    <!-- ViewPager2 to display fragments based on selected tab -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_gravity="top|start"
-        android:orientation="horizontal"
-        tools:listitem="@layout/profile_saved_animals_item" />
+        android:layout_weight="1" />
 </LinearLayout>

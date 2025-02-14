@@ -25,7 +25,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAeOVmkx58Imyud3xX5wmR_GUM_fNqDbV0" />
 
-        <service android:name=".database.FirebaseDataService" />
+        <service android:name=".database.FirebaseDataServiceUsers" />
 
         <activity
             android:name=".authentication.AuthenticationActivity"

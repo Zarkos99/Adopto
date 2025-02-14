@@ -7,7 +7,7 @@
         android:title="Geo" />
     <item
         android:id="@+id/navigation_explore"
-        android:icon="@drawable/baseline_settings_24"
+        android:icon="@drawable/baseline_search_24"
         android:title="Explore" />
     <item
         android:id="@+id/navigation_gallery"
