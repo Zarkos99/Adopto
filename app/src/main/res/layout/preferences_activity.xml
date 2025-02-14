@@ -8,7 +8,7 @@
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
     android:theme="@style/Theme.Adopto"
-    tools:context=".explore.ExploreFragment">
+    tools:context=".preferences.PreferencesActivity">
 
     <TextView
         android:id="@+id/preferences_title"
@@ -48,7 +48,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColorHint="@color/primary_background"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
             android:textSize="20sp"
             android:background="@color/card_background" />
 
@@ -65,7 +66,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColorHint="@color/primary_background"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
             android:textSize="20sp"
             android:background="@color/card_background" />
 

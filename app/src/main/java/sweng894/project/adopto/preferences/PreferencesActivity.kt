@@ -3,12 +3,9 @@ package sweng894.project.adopto.preferences
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import androidx.fragment.app.Fragment
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import com.google.firebase.auth.FirebaseAuth
@@ -16,27 +13,24 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.userProfileChangeRequest
 import sweng894.project.adopto.authentication.AuthenticationActivity
 import sweng894.project.adopto.R
-import sweng894.project.adopto.databinding.PreferencesFragmentBinding
+import sweng894.project.adopto.databinding.PreferencesActivityBinding
 
-class PreferencesFragment : Fragment() {
+class PreferencesActivity : AppCompatActivity() {
 
     lateinit var m_email_input_field: EditText
     lateinit var m_display_name_input_field: EditText
     lateinit var m_save_preferences_button: Button
     lateinit var m_logout_button: Button
-    private var _binding: PreferencesFragmentBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private val binding get() = _binding!!
+    private lateinit var binding: PreferencesActivityBinding
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = PreferencesFragmentBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = PreferencesActivityBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         m_email_input_field = binding.emailInputField
         m_display_name_input_field = binding.displayNameInputField
@@ -86,17 +80,10 @@ class PreferencesFragment : Fragment() {
             // Log out user and open authentication activity
             auth.signOut()
             val intent =
-                Intent(activity, AuthenticationActivity::class.java)
+                Intent(this, AuthenticationActivity::class.java)
             startActivity(intent)
-            activity?.finish()
+            this.finish()
         }
-
-        return root
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     private fun initializeInputFields(user: FirebaseUser?) {
@@ -119,14 +106,14 @@ class PreferencesFragment : Fragment() {
     private fun enableButton(button: Button) {
         button.isEnabled = true
         button.isClickable = true
-        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+        button.setTextColor(ContextCompat.getColor(this, R.color.black))
         button.background = m_logout_button.background
     }
 
     private fun disableButton(button: Button) {
         button.isEnabled = false
         button.isClickable = false
-        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_grey))
-        button.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.grey))
+        button.setTextColor(ContextCompat.getColor(this, R.color.light_grey))
+        button.setBackgroundColor(ContextCompat.getColor(this, R.color.grey))
     }
 }

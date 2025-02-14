@@ -52,7 +52,12 @@
                 android:textSize="30sp" />
         </LinearLayout>
 
-        <!-- TODO: Preferences button -->
+        <!-- Preferences button -->
+        <Button
+            android:id="@+id/preferences_button"
+            android:layout_width="50sp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/baseline_settings_24" />
     </LinearLayout>
 
     <LinearLayout

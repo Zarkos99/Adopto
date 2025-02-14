@@ -20,6 +20,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
+import sweng894.project.adopto.preferences.PreferencesActivity
 import sweng894.project.adopto.profile.Tabs.MyAnimalsFragment
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
 import sweng894.project.adopto.profile.Tabs.SavedAnimalsFragment
@@ -110,6 +111,13 @@ class ProfileFragment : Fragment() {
         _binding = ProfileFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        val preferences_button_view = binding.preferencesButton
+
+        preferences_button_view.setOnClickListener {
+            val intent = Intent(activity, PreferencesActivity::class.java)
+            startActivity(intent)
+            // Not calling finish() here so that AnimalProfileCreationActivity will come back to this fragment)
+        }
         // Create intent to open device storage for image selection
         m_select_profile_image_intent =
             registerForActivityResult(ActivityResultContracts.GetContent())
@@ -214,10 +222,10 @@ class ProfileFragment : Fragment() {
     /**
      * Dynamically obtains stored drawable images by name
      */
-    private fun getImage(ImageName: String?): Drawable {
+    private fun getImage(image_name: String?): Drawable {
         return activity?.resources?.getDrawable(
             activity?.resources?.getIdentifier(
-                ImageName,
+                image_name,
                 "drawable",
                 activity?.packageName
             )!!
