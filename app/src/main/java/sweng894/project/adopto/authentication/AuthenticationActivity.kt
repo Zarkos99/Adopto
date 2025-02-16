@@ -9,18 +9,15 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import sweng894.project.adopto.NavigationBaseActivity
-import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.addUserToDatabase
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.getUserData
-import sweng894.project.adopto.database.updateDataField
 import sweng894.project.adopto.databinding.AuthAuthenticationLayoutBinding
 
 class AuthenticationActivity : AppCompatActivity() {
 
-    private lateinit var auth: FirebaseAuth
+    lateinit var auth: FirebaseAuth
 
     // This property is only valid between onCreateView and
     // onDestroyView.

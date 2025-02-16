@@ -3,6 +3,7 @@ package sweng894.project.adopto.data
 import com.google.firebase.firestore.PropertyName
 import java.time.Instant
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 data class User(
     var user_id: String = "",
@@ -27,5 +28,5 @@ data class Animal(
     var supplementary_image_paths: ArrayList<String> = ArrayList(),
     var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
 ) {
-    val animal_id: String get() = Int.hashCode().toString()
+    val animal_id: String = UUID.randomUUID().toString() // Ensures unique ID
 }

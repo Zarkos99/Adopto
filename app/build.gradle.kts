@@ -40,6 +40,11 @@ android {
         compose = true
         viewBinding = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true // Robolectric needs this to load the R resources.
+        }
+    }
 }
 
 dependencies {
@@ -68,11 +73,29 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.play.services.maps)
     implementation(libs.androidx.navigation.fragment)
+    implementation(libs.core.ktx)
+    implementation(libs.androidx.junit.ktx)
+
+
     testImplementation(libs.junit)
+    testImplementation(libs.mockk) // Mockk for unit tests
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.inline)
+    testImplementation(libs.kotlin.mockito.kotlin)
+    testImplementation(libs.androidx.core.testing)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.firebase.auth)
+    testImplementation(libs.google.firebase.auth)
+
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 }

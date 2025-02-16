@@ -3,9 +3,9 @@ package sweng894.project.adopto
 import android.app.Application
 import androidx.annotation.StringRes
 
-class App : Application() {
+open class App : Application() {
     companion object {
-        private var _instance: App? = null
+        var _instance: App? = null
         val instance: App
             get() = _instance
                 ?: throw IllegalStateException("App instance is not initialized. Ensure it is declared in AndroidManifest.xml.")

@@ -14,8 +14,10 @@ import com.google.firebase.auth.userProfileChangeRequest
 import sweng894.project.adopto.authentication.AuthenticationActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.databinding.PreferencesActivityBinding
+import javax.inject.Inject
 
-class PreferencesActivity : AppCompatActivity() {
+class PreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :
+    AppCompatActivity() {
 
     lateinit var m_email_input_field: EditText
     lateinit var m_display_name_input_field: EditText
@@ -38,7 +40,6 @@ class PreferencesActivity : AppCompatActivity() {
         m_save_preferences_button = binding.savePreferencesButton
         disableButton(m_save_preferences_button)
 
-        val auth = FirebaseAuth.getInstance()
         val current_user = auth.currentUser
         initializeInputFields(current_user)
 
@@ -86,12 +87,12 @@ class PreferencesActivity : AppCompatActivity() {
         }
     }
 
-    private fun initializeInputFields(user: FirebaseUser?) {
+    fun initializeInputFields(user: FirebaseUser?) {
         m_display_name_input_field.setText(user?.displayName)
         m_email_input_field.setText(user?.email)
     }
 
-    private fun calculateSaveButtonClickability(
+    fun calculateSaveButtonClickability(
         user: FirebaseUser?,
         new_email: String,
         new_display_name: String
@@ -103,14 +104,14 @@ class PreferencesActivity : AppCompatActivity() {
         }
     }
 
-    private fun enableButton(button: Button) {
+    fun enableButton(button: Button) {
         button.isEnabled = true
         button.isClickable = true
         button.setTextColor(ContextCompat.getColor(this, R.color.black))
         button.background = m_logout_button.background
     }
 
-    private fun disableButton(button: Button) {
+    fun disableButton(button: Button) {
         button.isEnabled = false
         button.isClickable = false
         button.setTextColor(ContextCompat.getColor(this, R.color.light_grey))

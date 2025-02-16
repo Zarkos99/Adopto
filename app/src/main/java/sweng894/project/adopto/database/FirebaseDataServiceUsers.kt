@@ -67,7 +67,6 @@ class FirebaseDataServiceUsers : Service() {
                 callCallbacks()
             } else {
                 Log.d("Firebase Database", "Snapshot listener data: null")
-                addUserToDatabase(User())
             }
         }
 

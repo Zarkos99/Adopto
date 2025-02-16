@@ -11,12 +11,15 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KProperty1
 
 fun getCurrentUserId(): String {
@@ -32,27 +35,30 @@ fun getCurrentUserId(): String {
 /**
  * Get user data synchronously. Will lock main thread here to wait for data to return.
  */
-suspend fun getUserData(
-    user_id: String,
-): User? {
-    val firebase_database = Firebase.firestore
+suspend fun getUserData(user_id: String): User? {
+    return withTimeoutOrNull(10000) {  // 🔥 Timeout after 10 seconds
+        try {
+            val document = Firebase.firestore
+                .collection(Strings.get(R.string.firebase_collection_users))
+                .document(user_id)
+                .get()
+                .await()
 
-    return suspendCancellableCoroutine { continuation ->
-        firebase_database.collection(Strings.get(R.string.firebase_collection_users))
-            .document(user_id)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    continuation.resume(document.toObject(User::class.java)) // Return user data
-                } else {
-                    continuation.resume(null) // Document not found
-                }
+            if (document.exists()) {
+                document.toObject(User::class.java)
+            } else {
+                null
             }
-            .addOnFailureListener { exception ->
-                continuation.resumeWithException(exception) // Handle errors
-            }
+        } catch (e: Exception) {
+            println("ERROR: Firestore query failed - ${e.message}")
+            null
+        }
+    } ?: run {
+        println("ERROR: Firestore query timed out after 5 seconds")
+        null
     }
 }
+
 
 fun addUserToDatabase(new_user: User) {
     val firebase_database = Firebase.firestore
@@ -106,36 +112,26 @@ fun <T> updateDataField(
     field_name: KProperty1<T, *>,
     field_value: Any
 ) {
-    if (collection != Strings.get(R.string.firebase_collection_users) && collection != Strings.get(R.string.firebase_collection_animals)) {
-        Log.e("DEVELOPMENT BUG", "Not a valid collection input.")
-        return
+    val validCollections = setOf(
+        Strings.get(R.string.firebase_collection_users),
+        Strings.get(R.string.firebase_collection_animals)
+    )
+
+    if (collection !in validCollections) {
+        throw IllegalArgumentException("Invalid collection: $collection")
     }
+
     val firebase_database = Firebase.firestore
     val document_ref =
         firebase_database.collection(collection).document(document_id)
 
-    document_ref.get().addOnSuccessListener { document ->
-        if (document.exists()) {
-            // If the document exists, update the field
-            document_ref.update(field_name.name, field_value).addOnFailureListener {
-                Log.w(
-                    "FirebaseDatabaseUtilities ERROR",
-                    "Failed to update ${field_name.name} to $field_value"
-                )
-            }
-        } else {
-            // If document does not exist, determine whether it's a User or Animal and create it
-            if (collection == Strings.get(R.string.firebase_collection_users)) {
-                addUserToDatabase(User(user_id = document_id))
-                updateDataField(collection, document_id, field_name, field_value)
-            } else if (collection == Strings.get(R.string.firebase_collection_animals)) {
-                addAnimalToDatabase(Animal(associated_shelter_id = document_id))
-                updateDataField(collection, document_id, field_name, field_value)
-            }
+    document_ref.set(mapOf(field_name.name to field_value), SetOptions.merge())
+        .addOnFailureListener {
+            Log.w(
+                "FirebaseDatabaseUtilities ERROR",
+                "Failed to update ${field_name.name} to $field_value"
+            )
         }
-    }.addOnFailureListener {
-        Log.w("FirebaseDatabaseUtilities ERROR", "Failed to check if document exists")
-    }
 }
 
 fun <T> appendToDataFieldArray(
