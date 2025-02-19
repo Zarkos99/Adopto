@@ -47,7 +47,7 @@
         </activity>
 
         <activity
-            android:name=".profile.AnimalProfileCreationActivity"
+            android:name=".profile.animalprofile.AnimalProfileCreationActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -84,6 +84,15 @@
 
         <activity
             android:name=".preferences.PreferencesActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".profile.animalprofile.AnimalProfileViewingActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

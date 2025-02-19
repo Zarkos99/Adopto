@@ -11,6 +11,7 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
+import java.util.UUID
 
 fun uploadUserProfileImageAndUpdateUserImagePath(
     firebaseDataService: FirebaseDataServiceUsers, file: Uri
@@ -64,15 +65,13 @@ fun uploadAnimalImageAndUpdateAnimal(
     // Create a storage reference from our app
     val storage_ref = m_firebase_storage.reference
 
-    var storage_path_to_image = ""
-    if (is_profile_image) {
-        storage_path_to_image =
-            "${getCurrentUserId()}/Animal_${animal_id}/profile_image"
+    val unique_id = UUID.randomUUID().toString()
+
+    val storage_path_to_image = if (is_profile_image) {
+        "${getCurrentUserId()}/Animal_$animal_id/profile_image"
     } else {
-        val hash_id = Int.hashCode()
-        val image_name = "image_${hash_id}"
-        storage_path_to_image =
-            "${getCurrentUserId()}/Animal_${animal_id}/supplementary_images/${image_name}"
+        val image_name = "image_$unique_id"
+        "${getCurrentUserId()}/Animal_${animal_id}/supplementary_images/${image_name}"
     }
     val image_ref = storage_ref.child(storage_path_to_image)
     val upload_task = image_ref.putFile(file)

@@ -1,4 +1,4 @@
-package sweng894.project.adopto.profile
+package sweng894.project.adopto.profile.animalprofile
 
 import android.content.ComponentName
 import android.content.Context
@@ -95,7 +95,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
 
         // Initialize recyclerview adaptor
         m_additional_images_adaptor =
-            AnimalProfileAdditionalImagesAdapter(this)
+            AnimalProfileAdditionalImagesAdapter(this, true)
         additional_images_recycler_view.adapter = m_additional_images_adaptor
         additional_images_recycler_view.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)

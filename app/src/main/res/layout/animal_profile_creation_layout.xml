@@ -7,7 +7,7 @@
     android:gravity="top"
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
-    tools:context=".profile.AnimalProfileCreationActivity">
+    tools:context=".profile.animalprofile.AnimalProfileCreationActivity">
 
     <ImageView
         android:id="@+id/profile_image_view"

@@ -19,7 +19,10 @@ import sweng894.project.adopto.App
 import sweng894.project.adopto.TestApplication
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = TestApplication::class, manifest = Config.NONE)
+@Config(
+    application = TestApplication::class, manifest = Config.NONE,
+    sdk = [33] // Limit Robolectric to API 3
+)
 class FirebaseDataServiceUsersTest {
 
     private lateinit var service: FirebaseDataServiceUsers

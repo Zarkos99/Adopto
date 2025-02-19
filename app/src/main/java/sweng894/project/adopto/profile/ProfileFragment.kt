@@ -24,6 +24,7 @@ import sweng894.project.adopto.preferences.PreferencesActivity
 import sweng894.project.adopto.profile.Tabs.MyAnimalsFragment
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
 import sweng894.project.adopto.profile.Tabs.SavedAnimalsFragment
+import sweng894.project.adopto.profile.animalprofile.AnimalProfileCreationActivity
 
 
 class ProfileFragment : Fragment() {

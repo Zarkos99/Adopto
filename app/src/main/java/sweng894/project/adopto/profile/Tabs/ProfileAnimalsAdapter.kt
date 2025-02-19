@@ -1,6 +1,7 @@
 package sweng894.project.adopto.profile.Tabs
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,8 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivity
+
 
 /**
  * The adaptor for a recyclerview of sunset posts with the capability to have selectable items or not
@@ -21,6 +24,7 @@ class ProfileAnimalsAdapter(
 ) :
     RecyclerView.Adapter<ProfileAnimalsAdapter.ViewHolder>() {
 
+    // IMPORTANT: Must include only existing animals, as the viewholder binding is positionally based
     private val animalList: MutableList<Animal> = mutableListOf() // Store animals
 
     fun updateAnimals(new_animals: List<Animal>) {
@@ -55,12 +59,19 @@ class ProfileAnimalsAdapter(
         // Provides logic to track all selected products as the user selects them
         holder.setItemClickListener(object : ViewHolder.ItemClickListener {
             override fun onItemClick(v: View, pos: Int) {
-                val current_animal = if (is_hosted_animals) {
+                val current_animal_id = if (is_hosted_animals) {
                     firebase_data_service.current_user_data?.hosted_animal_ids?.get(holder.adapterPosition)
                 } else {
                     firebase_data_service.current_user_data?.saved_animal_ids?.get(holder.adapterPosition)
                 }
-                //TODO: Go to animal page
+
+                // Go to animal page
+                val intent = Intent(
+                    context,
+                    AnimalProfileViewingActivity::class.java
+                )
+                intent.putExtra("animal_id", current_animal_id)
+                context.startActivity(intent)
             }
         })
     }

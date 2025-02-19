@@ -1,8 +1,6 @@
 package sweng894.project.adopto.database
 
-import android.content.Context
 import android.util.Log
-import android.widget.ImageView
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -10,16 +8,12 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KProperty1
 
 fun getCurrentUserId(): String {
@@ -59,6 +53,64 @@ suspend fun getUserData(user_id: String): User? {
     }
 }
 
+suspend fun getAnimalData(animal_id: String): Animal? {
+    return withTimeoutOrNull(10000) {  // 🔥 Timeout after 10 seconds
+        try {
+            val document = Firebase.firestore
+                .collection(Strings.get(R.string.firebase_collection_animals))
+                .document(animal_id)
+                .get()
+                .await()
+
+            if (document.exists()) {
+                document.toObject(Animal::class.java)
+            } else {
+                Log.w("getAnimalData", "Document does not exist, returning null.")
+                null
+            }
+        } catch (e: Exception) {
+            println("ERROR: Firestore query failed - ${e.message}")
+            null
+        }
+    } ?: run {
+        println("ERROR: Firestore query timed out or failed to find animal: $animal_id")
+        null
+    }
+}
+
+fun fetchAllUserAnimals(
+    user_animal_ids: List<String>,
+    on_complete: (List<Animal>) -> Unit
+) {
+    val firebase_database = Firebase.firestore
+    val animal_list = mutableListOf<Animal>()
+
+    if (user_animal_ids.isEmpty()) {
+        on_complete(emptyList()) // No animals, return an empty list
+        return
+    }
+
+    val batchRequests = user_animal_ids.map { animalId ->
+        firebase_database.collection(Strings.get(R.string.firebase_collection_animals))
+            .document(animalId)
+            .get()
+    }
+
+    Tasks.whenAllSuccess<DocumentSnapshot>(batchRequests)
+        .addOnSuccessListener { results ->
+            results.forEach { document ->
+                val animal = document.toObject(Animal::class.java)
+                if (animal != null) {
+                    animal_list.add(animal)
+                }
+            }
+            on_complete(animal_list) // Return list of animals after all queries complete
+        }
+        .addOnFailureListener { exception ->
+            Log.e("FirebaseDatabaseUtilities ERROR", "Failed to fetch animal data.", exception)
+            on_complete(emptyList()) // Return empty list if an error occurs
+        }
+}
 
 fun addUserToDatabase(new_user: User) {
     val firebase_database = Firebase.firestore
@@ -185,40 +237,6 @@ fun <T> _syncDatabaseForRemovedImages(
     if (field_name.name.contains("image", ignoreCase = true)) {
         deleteImagesFromCloudStorage(values_to_be_removed)
     }
-}
-
-fun fetchAllUserAnimals(
-    user_animal_ids: List<String>,
-    on_complete: (List<Animal>) -> Unit
-) {
-    val firebase_database = Firebase.firestore
-    val animal_list = mutableListOf<Animal>()
-
-    if (user_animal_ids.isEmpty()) {
-        on_complete(emptyList()) // No animals, return an empty list
-        return
-    }
-
-    val batchRequests = user_animal_ids.map { animalId ->
-        firebase_database.collection(Strings.get(R.string.firebase_collection_animals))
-            .document(animalId)
-            .get()
-    }
-
-    Tasks.whenAllSuccess<DocumentSnapshot>(batchRequests)
-        .addOnSuccessListener { results ->
-            results.forEach { document ->
-                val animal = document.toObject(Animal::class.java)
-                if (animal != null) {
-                    animal_list.add(animal)
-                }
-            }
-            on_complete(animal_list) // Return list of animals after all queries complete
-        }
-        .addOnFailureListener { exception ->
-            Log.e("FirebaseDatabaseUtilities ERROR", "Failed to fetch animal data.", exception)
-            on_complete(emptyList()) // Return empty list if an error occurs
-        }
 }
 
 

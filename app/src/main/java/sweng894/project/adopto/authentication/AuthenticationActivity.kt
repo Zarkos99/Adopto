@@ -79,13 +79,13 @@ class AuthenticationActivity : AppCompatActivity() {
                                         openActivity(NavigationBaseActivity::class.java)
                                     }
                                 } else {
-                                    Log.w("TRACE", "User not found")
+                                    Log.w("AuthenticationActivity", "User not found")
                                     // Sign in successful but no user data
                                     addUserToDatabase(User(need_info = true))
                                     openActivity(NewAccountInfoActivity::class.java)
                                 }
                             } catch (e: Exception) {
-                                Log.w("TRACE", "Error fetching user: ${e.message}")
+                                Log.w("AuthenticationActivity", "Error fetching user: ${e.message}")
 
                                 // If db query fails, display a message to the user
                                 Toast.makeText(

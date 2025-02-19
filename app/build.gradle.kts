@@ -27,6 +27,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            debug {
+                enableUnitTestCoverage
+            }
         }
     }
     compileOptions {
