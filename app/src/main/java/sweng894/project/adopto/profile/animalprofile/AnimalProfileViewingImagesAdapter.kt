@@ -7,21 +7,30 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sweng894.project.adopto.R
+import sweng894.project.adopto.Strings
+import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.database.deleteImagesFromCloudStorage
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.database.removeFromDataFieldArray
+
+enum class AdapterClickability {
+    NOT_CLICKABLE,
+    DOUBLE_CLICKABLE
+}
+
 
 /**
  * The adaptor for a recyclerview of sunset posts with the capability to have selectable items or not
  */
-class AnimalProfileAdditionalImagesAdapter(
+class AnimalProfileViewingImagesAdapter(
     private val context: Context,
-    private val clickable: Boolean = false,
-    private val max_images: Int? = 5 // Set a maximum limit, null if no limit
+    private val current_animal: Animal,
+    private val clickability: AdapterClickability = AdapterClickability.NOT_CLICKABLE
 ) :
-    RecyclerView.Adapter<AnimalProfileAdditionalImagesAdapter.ClickableViewHolder>() {
+    RecyclerView.Adapter<AnimalProfileViewingImagesAdapter.ClickableViewHolder>() {
 
     private var m_image_uris: MutableList<Uri> = mutableListOf()// Stores the image URIs
 
@@ -31,8 +40,8 @@ class AnimalProfileAdditionalImagesAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ClickableViewHolder {
         // create new view
         val view = LayoutInflater.from(context)
-            .inflate(R.layout.animal_profile_additional_animal_images_item, parent, false)
-        return ClickableViewHolder(view, clickable)
+            .inflate(R.layout.animal_profile_viewing_images_item, parent, false)
+        return ClickableViewHolder(view, clickability)
     }
 
     /**
@@ -42,47 +51,64 @@ class AnimalProfileAdditionalImagesAdapter(
         if (m_image_uris.isNotEmpty()) {
             val imageUri = m_image_uris[position]
 
-            // If not clickable, then we cannot edit the list, therefore we are viewing only. Pull image from database
-            if (clickable) {
-                holder.additional_animal_image_view.setImageURI(imageUri)
-            } else {
-                loadCloudStoredImageIntoImageView(
-                    context,
-                    imageUri.path,
-                    holder.additional_animal_image_view
+            // Pull image from database
+            loadCloudStoredImageIntoImageView(
+                context,
+                imageUri.path,
+                holder.additional_animal_image_view
+            )
+        }
+
+
+        if (clickability != AdapterClickability.NOT_CLICKABLE) {
+            //If the delete item is selected, remove the item from the list
+            holder.delete_image_button.setOnClickListener {
+                // Remove image from cloud storage and databased animal's additional images field
+                val image_to_delete = arrayOf(m_image_uris[position].path!!)
+                deleteImagesFromCloudStorage(image_to_delete)
+                removeFromDataFieldArray(
+                    Strings.get(R.string.firebase_collection_animals),
+                    current_animal.animal_id,
+                    Animal::supplementary_image_paths,
+                    image_to_delete
                 )
+                removeItem(position)
+
             }
         }
 
-        // Provides logic to track all selected products as the user selects them
-        if (clickable) {
+        holder.delete_image_button.visibility = View.GONE
+
+        if (clickability != AdapterClickability.NOT_CLICKABLE) {
             holder.setItemClickListener(object : ClickableViewHolder.ItemClickListener {
                 override fun onItemClick(v: View, pos: Int) {
-                    removeItem(pos)
+                    // Toggle delete button visibility
+                    holder.delete_image_button.visibility =
+                        if (holder.delete_image_button.visibility == View.GONE)
+                            View.VISIBLE
+                        else
+                            View.GONE
                 }
             })
-        } else {
-            holder.delete_image_button.visibility = View.GONE
         }
     }
 
     /**
      * Adds a new image to the list and updates the RecyclerView.
      */
+    fun setItems(new_image_uris: ArrayList<Uri>) {
+        m_image_uris.clear()
+        m_image_uris.addAll(new_image_uris)
+        notifyDataSetChanged()
+    }
+
+    /**
+     * Adds a new image to the list and updates the RecyclerView.
+     */
     fun addItem(new_image_uri: Uri) {
-        if (max_images == null || m_image_uris.size < max_images) {
-            Log.d("TRACE", "Added animal image to adapter $new_image_uri")
-            m_image_uris.add(new_image_uri) // Add new image URI to list
-            notifyItemInserted(m_image_uris.size - 1) // Notify RecyclerView about new item
-        } else {
-            Log.d("TRACE", "Error adding animal image $new_image_uri")
-            //Display error message
-            Toast.makeText(
-                context,
-                "Max image limit reached ($max_images). Cannot add more images.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
+        Log.d("TRACE", "Added animal image to adapter $new_image_uri")
+        m_image_uris.add(new_image_uri) // Add new image URI to list
+        notifyItemInserted(m_image_uris.size - 1) // Notify RecyclerView about new item
     }
 
     /**
@@ -108,7 +134,8 @@ class AnimalProfileAdditionalImagesAdapter(
     /**
      * Handles logic for a ViewHolder instance
      */
-    class ClickableViewHolder(view: View, clickable: Boolean) : RecyclerView.ViewHolder(view),
+    class ClickableViewHolder(view: View, clickable: AdapterClickability) :
+        RecyclerView.ViewHolder(view),
         View.OnClickListener {
         val additional_animal_image_view: ImageView =
             view.findViewById(R.id.additional_animal_image_view)
@@ -118,7 +145,7 @@ class AnimalProfileAdditionalImagesAdapter(
         lateinit var click_listener: ItemClickListener
 
         init {
-            if (clickable) {
+            if (clickable != AdapterClickability.NOT_CLICKABLE) {
                 // Make the checkbox selectable
                 view.setOnClickListener(this)
             }

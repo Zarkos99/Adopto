@@ -19,7 +19,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentStart="true"
-        android:text="User Preferences"
+        android:text="Animal Profile"
         android:textSize="40sp"
         android:textStyle="bold"
         android:textColor="@color/primary_text" />
@@ -39,12 +39,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="15sp"
             android:gravity="center"
-            android:text="Email: "
+            android:text="Name: "
             android:textSize="25sp"
             android:textColor="@color/primary_text" />
 
         <EditText
-            android:id="@+id/email_input_field"
+            android:id="@+id/name_input_field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -57,20 +57,63 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Display Name: "
+            android:text="Age: "
             android:textSize="25sp"
             android:textColor="@color/primary_text" />
 
         <EditText
-            android:id="@+id/display_name_input_field"
+            android:id="@+id/age_input_field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:textColorHint="@color/secondary_text"
             android:textColor="@color/secondary_text"
+            android:inputType="numberDecimal"
             android:textSize="20sp"
             android:background="@color/card_background" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Health: "
+            android:textSize="25sp"
+            android:textColor="@color/primary_text" />
+
+        <EditText
+            android:id="@+id/health_input_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
+            android:inputType="numberDecimal"
+            android:textSize="20sp"
+            android:background="@color/card_background" />
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/primary_text"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:text="Description:" />
+
+        <EditText
+            android:id="@+id/description_input_field"
+            android:layout_width="match_parent"
+            android:layout_height="120sp"
+            android:padding="5dp"
+            android:background="@color/card_background"
+            android:gravity="start|top"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
+            android:textSize="24sp"
+            android:scrollbars="vertical"
+            android:overScrollMode="always"
+            android:maxLines="10" />
     </LinearLayout>
 
     <Button
@@ -86,12 +129,12 @@
         android:height="60sp" />
 
     <Button
-        android:id="@+id/logout_button"
+        android:id="@+id/delete_profile_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="20sp"
         android:layout_marginStart="10sp"
-        android:text="Logout"
+        android:text="Delete Profile"
         android:height="60sp" />
 </RelativeLayout>

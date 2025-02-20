@@ -158,11 +158,44 @@ fun addAnimalToDatabase(
         }
 }
 
+fun removeAnimalFromDatabase(
+    animal: Animal
+) {
+    val firebase_database = Firebase.firestore
+
+    val images_to_be_removed =
+        mutableListOf(animal.profile_image_path).filterNotNull().toMutableList()
+    images_to_be_removed.addAll(animal.supplementary_image_paths)
+    //Remove all animal images from cloud storage
+    deleteImagesFromCloudStorage(images_to_be_removed.toTypedArray())
+
+    firebase_database.collection(
+        Strings.get(R.string.firebase_collection_animals)
+    ).document(animal.animal_id).delete().addOnSuccessListener {
+        Log.d(
+            "TRACE",
+            "Successfully deleted animal from database. Removing animal_id from user's hosted_animal_ids"
+        )
+        removeFromDataFieldArray(
+            Strings.get(R.string.firebase_collection_animals),
+            getCurrentUserId(),
+            User::hosted_animal_ids,
+            arrayOf(animal.animal_id)
+        )
+    }.addOnFailureListener {
+        Log.e(
+            "removeAnimalFromDatabase Error",
+            "Failed to delete animal from database."
+        )
+    }
+}
+
 fun <T> updateDataField(
     collection: String,
     document_id: String,
     field_name: KProperty1<T, *>,
-    field_value: Any
+    field_value: Any,
+    onUploadSuccess: (() -> Unit)? = null
 ) {
     val validCollections = setOf(
         Strings.get(R.string.firebase_collection_users),
@@ -184,13 +217,15 @@ fun <T> updateDataField(
                 "Failed to update ${field_name.name} to $field_value"
             )
         }
+        .addOnSuccessListener { onUploadSuccess?.invoke() }
 }
 
 fun <T> appendToDataFieldArray(
     collection: String,
     document_id: String,
     field_name: KProperty1<T, *>,
-    field_value: Any
+    field_value: Any,
+    onUploadSuccess: (() -> Unit)? = null
 ) {
     if (collection != Strings.get(R.string.firebase_collection_users) && collection != Strings.get(R.string.firebase_collection_animals)) {
         Log.e("DEVELOPMENT BUG", "Not a valid collection input.")
@@ -207,6 +242,7 @@ fun <T> appendToDataFieldArray(
             "Failed to update ${field_name.name} to $field_value"
         )
     }
+        .addOnSuccessListener { onUploadSuccess?.invoke() }
 }
 
 /**

@@ -2,19 +2,14 @@ package sweng894.project.adopto.authentication
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.updateDataField
-import sweng894.project.adopto.databinding.AuthShelterProfileCreationActivityBinding
 import sweng894.project.adopto.databinding.AuthUserProfileCreationActivityBinding
 
 

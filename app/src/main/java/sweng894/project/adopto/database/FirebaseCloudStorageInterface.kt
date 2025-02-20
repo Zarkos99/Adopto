@@ -32,7 +32,8 @@ fun uploadUserProfileImageAndUpdateUserImagePath(
     // Create a storage reference from our app
     val storage_ref = m_firebase_storage.reference
 
-    val storage_path_to_image = "${getCurrentUserId()}/profile_image"
+    val storage_path_to_image =
+        "${Strings.get(R.string.firebase_collection_users)}/${getCurrentUserId()}/profile_image"
     val image_ref = storage_ref.child(storage_path_to_image)
     val upload_task = image_ref.putFile(file)
 
@@ -54,7 +55,8 @@ fun uploadUserProfileImageAndUpdateUserImagePath(
 fun uploadAnimalImageAndUpdateAnimal(
     animal_id: String,
     file: Uri,
-    is_profile_image: Boolean = false
+    is_profile_image: Boolean = false,
+    onUploadSuccess: (() -> Unit)? = null
 ) {
     val m_firebase_storage = Firebase.storage
     if (file.path == null) {
@@ -68,10 +70,10 @@ fun uploadAnimalImageAndUpdateAnimal(
     val unique_id = UUID.randomUUID().toString()
 
     val storage_path_to_image = if (is_profile_image) {
-        "${getCurrentUserId()}/Animal_$animal_id/profile_image"
+        "${Strings.get(R.string.firebase_collection_animals)}/Animal_$animal_id/profile_image"
     } else {
         val image_name = "image_$unique_id"
-        "${getCurrentUserId()}/Animal_${animal_id}/supplementary_images/${image_name}"
+        "${Strings.get(R.string.firebase_collection_animals)}/Animal_${animal_id}/supplementary_images/${image_name}"
     }
     val image_ref = storage_ref.child(storage_path_to_image)
     val upload_task = image_ref.putFile(file)
@@ -87,14 +89,16 @@ fun uploadAnimalImageAndUpdateAnimal(
                 Strings.get(R.string.firebase_collection_animals),
                 animal_id,
                 Animal::profile_image_path,
-                storage_path_to_image
+                storage_path_to_image,
+                onUploadSuccess
             )
         } else {
             appendToDataFieldArray(
                 Strings.get(R.string.firebase_collection_animals),
                 animal_id,
                 Animal::supplementary_image_paths,
-                storage_path_to_image
+                storage_path_to_image,
+                onUploadSuccess
             )
         }
     }

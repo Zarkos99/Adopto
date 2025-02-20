@@ -71,6 +71,7 @@ class ProfileAnimalsAdapter(
                     AnimalProfileViewingActivity::class.java
                 )
                 intent.putExtra("animal_id", current_animal_id)
+                intent.putExtra("editable", true)
                 context.startActivity(intent)
             }
         })

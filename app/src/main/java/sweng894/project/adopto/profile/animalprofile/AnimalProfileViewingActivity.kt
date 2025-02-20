@@ -1,22 +1,63 @@
 package sweng894.project.adopto.profile.animalprofile
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.android.flexbox.FlexDirection
-import com.google.android.flexbox.FlexWrap
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
+import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.launch
+import sweng894.project.adopto.NavigationBaseActivity
+import sweng894.project.adopto.authentication.NewAccountInfoActivity
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.AnimalProfileViewingLayoutBinding
 
 
 class AnimalProfileViewingActivity : AppCompatActivity() {
+
+
+    private var m_editable: Boolean = false
+    private var m_animal_id: String? = null
+    private var m_selected_animal: Animal? = null
+    private var m_adapter: AnimalProfileViewingImagesAdapter? = null
+
+    private val select_additional_images_intent =
+        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+            uris.forEach { uri ->
+                m_selected_animal?.let { animal ->
+                    uploadAnimalImageAndUpdateAnimal(
+                        animal.animal_id,
+                        uri
+                    ) {
+                        getAnimalAndExecuteCallback(animal.animal_id) {
+                            val image_uris =
+                                ArrayList(m_selected_animal?.supplementary_image_paths?.map {
+                                    Uri.parse(it)
+                                } ?: emptyList())
+                            m_adapter?.setItems(image_uris)
+                        }
+                    }
+                }
+            }
+        }
+
+    private val edit_animal_launcher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val updated_animal =
+                    result.data?.getParcelableExtra<Animal>("updated_animal")
+                updated_animal?.let {
+                    m_selected_animal = it
+                    populateTextViewsWithAnimalInfo(it)
+                }
+            }
+        }
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -28,9 +69,10 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Retrieve data using the same key
-        val animal_id = intent.getStringExtra("animal_id")
+        m_animal_id = intent.getStringExtra("animal_id")
+        m_editable = intent.getBooleanExtra("editable", false)
 
-        if (animal_id == null) {
+        if (m_animal_id == null) {
             //Display error message
             Toast.makeText(
                 this,
@@ -41,10 +83,39 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
             finish()
         }
 
+        getAnimalAndExecuteCallback(m_animal_id) {
+            initializeRecyclerViewAdapter(m_selected_animal!!)
+            populateTextViewsWithAnimalInfo(m_selected_animal!!)
+            populateProfileImage(m_selected_animal!!)
+
+            val edit_profile_button = binding.editProfileButton
+            edit_profile_button.setOnClickListener {
+                val intent = Intent(
+                    this@AnimalProfileViewingActivity,
+                    AnimalProfileEditActivity::class.java
+                )
+                intent.putExtra("current_animal", m_selected_animal)
+                edit_animal_launcher.launch(intent)
+                // Not calling finish() here so that AnimalProfileEditActivity will come back to this activity)
+            }
+
+            if (m_selected_animal!!.associated_shelter_id == getCurrentUserId()) {
+                edit_profile_button.visibility = View.VISIBLE
+                binding.addImageButton.visibility = View.VISIBLE
+            }
+        }
+
+        val adopt_button = binding.adoptButton
+        adopt_button.setOnClickListener {
+            // TODO: Initiate adoption
+        }
+    }
+
+    fun getAnimalAndExecuteCallback(animal_id: String?, onGetDataSuccess: (() -> Unit)? = null) {
         lifecycleScope.launch {
             try {
-                val animal = getAnimalData(animal_id!!)
-                if (animal == null) {
+                m_selected_animal = getAnimalData(animal_id!!)
+                if (m_selected_animal == null) {
                     Log.e("AnimalProfileViewingActivity", "Database queried animal returned null.")
                     //Display error message
                     Toast.makeText(
@@ -54,9 +125,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                     ).show()
                     finish()
                 } else {
-                    initializeRecyclerViewAdapter(animal)
-                    populateTextViewsWithAnimalInfo(animal)
-                    populateProfileImage(animal)
+                    onGetDataSuccess?.invoke()
                 }
             } catch (e: Exception) {
                 Log.w(
@@ -69,12 +138,8 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                     "Database Query error: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
+                finish()
             }
-        }
-
-        val adopt_button = binding.adoptButton
-        adopt_button.setOnClickListener {
-            // TODO: Initiate adoption
         }
     }
 
@@ -93,7 +158,9 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
         val animal_description_view = binding.animalDescription
 
         animal_name_view.text = current_animal.animal_name
-        animal_age_view.text = current_animal.animal_age.toString()
+
+        animal_age_view.text =
+            if (current_animal.animal_age!! <= 1.0) current_animal.animal_age.toString() + " Year" else current_animal.animal_age.toString() + " Years"
         animal_health_view.text = current_animal.health_summary
         animal_description_view.text = current_animal.biography
     }
@@ -101,28 +168,33 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
     fun initializeRecyclerViewAdapter(current_animal: Animal) {
         val animal_images_recycler_view = binding.additionalImages
+
+        // Ensure smooth scrolling
+        animal_images_recycler_view.setHasFixedSize(true)
+
         // Initialize recyclerview adaptor
-        val animals_list_adaptor =
-            AnimalProfileAdditionalImagesAdapter(this, false, null)
-        animal_images_recycler_view.adapter = animals_list_adaptor
-        initializeRecyclerViewLayoutManager()
-        
-        current_animal.supplementary_image_paths.forEach { image_path ->
-            animals_list_adaptor.addItem(
-                Uri.parse(image_path)
-            )
-        }
+        val clickability =
+            if (m_editable) AdapterClickability.DOUBLE_CLICKABLE else AdapterClickability.NOT_CLICKABLE
+        m_adapter =
+            AnimalProfileViewingImagesAdapter(this, current_animal, clickability)
+        animal_images_recycler_view.adapter = m_adapter
+        animal_images_recycler_view.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+
+        val image_uris =
+            ArrayList(m_selected_animal?.supplementary_image_paths?.map {
+                Uri.parse(it)
+            } ?: emptyList())
+        m_adapter?.setItems(image_uris)
+
+        initializeAddImageButton()
     }
 
-    fun initializeRecyclerViewLayoutManager() {
-        val animal_images_recycler_view = binding.additionalImages
-        // Initialize FlexBox Layout Manager for recyclerview to allow wrapping items to next line
-        val layout_manager = FlexboxLayoutManager(this)
-        layout_manager.apply {
-            flexDirection = FlexDirection.ROW
-            justifyContent = JustifyContent.FLEX_START
-            flexWrap = FlexWrap.WRAP
+    fun initializeAddImageButton() {
+        val add_image_button = binding.addImageButton
+
+        add_image_button.setOnClickListener {
+            select_additional_images_intent.launch("image/*")
         }
-        animal_images_recycler_view.layoutManager = layout_manager
     }
 }

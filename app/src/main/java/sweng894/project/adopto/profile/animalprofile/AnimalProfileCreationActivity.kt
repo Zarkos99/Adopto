@@ -29,7 +29,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
     private lateinit var m_description_input_edit_text: EditText
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_select_additional_images_intent: ActivityResultLauncher<String>
-    private lateinit var m_additional_images_adaptor: AnimalProfileAdditionalImagesAdapter
+    private lateinit var m_additional_images_adaptor: AnimalProfileCreationImagesAdapter
     private lateinit var m_new_profile_image_uri: Uri
 
     private val FAKE_NAME = "Tofu"
@@ -95,7 +95,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
 
         // Initialize recyclerview adaptor
         m_additional_images_adaptor =
-            AnimalProfileAdditionalImagesAdapter(this, true)
+            AnimalProfileCreationImagesAdapter(this, 5)
         additional_images_recycler_view.adapter = m_additional_images_adaptor
         additional_images_recycler_view.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
