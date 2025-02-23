@@ -241,18 +241,18 @@ fun <T> appendToDataFieldArray(
             "FirebaseDatabaseUtilities ERROR",
             "Failed to update ${field_name.name} to $field_value"
         )
-    }
-        .addOnSuccessListener { onUploadSuccess?.invoke() }
+    }.addOnSuccessListener { onUploadSuccess?.invoke() }
 }
 
 /**
  * Removes items from array type data fields. If data fields are arrays of image paths, this will also delete the images on the cloud storage.
  */
-inline fun <reified T> removeFromDataFieldArray(
+fun <T> removeFromDataFieldArray(
     collection: String,
     document_id: String,
     field_name: KProperty1<T, *>,
-    values_to_be_removed: Array<String>
+    values_to_be_removed: Array<String>,
+    onRemovalSuccess: (() -> Unit)? = null
 ) {
     val firebase_database = Firebase.firestore
     val document_ref = firebase_database.collection(collection).document(document_id)
@@ -262,8 +262,8 @@ inline fun <reified T> removeFromDataFieldArray(
         .addOnSuccessListener {
             println("Successfully removed values from ${field_name.name}")
             _syncDatabaseForRemovedImages(field_name, values_to_be_removed)
-        }
-        .addOnFailureListener { println("Error updating field: ${it.message}") }
+        }.addOnFailureListener { println("Error updating field: ${it.message}") }
+        .addOnSuccessListener { onRemovalSuccess?.invoke() }
 }
 
 fun <T> _syncDatabaseForRemovedImages(

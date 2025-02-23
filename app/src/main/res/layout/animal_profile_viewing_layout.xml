@@ -26,7 +26,7 @@
                 android:id="@+id/profile_image_view"
                 android:layout_width="160dp"
                 android:layout_height="140dp"
-                android:scaleType="fitXY"
+                android:scaleType="centerCrop"
                 android:src="@drawable/default_profile_pic" />
 
             <RelativeLayout
@@ -56,7 +56,7 @@
                     android:textColor="@color/primary_text"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:text="1 Year" />
+                    android:text="x years y months" />
 
                 <TextView
                     android:id="@+id/animal_health"
@@ -93,6 +93,18 @@
                 android:textSize="20sp"
                 android:text="Adopt Me!" />
 
+            <ImageView
+                android:id="@+id/save_animal_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/adopt_button"
+                android:layout_marginStart="15sp"
+                android:layout_centerVertical="true"
+                android:contentDescription="Button to save an animal to profile."
+                android:scaleX="1.5"
+                android:scaleY="1.5"
+                android:src="@drawable/ic_heart_plus" />
+
             <Button
                 android:id="@+id/add_image_button"
                 android:layout_width="wrap_content"
@@ -113,7 +125,8 @@
             android:id="@+id/animal_description"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_marginHorizontal="5sp"
+            android:gravity="start"
             android:textColor="@color/primary_text"
             android:textSize="16sp"
             android:textStyle="bold"

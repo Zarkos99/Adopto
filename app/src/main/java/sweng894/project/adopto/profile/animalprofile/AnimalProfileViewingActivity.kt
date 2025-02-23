@@ -11,8 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.launch
-import sweng894.project.adopto.NavigationBaseActivity
-import sweng894.project.adopto.authentication.NewAccountInfoActivity
+import sweng894.project.adopto.R
+import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.*
@@ -21,8 +21,7 @@ import sweng894.project.adopto.databinding.AnimalProfileViewingLayoutBinding
 
 class AnimalProfileViewingActivity : AppCompatActivity() {
 
-
-    private var m_editable: Boolean = false
+    private var m_current_user: User? = null
     private var m_animal_id: String? = null
     private var m_selected_animal: Animal? = null
     private var m_adapter: AnimalProfileViewingImagesAdapter? = null
@@ -70,13 +69,19 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
         // Retrieve data using the same key
         m_animal_id = intent.getStringExtra("animal_id")
-        m_editable = intent.getBooleanExtra("editable", false)
+        m_current_user = intent.getParcelableExtra("current_user")
 
-        if (m_animal_id == null) {
+        val error_str_prefix = "Cannot find "
+        var error_str = ""
+
+        error_str += if (m_animal_id == null) "animal" else ""
+        error_str += if (m_current_user == null && m_animal_id == null) "and user" else if (m_current_user == null) "user" else ""
+
+        if (error_str.isNotEmpty()) {
             //Display error message
             Toast.makeText(
                 this,
-                "Cannot find animal",
+                error_str_prefix + error_str,
                 Toast.LENGTH_LONG
             ).show()
             Log.e("AnimalProfileViewingActivity", "Activity provided null animal_id")
@@ -102,6 +107,36 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
             if (m_selected_animal!!.associated_shelter_id == getCurrentUserId()) {
                 edit_profile_button.visibility = View.VISIBLE
                 binding.addImageButton.visibility = View.VISIBLE
+            }
+
+            val save_animal_button = binding.saveAnimalButton
+            // Ensure hosting shelter cannot save their own animals
+            save_animal_button.visibility =
+                if (m_selected_animal?.associated_shelter_id != getCurrentUserId()) View.VISIBLE else View.GONE
+            instantiateSaveAnimalButton()
+
+            save_animal_button.setOnClickListener {
+                if (m_current_user?.saved_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
+                    removeFromDataFieldArray(
+                        Strings.get(R.string.firebase_collection_users),
+                        getCurrentUserId(),
+                        User::saved_animal_ids,
+                        arrayOf(m_selected_animal!!.animal_id)
+                    ) {
+                        m_current_user?.saved_animal_ids?.remove(m_selected_animal!!.animal_id)
+                        instantiateSaveAnimalButton()
+                    }
+                } else {
+                    appendToDataFieldArray(
+                        Strings.get(R.string.firebase_collection_users),
+                        getCurrentUserId(),
+                        User::saved_animal_ids,
+                        m_selected_animal!!.animal_id
+                    ) {
+                        m_current_user?.saved_animal_ids?.add(m_selected_animal!!.animal_id)
+                        instantiateSaveAnimalButton()
+                    }
+                }
             }
         }
 
@@ -159,12 +194,23 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
         animal_name_view.text = current_animal.animal_name
 
-        animal_age_view.text =
-            if (current_animal.animal_age!! <= 1.0) current_animal.animal_age.toString() + " Year" else current_animal.animal_age.toString() + " Years"
+        animal_age_view.text = convertDoubleToYearsMonths(current_animal.animal_age!!)
         animal_health_view.text = current_animal.health_summary
         animal_description_view.text = current_animal.biography
     }
 
+    fun convertDoubleToYearsMonths(age_in_years: Double): String {
+        val years = age_in_years.toInt() // Extract whole years
+        val months = ((age_in_years - years) * 12).toInt() // Convert decimal part to months
+
+        val years_val_str = if (years != 0) years.toString() else ""
+        val months_val_str =
+            if (years_val_str != "" && months != 0) " $months" else if (months != 0) months.toString() else ""
+        val years_str = if (years > 1) " years" else if (years == 1) " year" else ""
+        val months_str = if (months > 1) " months" else if (months == 1) " month" else ""
+
+        return years_val_str + years_str + months_val_str + months_str
+    }
 
     fun initializeRecyclerViewAdapter(current_animal: Animal) {
         val animal_images_recycler_view = binding.additionalImages
@@ -174,7 +220,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
         // Initialize recyclerview adaptor
         val clickability =
-            if (m_editable) AdapterClickability.DOUBLE_CLICKABLE else AdapterClickability.NOT_CLICKABLE
+            if (m_selected_animal!!.associated_shelter_id == getCurrentUserId()) AdapterClickability.DOUBLE_CLICKABLE else AdapterClickability.NOT_CLICKABLE
         m_adapter =
             AnimalProfileViewingImagesAdapter(this, current_animal, clickability)
         animal_images_recycler_view.adapter = m_adapter
@@ -188,6 +234,16 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
         m_adapter?.setItems(image_uris)
 
         initializeAddImageButton()
+    }
+
+    fun instantiateSaveAnimalButton() {
+        val save_animal_button = binding.saveAnimalButton
+        // If user already has animal saved, show heart with check mark, otherwise heart with plus
+        if (m_current_user?.saved_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
+            save_animal_button.setImageResource(R.drawable.ic_heart_check)
+        } else {
+            save_animal_button.setImageResource(R.drawable.ic_heart_plus)
+        }
     }
 
     fun initializeAddImageButton() {
