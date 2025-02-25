@@ -112,6 +112,28 @@ fun fetchAllUserAnimals(
         }
 }
 
+fun fetchAllAnimals(onComplete: (List<Animal>) -> Unit) {
+    val firebaseDatabase = Firebase.firestore
+    val animal_list = mutableListOf<Animal>()
+
+    // Fetch all documents from the "Animals" collection
+    firebaseDatabase.collection(Strings.get(R.string.firebase_collection_animals))
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+                val animal = document.toObject(Animal::class.java)
+                if (animal != null) {
+                    animal_list.add(animal)
+                }
+            }
+            onComplete(animal_list) // Return the list after fetching all documents
+        }
+        .addOnFailureListener { exception ->
+            Log.e("FirebaseDatabaseUtilities ERROR", "Failed to fetch animal data.", exception)
+            onComplete(emptyList()) // Return empty list if an error occurs
+        }
+}
+
 fun addUserToDatabase(new_user: User) {
     val firebase_database = Firebase.firestore
     val user_id = getCurrentUserId()

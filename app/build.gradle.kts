@@ -78,7 +78,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.core.ktx)
     implementation(libs.androidx.junit.ktx)
-
+    implementation(libs.card.stack.view)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk) // Mockk for unit tests
