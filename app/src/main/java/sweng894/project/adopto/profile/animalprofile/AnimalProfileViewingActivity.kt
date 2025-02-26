@@ -69,81 +69,104 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
         // Retrieve data using the same key
         m_animal_id = intent.getStringExtra("animal_id")
-        m_current_user = intent.getParcelableExtra("current_user")
+        
+        getUserData(getCurrentUserId()) { user ->
+            m_current_user = user
 
-        val error_str_prefix = "Cannot find "
-        var error_str = ""
+            val error_str_prefix = "Cannot find "
+            var error_str = ""
 
-        error_str += if (m_animal_id == null) "animal" else ""
-        error_str += if (m_current_user == null && m_animal_id == null) "and user" else if (m_current_user == null) "user" else ""
+            error_str += if (m_animal_id == null) "animal" else ""
+            error_str += if (m_current_user == null && m_animal_id == null) "and user" else if (m_current_user == null) "user" else ""
 
-        if (error_str.isNotEmpty()) {
-            //Display error message
-            Toast.makeText(
-                this,
-                error_str_prefix + error_str,
-                Toast.LENGTH_LONG
-            ).show()
-            Log.e("AnimalProfileViewingActivity", "Activity provided null animal_id")
-            finish()
-        }
-
-        getAnimalAndExecuteCallback(m_animal_id) {
-            initializeRecyclerViewAdapter(m_selected_animal!!)
-            populateTextViewsWithAnimalInfo(m_selected_animal!!)
-            populateProfileImage(m_selected_animal!!)
-
-            val edit_profile_button = binding.editProfileButton
-            edit_profile_button.setOnClickListener {
-                val intent = Intent(
-                    this@AnimalProfileViewingActivity,
-                    AnimalProfileEditActivity::class.java
-                )
-                intent.putExtra("current_animal", m_selected_animal)
-                edit_animal_launcher.launch(intent)
-                // Not calling finish() here so that AnimalProfileEditActivity will come back to this activity)
+            if (error_str.isNotEmpty()) {
+                //Display error message
+                Toast.makeText(
+                    this,
+                    error_str_prefix + error_str,
+                    Toast.LENGTH_LONG
+                ).show()
+                Log.e("AnimalProfileViewingActivity", error_str_prefix + error_str)
+                finish()
             }
 
-            if (m_selected_animal!!.associated_shelter_id == getCurrentUserId()) {
-                edit_profile_button.visibility = View.VISIBLE
-                binding.addImageButton.visibility = View.VISIBLE
-            }
+            getAnimalAndExecuteCallback(m_animal_id) {
+                initializeRecyclerViewAdapter(m_selected_animal!!)
+                populateTextViewsWithAnimalInfo(m_selected_animal!!)
+                populateProfileImage(m_selected_animal!!)
 
-            val save_animal_button = binding.saveAnimalButton
-            // Ensure hosting shelter cannot save their own animals
-            save_animal_button.visibility =
-                if (m_selected_animal?.associated_shelter_id != getCurrentUserId()) View.VISIBLE else View.GONE
-            instantiateSaveAnimalButton()
+                val edit_profile_button = binding.editProfileButton
+                edit_profile_button.setOnClickListener {
+                    val intent = Intent(
+                        this@AnimalProfileViewingActivity,
+                        AnimalProfileEditActivity::class.java
+                    )
+                    intent.putExtra("current_animal", m_selected_animal)
+                    edit_animal_launcher.launch(intent)
+                    // Not calling finish() here so that AnimalProfileEditActivity will come back to this activity)
+                }
 
-            save_animal_button.setOnClickListener {
-                if (m_current_user?.saved_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
-                    removeFromDataFieldArray(
-                        Strings.get(R.string.firebase_collection_users),
-                        getCurrentUserId(),
-                        User::saved_animal_ids,
-                        arrayOf(m_selected_animal!!.animal_id)
-                    ) {
-                        m_current_user?.saved_animal_ids?.remove(m_selected_animal!!.animal_id)
-                        instantiateSaveAnimalButton()
-                    }
-                } else {
-                    appendToDataFieldArray(
-                        Strings.get(R.string.firebase_collection_users),
-                        getCurrentUserId(),
-                        User::saved_animal_ids,
-                        m_selected_animal!!.animal_id
-                    ) {
-                        m_current_user?.saved_animal_ids?.add(m_selected_animal!!.animal_id)
-                        instantiateSaveAnimalButton()
+                if (m_selected_animal!!.associated_shelter_id == getCurrentUserId()) {
+                    edit_profile_button.visibility = View.VISIBLE
+                    binding.addImageButton.visibility = View.VISIBLE
+                }
+
+                val save_animal_button = binding.saveAnimalButton
+                // Ensure hosting shelter cannot save their own animals
+                save_animal_button.visibility =
+                    if (m_selected_animal?.associated_shelter_id != getCurrentUserId()) View.VISIBLE else View.GONE
+                instantiateSaveAnimalButton()
+
+                save_animal_button.setOnClickListener {
+                    if (m_current_user?.saved_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
+                        removeFromDataFieldArray(
+                            Strings.get(R.string.firebase_collection_users),
+                            getCurrentUserId(),
+                            User::saved_animal_ids,
+                            arrayOf(m_selected_animal!!.animal_id)
+                        ) {
+                            m_current_user?.saved_animal_ids?.remove(m_selected_animal!!.animal_id)
+                            instantiateSaveAnimalButton()
+                        }
+                    } else {
+                        appendToDataFieldArray(
+                            Strings.get(R.string.firebase_collection_users),
+                            getCurrentUserId(),
+                            User::saved_animal_ids,
+                            m_selected_animal!!.animal_id
+                        ) {
+                            m_current_user?.saved_animal_ids?.add(m_selected_animal!!.animal_id)
+                            instantiateSaveAnimalButton()
+                        }
                     }
                 }
             }
+
+            val adopt_button = binding.adoptButton
+            adopt_button.setOnClickListener {
+                // TODO: Initiate adoption
+            }
+        }
+    }
+
+    suspend fun getCurrentUserData(): User? {
+        var user_data: User? = null
+
+        try {
+            user_data = getUserData(getCurrentUserId())
+        } catch (e: Exception) {
+            Log.w("AnimalProfileViewingActivity", "Error fetching user: ${e.message}")
+
+            // If db query fails, display a message to the user
+            Toast.makeText(
+                this@AnimalProfileViewingActivity,
+                "Database Query error: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
 
-        val adopt_button = binding.adoptButton
-        adopt_button.setOnClickListener {
-            // TODO: Initiate adoption
-        }
+
+        return user_data
     }
 
     fun getAnimalAndExecuteCallback(animal_id: String?, onGetDataSuccess: (() -> Unit)? = null) {

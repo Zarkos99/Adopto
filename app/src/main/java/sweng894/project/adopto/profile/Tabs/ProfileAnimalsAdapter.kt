@@ -71,7 +71,6 @@ class ProfileAnimalsAdapter(
                     AnimalProfileViewingActivity::class.java
                 )
                 intent.putExtra("animal_id", current_animal_id)
-                intent.putExtra("current_user", firebase_data_service.current_user_data)
                 context.startActivity(intent)
             }
         })

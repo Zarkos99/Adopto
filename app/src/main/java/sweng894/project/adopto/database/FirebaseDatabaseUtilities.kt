@@ -53,6 +53,24 @@ suspend fun getUserData(user_id: String): User? {
     }
 }
 
+fun getUserData(
+    user_id: String,
+    onUserFound: (User?) -> Unit
+) {
+    Firebase.firestore
+        .collection(Strings.get(R.string.firebase_collection_users))
+        .document(user_id)
+        .get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val user = document.toObject(User::class.java)
+                onUserFound.invoke(user)
+            } else {
+                Log.d("FIREBASE DEBUG", "User document does not exist.")
+            }
+        }
+}
+
+
 suspend fun getAnimalData(animal_id: String): Animal? {
     return withTimeoutOrNull(10000) {  // 🔥 Timeout after 10 seconds
         try {
@@ -286,6 +304,33 @@ fun <T> removeFromDataFieldArray(
             _syncDatabaseForRemovedImages(field_name, values_to_be_removed)
         }.addOnFailureListener { println("Error updating field: ${it.message}") }
         .addOnSuccessListener { onRemovalSuccess?.invoke() }
+}
+
+fun <T, V> appendToDataFieldMap(
+    collection: String,
+    document_id: String,
+    field_name: KProperty1<T, *>,
+    field_key: String,
+    field_value: V,
+    onUploadSuccess: (() -> Unit)? = null
+) {
+    if (collection != Strings.get(R.string.firebase_collection_users) && collection != Strings.get(R.string.firebase_collection_animals)) {
+        Log.e("DEVELOPMENT BUG", "Not a valid collection input.")
+        return
+    }
+
+    val firebase_database = Firebase.firestore
+    val document_ref =
+        firebase_database.collection(collection).document(document_id)
+
+    document_ref.update("${field_name.name}.$field_key", field_value)
+        .addOnSuccessListener { onUploadSuccess?.invoke() }
+        .addOnFailureListener {
+            Log.w(
+                "FirebaseDatabaseUtilities ERROR",
+                "Failed to update ${field_name.name} to $field_value"
+            )
+        }
 }
 
 fun <T> _syncDatabaseForRemovedImages(

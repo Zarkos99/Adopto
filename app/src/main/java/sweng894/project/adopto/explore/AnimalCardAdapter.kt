@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.database.getCurrentUserId
+import sweng894.project.adopto.database.getUserData
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivity
 

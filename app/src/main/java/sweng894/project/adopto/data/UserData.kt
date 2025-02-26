@@ -17,6 +17,7 @@ data class User(
     var profile_image_path: String? = "",
     var saved_animal_ids: ArrayList<String> = ArrayList(),
     var hosted_animal_ids: ArrayList<String> = ArrayList(),
+    var viewed_animals: Map<String, String> = mapOf(), //animal_id, timestamp
     var zip_code: String? = "",
     var need_info: Boolean = false
 ) : Parcelable
