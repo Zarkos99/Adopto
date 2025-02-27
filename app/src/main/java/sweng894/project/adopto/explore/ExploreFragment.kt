@@ -9,29 +9,39 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
-import androidx.fragment.app.Fragment
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DefaultItemAnimator
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.yuyakaido.android.cardstackview.CardStackLayoutManager
 import com.yuyakaido.android.cardstackview.CardStackListener
-import com.yuyakaido.android.cardstackview.StackFrom
 import com.yuyakaido.android.cardstackview.Direction
+import com.yuyakaido.android.cardstackview.Duration
+import com.yuyakaido.android.cardstackview.RewindAnimationSetting
+import com.yuyakaido.android.cardstackview.StackFrom
+import com.yuyakaido.android.cardstackview.SwipeAnimationSetting
+import com.yuyakaido.android.cardstackview.SwipeableMethod
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.appendToDataFieldArray
-import sweng894.project.adopto.database.appendToDataFieldMap
 import sweng894.project.adopto.database.fetchAllAnimals
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.databinding.ExploreFragmentBinding
 import java.time.Instant
-import java.time.format.DateTimeFormatter
+
 
 class ExploreFragment : Fragment(), CardStackListener {
+
+    private lateinit var m_skip_button: FloatingActionButton
+    private lateinit var m_rewind_button: FloatingActionButton
+    private lateinit var m_save_animal_button: FloatingActionButton
 
     private lateinit var manager: CardStackLayoutManager
     private lateinit var adapter: AnimalCardAdapter
@@ -93,15 +103,52 @@ class ExploreFragment : Fragment(), CardStackListener {
         savedInstanceState: Bundle?
     ): View {
         _binding = ExploreFragmentBinding.inflate(inflater, container, false)
-        loadAnimals()
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initializeScrollControls()
         initializeCardHeight()
         setupCardStackView()
+        animal_list.clear()
+        loadAnimals()
+    }
+
+
+    private fun initializeScrollControls() {
+        m_skip_button = binding.skipButton
+        m_rewind_button = binding.rewindButton
+        m_save_animal_button = binding.saveAnimalButton
+
+        m_skip_button.setOnClickListener {
+            val setting = SwipeAnimationSetting.Builder()
+                .setDirection(Direction.Left)
+                .setDuration(Duration.Normal.duration)
+                .build()
+
+            manager.setSwipeAnimationSetting(setting)
+            binding.cardStackView.swipe()
+        }
+        m_rewind_button.setOnClickListener {
+            val setting = SwipeAnimationSetting.Builder()
+                .setDirection(Direction.Top)
+                .setDuration(Duration.Normal.duration)
+                .build()
+
+            manager.setSwipeAnimationSetting(setting)
+            binding.cardStackView.swipe()
+        }
+        m_save_animal_button.setOnClickListener {
+            val setting = SwipeAnimationSetting.Builder()
+                .setDirection(Direction.Right)
+                .setDuration(Duration.Normal.duration)
+                .build()
+
+            manager.setSwipeAnimationSetting(setting)
+            binding.cardStackView.swipe()
+        }
     }
 
     private fun initializeCardHeight() {
@@ -117,15 +164,21 @@ class ExploreFragment : Fragment(), CardStackListener {
         card_stack_view.layoutParams = layoutParams
     }
 
-    private fun setupCardStackView() {
-        manager = CardStackLayoutManager(requireContext(), this).apply {
+    private fun initializeManager(): CardStackLayoutManager {
+        return CardStackLayoutManager(requireContext(), this).apply {
             setStackFrom(StackFrom.Top)
             setTranslationInterval(8.0f)
             setSwipeThreshold(0.3f)
             setDirections(listOf(Direction.Left, Direction.Right, Direction.Top, Direction.Bottom))
             setCanScrollHorizontal(true)
             setCanScrollVertical(true)
+            setSwipeableMethod(SwipeableMethod.AutomaticAndManual)
+            setOverlayInterpolator(LinearInterpolator())
         }
+    }
+
+    private fun setupCardStackView() {
+        manager = initializeManager()
 
         adapter = AnimalCardAdapter(animal_list)
         binding.cardStackView.layoutManager = manager
@@ -173,38 +226,59 @@ class ExploreFragment : Fragment(), CardStackListener {
     }
 
     override fun onCardSwiped(direction: Direction) {
+        Log.d("TRACE", "Card swiped $direction ")
         val animal = animal_list[manager.topPosition - 1] // Current swiped animal
-        appendToDataFieldMap(
-            Strings.get(R.string.firebase_collection_users),
-            getCurrentUserId(),
-            User::viewed_animals,
-            animal.animal_id,
-            DateTimeFormatter.ISO_INSTANT.format(Instant.now())
-        )
+        var is_animal_viewed = false
 
         when (direction) {
-            Direction.Right -> {
-                saveAnimalMatch(animal)
-                Toast.makeText(
-                    requireContext(),
-                    "Matched with ${animal.animal_name}!",
-                    Toast.LENGTH_SHORT
-                ).show()
+
+            Direction.Top -> {
+                rewind()
             }
 
             Direction.Left, Direction.Bottom -> {
-                Log.d("TRACE", "Skipped ${animal.animal_name}")
+                skip(animal)
+                is_animal_viewed = true
             }
 
-            Direction.Top -> {
-                // Go back to previous animal
-                if (manager.topPosition > 0) {
-                    binding.cardStackView.smoothScrollToPosition(manager.topPosition - 1)
-                }
+            Direction.Right -> {
+                saveAnimalMatch(animal)
+                is_animal_viewed = true
             }
 
             else -> {}
         }
+
+        if (is_animal_viewed) {
+            //TODO: uncomment this to disallow users from seeing the same animal multiple times after debug is finished
+//            appendToDataFieldMap(
+//                Strings.get(R.string.firebase_collection_users),
+//                getCurrentUserId(),
+//                User::viewed_animals,
+//                animal.animal_id,
+//                DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+//            )
+        }
+    }
+
+    private fun skip(animal: Animal) {
+        Log.d("TRACE", "Skipped ${animal.animal_name}")
+    }
+
+    private fun rewind() {
+        Log.d("TRACE", "Attempting to rewind card")
+        val setting = RewindAnimationSetting.Builder()
+            .setDirection(Direction.Bottom)
+            .setDuration(Duration.Normal.duration)
+            .setInterpolator(DecelerateInterpolator())
+            .build()
+
+        val new_manager = initializeManager()
+        new_manager.setRewindAnimationSetting(setting)
+        manager = new_manager
+        binding.cardStackView.setLayoutManager(manager)
+        binding.cardStackView.smoothScrollToPosition(manager.topPosition - 1)
+        binding.cardStackView.rewind()
     }
 
     private fun saveAnimalMatch(animal: Animal) {
@@ -217,6 +291,12 @@ class ExploreFragment : Fragment(), CardStackListener {
             User::saved_animal_ids,
             animal.animal_id
         )
+
+        Toast.makeText(
+            requireContext(),
+            "Matched with ${animal.animal_name}!",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun onDestroyView() {
@@ -225,7 +305,10 @@ class ExploreFragment : Fragment(), CardStackListener {
     }
 
 
-    override fun onCardRewound() {}
+    override fun onCardRewound() {
+        Log.d("CardStackView", "onCardRewound: ${manager.topPosition}")
+    }
+
     override fun onCardDragging(direction: Direction?, ratio: Float) {}
     override fun onCardCanceled() {}
     override fun onCardAppeared(view: View?, position: Int) {}

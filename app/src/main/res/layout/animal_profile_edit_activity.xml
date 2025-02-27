@@ -14,7 +14,7 @@
         android:id="@+id/preferences_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="80sp"
+        android:layout_marginBottom="50sp"
         android:gravity="center"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
@@ -29,7 +29,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/preferences_title"
-        android:layout_above="@id/logout_button"
         android:layout_marginStart="30sp"
         android:layout_marginEnd="30sp"
         android:orientation="vertical">
@@ -37,7 +36,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15sp"
             android:gravity="center"
             android:text="Name: "
             android:textSize="25sp"
@@ -47,7 +45,7 @@
             android:id="@+id/name_input_field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:gravity="start"
             android:textColorHint="@color/secondary_text"
             android:textColor="@color/secondary_text"
             android:textSize="20sp"
@@ -91,6 +89,61 @@
             android:textSize="20sp"
             android:background="@color/card_background" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5sp"
+            android:layout_marginBottom="5sp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Size: "
+                android:textSize="25sp"
+                android:textColor="@color/primary_text" />
+
+            <Spinner
+                android:id="@+id/animal_size_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:entries="@array/animal_sizes"
+                android:theme="@style/SpinnerTextStyle" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Type: "
+                android:textSize="25sp"
+                android:textColor="@color/primary_text" />
+
+            <Spinner
+                android:id="@+id/animal_type_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:entries="@array/animal_types"
+                android:theme="@style/SpinnerTextStyle" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Breed: "
+            android:textSize="25sp"
+            android:textColor="@color/primary_text" />
+
+        <EditText
+            android:id="@+id/breed_input_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
+            android:textSize="20sp"
+            android:background="@color/card_background" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -114,6 +167,7 @@
             android:scrollbars="vertical"
             android:overScrollMode="always"
             android:maxLines="10" />
+
     </LinearLayout>
 
     <Button

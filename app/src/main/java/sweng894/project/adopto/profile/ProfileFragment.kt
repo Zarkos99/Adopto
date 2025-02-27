@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,10 +15,12 @@ import android.widget.Button
 import android.widget.ImageView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
+import sweng894.project.adopto.R
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
 import sweng894.project.adopto.preferences.PreferencesActivity
@@ -221,17 +224,23 @@ class ProfileFragment : Fragment() {
     }
 
     /**
-     * Dynamically obtains stored drawable images by name
+     * Dynamically obtains stored drawable images by name.
+     * Ensures that the activity is available and the image exists.
      */
-    private fun getImage(image_name: String?): Drawable {
-        return activity?.resources?.getDrawable(
-            activity?.resources?.getIdentifier(
-                image_name,
-                "drawable",
-                activity?.packageName
-            )!!
-        )!!
+    private fun getImage(image_name: String): Drawable? {
+        val activity = activity ?: return null // Ensure activity is not null
+        val resources = activity.resources
+
+        val imageId = resources.getIdentifier(image_name, "drawable", activity.packageName)
+
+        return if (imageId != 0) {
+            ResourcesCompat.getDrawable(resources, imageId, activity.theme)
+        } else {
+            Log.e("getImage", "Drawable not found: $image_name, using default image")
+            ResourcesCompat.getDrawable(resources, R.drawable.default_profile_pic, activity.theme)
+        }
     }
+
 
     fun populateProfileImage() {
         val current_user_data = m_firebase_data_service.current_user_data

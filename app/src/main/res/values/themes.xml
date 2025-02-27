@@ -21,4 +21,9 @@
 
     <style name="Theme.Adopto" parent="Base.Theme.Adopto" />
 
+    <style name="SpinnerTextStyle" parent="Theme.AppCompat.Light">
+        <item name="android:textColor">@color/primary_text</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
 </resources>

@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/primary_background"
     tools:context=".explore.ExploreFragment">
+
+    <!-- Preferences button -->
+    <Button
+        android:id="@+id/explore_preferences_button"
+        android:layout_width="50sp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="10sp"
+        android:layout_marginEnd="10sp"
+        android:background="@drawable/baseline_settings_24" />
 
     <com.yuyakaido.android.cardstackview.CardStackView
         android:id="@+id/card_stack_view"
@@ -18,4 +28,51 @@
         app:cardCornerRadius="16dp"
         app:cardElevation="8dp" />
 
+    <RelativeLayout
+        android:id="@+id/button_container"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_marginBottom="8dp"
+        android:layout_height="80dp"
+        android:layout_gravity="bottom"
+        android:clipChildren="false">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/skip_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@+id/rewind_button"
+            android:src="@drawable/ic_step_over"
+            app:backgroundTint="@color/card_background"
+            app:fabSize="auto"
+            app:rippleColor="#22ED7563" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/rewind_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="32dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginRight="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_undo_drawable"
+            app:backgroundTint="@color/card_background"
+            app:fabSize="mini"
+            app:rippleColor="#225BC9FA" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/save_animal_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/rewind_button"
+            android:layout_toEndOf="@+id/rewind_button"
+            android:src="@drawable/ic_heart_plus"
+            app:backgroundTint="@color/card_background"
+            app:fabSize="auto"
+            app:rippleColor="#226FE2B3" />
+
+    </RelativeLayout>
 </FrameLayout>

@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,16 +27,14 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
     private lateinit var m_name_input_edit_text: EditText
     private lateinit var m_age_input_edit_text: EditText
     private lateinit var m_health_input_edit_text: EditText
+    private lateinit var m_type_input_field: Spinner
+    private lateinit var m_size_input_field: Spinner
+    private lateinit var m_breed_input_field: EditText
     private lateinit var m_description_input_edit_text: EditText
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_select_additional_images_intent: ActivityResultLauncher<String>
     private lateinit var m_additional_images_adaptor: AnimalProfileCreationImagesAdapter
     private lateinit var m_new_profile_image_uri: Uri
-
-    private val FAKE_NAME = "Tofu"
-    private val FAKE_AGE = 1
-    private val FAKE_HEALTH = "Healthy"
-    private val FAKE_DESCRIPTION = "What a cute little animal!"
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -85,6 +84,9 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         m_name_input_edit_text = binding.animalNameInputField
         m_age_input_edit_text = binding.animalAgeInputField
         m_health_input_edit_text = binding.animalHealthInputField
+        m_type_input_field = binding.animalTypeSpinner
+        m_size_input_field = binding.animalSizeSpinner
+        m_breed_input_field = binding.breedInputField
         m_description_input_edit_text = binding.descriptionInputField
         val animal_profile_image_view = binding.profileImageView
         val additional_images_image_view = binding.additionalImagesButton
@@ -99,8 +101,6 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         additional_images_recycler_view.adapter = m_additional_images_adaptor
         additional_images_recycler_view.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-
-        initializeEditTexts()
 
         m_select_profile_image_intent =
             registerForActivityResult(ActivityResultContracts.GetContent())
@@ -134,32 +134,30 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         }
     }
 
-    fun handleCreateAnimalProfile() {
-        val current_user = m_firebase_data_service.current_user_data
-        if (!current_user?.is_shelter!!) {
-            Log.d("IMPROPER ACCESS", "Non-shelter account attempting to create animal profile.")
-            return
-        }
 
-        var new_name = m_name_input_edit_text.text.toString().trim()
-        var new_age_str = m_age_input_edit_text.text.toString().trim()
-        var new_health = m_health_input_edit_text.text.toString().trim()
-        var new_description = m_description_input_edit_text.text.toString().trim()
+    fun createAnimalFromInputs(): Animal? {
+        val new_name = m_name_input_edit_text.text.toString()
+        val new_age_str = m_age_input_edit_text.text.toString() // Optional Field
+        val new_health = m_health_input_edit_text.text.toString() //Optional Field
+        val new_description = m_description_input_edit_text.text.toString()
+        val new_size = m_size_input_field.selectedItem.toString()
+        val new_type = m_type_input_field.selectedItem.toString()
+        val new_breed = m_breed_input_field.toString() //Optional Field
 
         var error = false
 
         // Default to fake values if fields are empty
         if (new_name.isEmpty()) {
-            new_name = FAKE_NAME
-        }
-        if (new_age_str.isEmpty()) {
-            new_age_str = FAKE_AGE.toString()
-        }
-        if (new_health.isEmpty()) {
-            new_health = FAKE_HEALTH
+            error = true
         }
         if (new_description.isEmpty()) {
-            new_description = FAKE_DESCRIPTION
+            error = true
+        }
+        if (new_size.isEmpty()) {
+            error = true
+        }
+        if (new_type.isEmpty()) {
+            error = true
         }
 
         var new_age = 0.0
@@ -169,33 +167,56 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             //Display error message
             Toast.makeText(
                 this,
-                "Invalid age. Please input a decimal number (ex. 5, 5.5, or 5.0)",
-                Toast.LENGTH_LONG
-            ).show()
-            error = true
-        }
-
-        if (m_new_profile_image_uri.toString().isEmpty()) {
-            //Display error message
-            Toast.makeText(
-                this,
-                "Please select an image for your post",
+                "Invalid age input. Ensure age is numerical.",
                 Toast.LENGTH_LONG
             ).show()
             error = true
         }
 
         if (error) {
-            return
+            return null
         }
 
         val new_animal = Animal(
-            associated_shelter_id = current_user.user_id,
             animal_name = new_name,
             animal_age = new_age,
             health_summary = new_health,
-            biography = new_description
+            biography = new_description,
+            animal_size = new_size,
+            animal_type = new_type,
+            animal_breed = new_breed
         )
+        return new_animal
+    }
+
+    fun handleCreateAnimalProfile() {
+        val current_user = m_firebase_data_service.current_user_data
+        if (!current_user?.is_shelter!!) {
+            Log.d("IMPROPER ACCESS", "Non-shelter account attempting to create animal profile.")
+            return
+        }
+
+        if (m_new_profile_image_uri.toString().isEmpty()) {
+            //Display error message
+            Toast.makeText(
+                this,
+                "Please select an image for your animal",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val new_animal = createAnimalFromInputs()
+        if (new_animal == null) {
+            //Display error message
+            Toast.makeText(
+                this,
+                "Please ensure all required fields are filled",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
         addAnimalToDatabase(new_animal)
 
         // Send profile image to database and get cloud storage path, create animal with that path
@@ -208,12 +229,5 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         }
 
         finish()
-    }
-
-    fun initializeEditTexts() {
-        m_name_input_edit_text.hint = FAKE_NAME
-        m_age_input_edit_text.hint = FAKE_AGE.toString()
-        m_health_input_edit_text.hint = FAKE_HEALTH
-        m_description_input_edit_text.hint = FAKE_DESCRIPTION
     }
 }

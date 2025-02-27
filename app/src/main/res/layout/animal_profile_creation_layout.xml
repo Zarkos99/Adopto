@@ -48,17 +48,6 @@
             android:textColorHint="@color/secondary_text"
             android:textColor="@color/secondary_text"
             android:textSize="24sp" />
-    </LinearLayout>
-
-    <!--    Name input field-->
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10sp"
-        android:layout_marginStart="20sp"
-        android:layout_marginEnd="20sp"
-        android:background="@color/primary_background">
 
         <TextView
             android:layout_width="wrap_content"
@@ -80,17 +69,6 @@
             android:textColor="@color/secondary_text"
             android:textSize="24sp"
             android:inputType="number|numberDecimal" />
-    </LinearLayout>
-
-    <!--    Health input field-->
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10sp"
-        android:layout_marginStart="20sp"
-        android:layout_marginEnd="20sp"
-        android:background="@color/primary_background">
 
         <TextView
             android:layout_width="wrap_content"
@@ -114,17 +92,62 @@
             android:scrollbars="vertical"
             android:overScrollMode="always"
             android:maxLines="10" />
-    </LinearLayout>
 
-    <!--    Description input field-->
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10sp"
-        android:layout_marginStart="20sp"
-        android:layout_marginEnd="20sp"
-        android:background="@color/primary_background">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5sp"
+            android:layout_marginBottom="5sp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Size: "
+                android:textSize="25sp"
+                android:textColor="@color/primary_text" />
+
+            <Spinner
+                android:id="@+id/animal_size_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:entries="@array/animal_sizes"
+                android:theme="@style/SpinnerTextStyle" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Type: "
+                android:textSize="25sp"
+                android:textColor="@color/primary_text" />
+
+            <Spinner
+                android:id="@+id/animal_type_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:entries="@array/animal_types"
+                android:theme="@style/SpinnerTextStyle" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Breed: "
+            android:textSize="25sp"
+            android:textColor="@color/primary_text" />
+
+        <EditText
+            android:id="@+id/breed_input_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
+            android:textSize="20sp"
+            android:background="@color/card_background" />
 
         <TextView
             android:layout_width="wrap_content"

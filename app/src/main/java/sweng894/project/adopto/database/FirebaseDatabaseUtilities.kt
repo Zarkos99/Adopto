@@ -230,6 +230,35 @@ fun removeAnimalFromDatabase(
     }
 }
 
+fun setDocumentData(
+    collection: String,
+    document_id: String,
+    new_document_data: Any,
+    onUploadSuccess: (() -> Unit)? = null
+) {
+    val validCollections = setOf(
+        Strings.get(R.string.firebase_collection_users),
+        Strings.get(R.string.firebase_collection_animals)
+    )
+
+    if (collection !in validCollections) {
+        throw IllegalArgumentException("Invalid collection: $collection")
+    }
+
+    val firebase_database = Firebase.firestore
+    val document_ref =
+        firebase_database.collection(collection).document(document_id)
+
+    document_ref.set(new_document_data)
+        .addOnFailureListener {
+            Log.w(
+                "FirebaseDatabaseUtilities ERROR",
+                "Failed to set document ${document_id} to $new_document_data"
+            )
+        }
+        .addOnSuccessListener { onUploadSuccess?.invoke() }
+}
+
 fun <T> updateDataField(
     collection: String,
     document_id: String,
