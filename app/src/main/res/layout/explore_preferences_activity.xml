@@ -70,7 +70,7 @@
             <sweng894.project.adopto.custom.MultiSelectView
                 android:id="@+id/sizes_multi_select"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <LinearLayout
@@ -90,20 +90,34 @@
             <sweng894.project.adopto.custom.MultiSelectView
                 android:id="@+id/types_multi_select"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
     </LinearLayout>
 
-    <Button
-        android:id="@+id/save_preferences_button"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="20sp"
-        android:layout_marginStart="10sp"
-        android:layout_alignParentEnd="true"
-        android:text="Save"
-        android:clickable="false"
-        android:height="60sp" />
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/cancel_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20sp"
+            android:layout_marginEnd="40sp"
+            android:text="Cancel"
+            android:height="60sp" />
+        
+        <Button
+            android:id="@+id/save_preferences_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20sp"
+            android:layout_marginEnd="20sp"
+            android:text="Save"
+            android:clickable="false"
+            android:height="60sp" />
+    </LinearLayout>
 </RelativeLayout>

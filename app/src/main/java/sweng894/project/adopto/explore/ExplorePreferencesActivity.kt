@@ -22,6 +22,7 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
     private var m_selected_sizes = arrayListOf<String>()
     private var m_selected_types = arrayListOf<String>()
     private lateinit var m_save_preferences_button: Button
+    private lateinit var m_cancel_button: Button
     private lateinit var m_sizes_multi_select_view: MultiSelectView
     private lateinit var m_types_multi_select_view: MultiSelectView
 
@@ -40,6 +41,7 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
         setupMultiSelectListeners()
 
         m_save_preferences_button = binding.savePreferencesButton
+        m_cancel_button = binding.cancelButton
         disableButton(m_save_preferences_button)
         m_save_preferences_button.setOnClickListener {
             updateDataField(
@@ -51,6 +53,7 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
             disableButton(m_save_preferences_button)
             finish()
         }
+        m_cancel_button.setOnClickListener { finish() }
     }
 
     override fun onSelectionChanged(selectedItems: List<String>) {
