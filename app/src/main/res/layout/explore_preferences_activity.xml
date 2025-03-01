@@ -67,17 +67,10 @@
                 android:textSize="25sp"
                 android:textColor="@color/primary_text" />
 
-            <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:background="@color/primary_button">
-
-                <com.androidbuts.multispinnerfilter.MultiSpinnerSearch
-                    android:id="@+id/sizes_multi_select_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:hintText="Select Items" />
-            </FrameLayout>
+            <sweng894.project.adopto.custom.MultiSelectView
+                android:id="@+id/sizes_multi_select"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <LinearLayout
@@ -94,17 +87,11 @@
                 android:textSize="25sp"
                 android:textColor="@color/primary_text" />
 
-            <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:background="@color/primary_button">
+            <sweng894.project.adopto.custom.MultiSelectView
+                android:id="@+id/types_multi_select"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
-                <com.androidbuts.multispinnerfilter.MultiSpinnerSearch
-                    android:id="@+id/types_multi_select_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:hintText="Select Items" />
-            </FrameLayout>
         </LinearLayout>
     </LinearLayout>
 
