@@ -140,9 +140,7 @@ fun fetchAllAnimals(onComplete: (List<Animal>) -> Unit) {
         .addOnSuccessListener { result ->
             for (document in result) {
                 val animal = document.toObject(Animal::class.java)
-                if (animal != null) {
-                    animal_list.add(animal)
-                }
+                animal_list.add(animal)
             }
             onComplete(animal_list) // Return the list after fetching all documents
         }
@@ -335,6 +333,15 @@ fun <T> removeFromDataFieldArray(
         .addOnSuccessListener { onRemovalSuccess?.invoke() }
 }
 
+fun <T> _syncDatabaseForRemovedImages(
+    field_name: KProperty1<T, *>,
+    values_to_be_removed: Array<String>
+) {
+    if (field_name.name.contains("image", ignoreCase = true)) {
+        deleteImagesFromCloudStorage(values_to_be_removed)
+    }
+}
+
 fun <T, V> appendToDataFieldMap(
     collection: String,
     document_id: String,
@@ -362,13 +369,26 @@ fun <T, V> appendToDataFieldMap(
         }
 }
 
-fun <T> _syncDatabaseForRemovedImages(
+fun <T> updateExplorePreferencesField(
     field_name: KProperty1<T, *>,
-    values_to_be_removed: Array<String>
+    value: Any,
+    onSuccess: (() -> Unit)? = null,
+    onFailure: ((Exception) -> Unit)? = null
 ) {
-    if (field_name.name.contains("image", ignoreCase = true)) {
-        deleteImagesFromCloudStorage(values_to_be_removed)
-    }
-}
+    val firebase_database = Firebase.firestore
+    val field_path =
+        "explore_preferences.${field_name.name}" // Constructs the dot notation field path
 
+    firebase_database.collection(Strings.get(R.string.firebase_collection_users))
+        .document(getCurrentUserId())
+        .update(field_path, value)
+        .addOnSuccessListener {
+            onSuccess?.invoke()
+            Log.d("FirestoreUpdate", "Successfully updated $field_path to $value")
+        }
+        .addOnFailureListener { exception ->
+            onFailure?.invoke(exception)
+            Log.e("FirestoreUpdate", "Error updating $field_path", exception)
+        }
+}
 

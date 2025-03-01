@@ -22,12 +22,13 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import sweng894.project.adopto.TestApplication
 import sweng894.project.adopto.R
+import sweng894.project.adopto.profile.ProfilePreferencesActivity
 
 @RunWith(AndroidJUnit4::class)
 @Config(application = TestApplication::class, manifest = Config.NONE, sdk = [33])
-class PreferencesActivityTest {
+class ProfilePreferencesActivityTest {
 
-    private lateinit var scenario: ActivityScenario<PreferencesActivity>
+    private lateinit var scenario: ActivityScenario<ProfilePreferencesActivity>
     private lateinit var mockAuth: FirebaseAuth
     private lateinit var mockUser: FirebaseUser
 
@@ -65,7 +66,7 @@ class PreferencesActivityTest {
         }
 
         // Launch the activity
-        scenario = ActivityScenario.launch(PreferencesActivity::class.java)
+        scenario = ActivityScenario.launch(ProfilePreferencesActivity::class.java)
     }
 
     @Test

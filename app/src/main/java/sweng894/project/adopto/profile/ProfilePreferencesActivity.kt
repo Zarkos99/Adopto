@@ -1,4 +1,4 @@
-package sweng894.project.adopto.preferences
+package sweng894.project.adopto.profile
 
 import android.content.Intent
 import android.os.Bundle
@@ -13,10 +13,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.userProfileChangeRequest
 import sweng894.project.adopto.authentication.AuthenticationActivity
 import sweng894.project.adopto.R
-import sweng894.project.adopto.databinding.PreferencesActivityBinding
-import javax.inject.Inject
+import sweng894.project.adopto.databinding.ProfilePreferencesActivityBinding
 
-class PreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :
+class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :
     AppCompatActivity() {
 
     lateinit var m_email_input_field: EditText
@@ -26,12 +25,12 @@ class PreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInsta
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private lateinit var binding: PreferencesActivityBinding
+    private lateinit var binding: ProfilePreferencesActivityBinding
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = PreferencesActivityBinding.inflate(layoutInflater)
+        binding = ProfilePreferencesActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         m_email_input_field = binding.emailInputField

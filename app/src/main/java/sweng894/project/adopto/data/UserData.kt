@@ -19,7 +19,18 @@ data class User(
     var hosted_animal_ids: ArrayList<String> = ArrayList(),
     var viewed_animals: Map<String, String> = mapOf(), //animal_id, timestamp
     var zip_code: String? = "",
-    var need_info: Boolean = false
+    var need_info: Boolean = false,
+    @get:PropertyName("explore_preferences")
+    @set:PropertyName("explore_preferences")
+    var explore_preferences: ExplorationPreferences? = ExplorationPreferences()
+) : Parcelable
+
+@Parcelize
+data class ExplorationPreferences(
+    var min_animal_age: Double? = 0.0,
+    var max_animal_age: Double? = 30.0,
+    var animal_sizes: ArrayList<String> = ArrayList(),
+    var animal_types: ArrayList<String> = ArrayList(),
 ) : Parcelable
 
 @Parcelize

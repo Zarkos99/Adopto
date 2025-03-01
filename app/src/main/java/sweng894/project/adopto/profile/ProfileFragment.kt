@@ -23,7 +23,6 @@ import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
-import sweng894.project.adopto.preferences.PreferencesActivity
 import sweng894.project.adopto.profile.Tabs.MyAnimalsFragment
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
 import sweng894.project.adopto.profile.Tabs.SavedAnimalsFragment
@@ -118,7 +117,7 @@ class ProfileFragment : Fragment() {
         val preferences_button_view = binding.preferencesButton
 
         preferences_button_view.setOnClickListener {
-            val intent = Intent(activity, PreferencesActivity::class.java)
+            val intent = Intent(activity, ProfilePreferencesActivity::class.java)
             startActivity(intent)
             // Not calling finish() here so that AnimalProfileCreationActivity will come back to this fragment)
         }

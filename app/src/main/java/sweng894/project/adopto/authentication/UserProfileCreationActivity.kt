@@ -7,9 +7,11 @@ import androidx.appcompat.app.AppCompatActivity
 import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
+import sweng894.project.adopto.data.ExplorationPreferences
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.updateDataField
+import sweng894.project.adopto.database.updateExplorePreferencesField
 import sweng894.project.adopto.databinding.AuthUserProfileCreationActivityBinding
 
 
@@ -62,6 +64,11 @@ class UserProfileCreationActivity : AppCompatActivity() {
                 User::need_info,
                 false
             )
+
+            val animal_types = resources.getStringArray(R.array.animal_types)
+            val animal_sizes = resources.getStringArray(R.array.animal_sizes)
+            updateExplorePreferencesField(ExplorationPreferences::animal_types, animal_types)
+            updateExplorePreferencesField(ExplorationPreferences::animal_sizes, animal_sizes)
 
             openActivity(NavigationBaseActivity::class.java)
         }

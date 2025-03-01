@@ -34,9 +34,13 @@ import sweng894.project.adopto.database.appendToDataFieldArray
 import sweng894.project.adopto.database.fetchAllAnimals
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.databinding.ExploreFragmentBinding
+import sweng894.project.adopto.profile.ExplorePreferencesActivity
 import java.time.Instant
 
-
+/**
+ * A fragment allowing users to explore databased animals using a CardStackView architecture.
+ * CardStackView source: https://github.com/yuyakaido/CardStackView/tree/master
+ */
 class ExploreFragment : Fragment(), CardStackListener {
 
     private lateinit var m_skip_button: FloatingActionButton
@@ -103,6 +107,7 @@ class ExploreFragment : Fragment(), CardStackListener {
         savedInstanceState: Bundle?
     ): View {
         _binding = ExploreFragmentBinding.inflate(inflater, container, false)
+        initializePreferencesButton()
         return binding.root
     }
 
@@ -116,6 +121,20 @@ class ExploreFragment : Fragment(), CardStackListener {
         loadAnimals()
     }
 
+
+    private fun initializePreferencesButton() {
+        val explore_preferences_button = binding.explorePreferencesButton
+
+        explore_preferences_button.setOnClickListener {
+            val intent = Intent(activity, ExplorePreferencesActivity::class.java)
+            intent.putExtra(
+                "explore_preferences",
+                m_firebase_data_service.current_user_data?.explore_preferences
+            )
+            startActivity(intent)
+            // Not calling finish() here so that the Activity will come back to this fragment
+        }
+    }
 
     private fun initializeScrollControls() {
         m_skip_button = binding.skipButton
