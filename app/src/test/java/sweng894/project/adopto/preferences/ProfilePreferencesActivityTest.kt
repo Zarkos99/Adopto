@@ -6,7 +6,6 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseApp
@@ -17,15 +16,10 @@ import io.mockk.*
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
-import sweng894.project.adopto.TestApplication
 import sweng894.project.adopto.R
 import sweng894.project.adopto.profile.ProfilePreferencesActivity
 
-@RunWith(AndroidJUnit4::class)
-@Config(application = TestApplication::class, manifest = Config.NONE, sdk = [33])
+
 class ProfilePreferencesActivityTest {
 
     private lateinit var scenario: ActivityScenario<ProfilePreferencesActivity>
@@ -137,8 +131,6 @@ class ProfilePreferencesActivityTest {
 
             saveButton.performClick()
 
-            shadowOf(Looper.getMainLooper()).idle()
-
             println("Save button clicked.")
 
             val captor = slot<UserProfileChangeRequest>()
@@ -163,8 +155,6 @@ class ProfilePreferencesActivityTest {
             assertTrue("Logout button should be clickable", logoutButton.isClickable)
 
             logoutButton.performClick()
-
-            shadowOf(Looper.getMainLooper()).idle()
 
             println("Logout button clicked.")
 

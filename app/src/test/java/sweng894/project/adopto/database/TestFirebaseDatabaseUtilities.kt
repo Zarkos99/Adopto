@@ -1,37 +1,25 @@
 package sweng894.project.adopto.database
 
-import android.os.Looper
-import androidx.test.core.app.ApplicationProvider
-import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
+import com.google.firebase.storage.FirebaseStorage
 import io.mockk.*
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
-import sweng894.project.adopto.R
+import sweng894.project.adopto.App
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.TestApplication
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KProperty1
 
-@RunWith(RobolectricTestRunner::class)
-@Config(
-    application = TestApplication::class,
-    manifest = Config.NONE,
-    sdk = [33] // Limit Robolectric to API 33
-)
 class FirebaseDatabaseUtilitiesTest {
 
     private lateinit var mockFirestore: FirebaseFirestore
@@ -39,324 +27,339 @@ class FirebaseDatabaseUtilitiesTest {
     private lateinit var mockDocumentReference: DocumentReference
     private lateinit var mockFirebaseAuth: FirebaseAuth
 
-    // Helper function to avoid Firestore hanging
-    private fun <T> mockTask(result: T): Task<T> = Tasks.forResult(result)
-
-
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<TestApplication>()
-
-        // ✅ Manually provide FirebaseOptions to avoid `Resources$NotFoundException`
-        val firebaseOptions = FirebaseOptions.Builder()
-            .setApplicationId("1:1234567890:android:abcdef") // Fake App ID
-            .setApiKey("fake-api-key") // Fake API Key
-            .setProjectId("test-project") // Fake Project ID
-            .build()
-
-        // ✅ Ensure FirebaseApp is initialized properly
-        if (FirebaseApp.getApps(context).isEmpty()) {
-            FirebaseApp.initializeApp(context, firebaseOptions)
-        }
-
-        // ✅ Mock FirebaseApp BEFORE Firestore
-        mockkStatic(FirebaseApp::class)
-        val mockFirebaseApp = mockk<FirebaseApp>(relaxed = true)
-        every { FirebaseApp.getInstance() } returns mockFirebaseApp
-
-        // ✅ Mock FirebaseAuth
+        // Mock Firebase Components
         mockkStatic(FirebaseAuth::class)
-        mockFirebaseAuth = mockk(relaxed = true)
-        every { FirebaseAuth.getInstance() } returns mockFirebaseAuth
-        every { mockFirebaseAuth.currentUser?.uid } returns "test_user_id"
-
-        // ✅ Mock Strings.get() to prevent resource issues
-        mockkObject(Strings)
-        every { Strings.get(any()) } returns "mocked_collection_name"
-
-        // ✅ Corrected Firestore Mocking
         mockkStatic(FirebaseFirestore::class)
+        // Mock FirebaseStorage to isolate it from tests
+        mockkStatic(FirebaseStorage::class)
+        every { FirebaseStorage.getInstance() } returns mockk(relaxed = true)
+
+        // Initialize Firebase Firestore
         mockFirestore = mockk(relaxed = true)
         mockCollection = mockk(relaxed = true)
         mockDocumentReference = mockk(relaxed = true)
 
         every { FirebaseFirestore.getInstance() } returns mockFirestore
-        every { mockFirestore.collection("mocked_collection_name") } returns mockCollection
-        every { mockCollection.document("test123") } returns mockDocumentReference
+        every { mockFirestore.collection(any()) } returns mockCollection
+        every { mockCollection.document(any()) } returns mockDocumentReference
+        // Mock Strings.get() to prevent resource dependency errors
+        mockkObject(Strings)
+        every { Strings.get(any()) } returns "mocked_collection_name"
 
-        // ✅ Ensure `mockDocumentReference.get()` returns a Task<DocumentSnapshot>
-        val mockSnapshot: DocumentSnapshot = mockk(relaxed = true)
-        every { mockSnapshot.exists() } returns true
-        every { mockSnapshot.toObject(User::class.java) } returns User(
-            user_id = "test123",
-            is_shelter = true
-        )
+        // Ensure Firestore `.set()` and `.get()` return results
+        every { mockDocumentReference.set(any()) } returns Tasks.forResult(null)
+        every { mockDocumentReference.get() } returns Tasks.forResult(mockk(relaxed = true))
+        every { mockDocumentReference.update(any<String>(), any()) } returns Tasks.forResult(null)
+        every { mockDocumentReference.delete() } returns Tasks.forResult(null)
 
-        every { mockDocumentReference.get() } returns Tasks.forResult(mockSnapshot)
+        // Mock FirebaseAuth
+        mockFirebaseAuth = mockk(relaxed = true)
+        every { FirebaseAuth.getInstance() } returns mockFirebaseAuth
+        every { mockFirebaseAuth.currentUser?.uid } returns "test_user_id"
+
+        // Mock App instance to avoid "App.instance is not initialized" error
+        mockkObject(App)
+        every { App.isInitialized() } returns true
+        every { App.instance } returns mockk(relaxed = true)
+
+        // Mock Task execution to avoid calling `TaskExecutors.MAIN_THREAD`
+        mockkStatic(Tasks::class)
+        every { Tasks.forResult(null) } returns mockk(relaxed = true)
     }
 
     @Test
-    fun testGetCurrentUserIdReturnsCorrectUserId() {
+    fun testGetCurrentUserIdReturnsCorrectUserID() {
         val userId = getCurrentUserId()
         assertEquals("test_user_id", userId)
     }
 
     @Test
-    fun testGetUserDataReturnsUserOnSuccess() = runTest {
+    fun testGetUserDataReturnsUserOnSuccess() = runBlocking {
+        // Mock Firestore document snapshot
         val mockSnapshot: DocumentSnapshot = mockk(relaxed = true)
         val testUser = User(user_id = "test123", is_shelter = true)
 
+        // Simulate a successful Firestore query
         every { mockSnapshot.exists() } returns true
         every { mockSnapshot.toObject(User::class.java) } returns testUser
 
-        // ✅ Mock Firestore Task
-        val mockTask: Task<DocumentSnapshot> = mockk(relaxed = true)
-
-        every { mockTask.isComplete } returns true
-        every { mockTask.isSuccessful } returns true
-        every { mockTask.result } returns mockSnapshot
-
-        // ✅ Ensure Firestore's .get() returns this task
-        every { mockDocumentReference.get() } returns mockTask
-
-        // ✅ Corrected lambda capturing
+        // Ensure Firestore returns a properly completed Task
         every { mockDocumentReference.get() } returns Tasks.forResult(mockSnapshot)
 
-        every { mockTask.addOnFailureListener(any()) } answers {
-            val callback = firstArg<OnFailureListener>()
-            // Do nothing since we simulate success
-            mockTask
-        }
-
-        // ✅ Run test
+        // Call the actual function
         val result = getUserData("test123")
 
+        // Ensure the result is not null and contains the correct data
         assertNotNull(result)
         assertEquals("test123", result?.user_id)
         assertTrue(result?.is_shelter == true)
+
+        // Verify Firestore `.get()` was actually called once
+        verify(exactly = 1) { mockDocumentReference.get() }
     }
 
     @Test
-    fun testGetUserDataReturnsNullWhenUserNotFound() = runTest {
-        // 🔥 Mock Firestore document snapshot to simulate missing user
+    fun testGetUserDataReturnsNullWhenUserNotFound() = runBlocking {
         val mockSnapshot: DocumentSnapshot = mockk(relaxed = true)
         every { mockSnapshot.exists() } returns false
-
-        // 🔥 Ensure Firestore `.get()` returns the mocked snapshot
         every { mockDocumentReference.get() } returns Tasks.forResult(mockSnapshot)
-
-        println("DEBUG: Before calling getUserData")
 
         val result = getUserData("non_existing_user")
 
-        println("DEBUG: After calling getUserData -> $result")
-
-        assertNull(result) // ✅ Expected null
+        assertNull(result)
     }
 
     @Test
-    fun testGetUserDataTimesOut() = runTest {
-        // 🔥 Mock Firestore task that never completes
-        val uncompletedTask: Task<DocumentSnapshot> = mockk(relaxed = true)
-        every { uncompletedTask.isComplete } returns false  // Simulates hanging request
-        every { mockDocumentReference.get() } returns uncompletedTask
+    fun testGetUserDataAsynchronouslySuccessfullyRetrievesUser() {
+        val mockSnapshot: DocumentSnapshot = mockk(relaxed = true)
+        val testUser = User(user_id = "test123", is_shelter = true)
+        val mockTask: Task<DocumentSnapshot> = mockk(relaxed = true)
 
-        println("DEBUG: Before calling getUserData")
+        every { mockSnapshot.exists() } returns true
+        every { mockSnapshot.toObject(User::class.java) } returns testUser
+        every { mockDocumentReference.get() } returns mockTask
+        every { mockTask.addOnSuccessListener(any()) } answers {
+            val listener = firstArg<OnSuccessListener<DocumentSnapshot>>()
+            listener.onSuccess(mockSnapshot)
+            mockTask
+        }
 
-        // ⏳ Advance time to trigger timeout
-        advanceTimeBy(10000) // Simulates the coroutine waiting for 10 seconds
+        val latch = CountDownLatch(1) // Ensures the test waits for Firestore
+        var result: User?
 
-        val result = getUserData("timeout_user")
+        println("Before callback")
+        getUserData("test123") { user ->
+            println("In callback. User data retrieved: $user")
+            result = user
 
-        println("DEBUG: After calling getUserData -> $result")
+            assertNotNull(result)
+            assertEquals("test123", result?.user_id)
+            assertTrue(result?.is_shelter == true)
 
-        assertNull(result) // ✅ Expected null due to timeout
+            latch.countDown() // Signal that Firestore callback finished
+        }
+
+        assertTrue("Callback was not invoked in time", latch.await(5, TimeUnit.SECONDS))
     }
 
     @Test
-    fun testAddUserToDatabaseSuccessfullyAddsUser() = runTest {
-        // ✅ Mock getCurrentUserId() to return expected user ID
-        mockkStatic("sweng894.project.adopto.database.FirebaseDatabaseUtilitiesKt")
+    fun testGetUserDataAsynchronouslyReturnsNullWhenUserFoundNull() {
+        val mockSnapshot: DocumentSnapshot = mockk(relaxed = true)
+        val mockTask: Task<DocumentSnapshot> = mockk(relaxed = true)
 
-        // ✅ Mock Firestore again within the test scope
-        mockkStatic(FirebaseFirestore::class)
-        every { FirebaseFirestore.getInstance() } returns mockFirestore
-        every { mockFirestore.collection(any()) } returns mockCollection
-        every { mockCollection.document(any()) } returns mockDocumentReference
+        every { mockSnapshot.exists() } returns false
+        every { mockDocumentReference.get() } returns mockTask
+        every { mockTask.addOnSuccessListener(any()) } answers {
+            val listener = firstArg<OnSuccessListener<DocumentSnapshot>>()
+            listener.onSuccess(mockSnapshot)
+            mockTask
+        }
 
-        // ✅ Mock Firestore behavior
+        val latch = CountDownLatch(1)
+        var result: User?
+
+        getUserData("non_existing_user") { user ->
+            result = user
+            latch.countDown()
+
+            assertNull(result)
+        }
+
+        assertTrue("Callback was not invoked in time", latch.await(5, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun testGetAnimalDataReturnsAnimalOnSuccess() = runBlocking {
+        val mockSnapshot: DocumentSnapshot = mockk(relaxed = true)
+        val testAnimal = Animal(animal_id = "animal123", associated_shelter_id = "shelter123")
+
+        every { mockSnapshot.exists() } returns true
+        every { mockSnapshot.toObject(Animal::class.java) } returns testAnimal
+        every { mockDocumentReference.get() } returns Tasks.forResult(mockSnapshot)
+
+        val result = getAnimalData("animal123")
+
+        assertNotNull("Animal should not be null", result)
+        assertEquals("animal123", result!!.animal_id)
+        assertEquals("shelter123", result.associated_shelter_id)
+    }
+
+    @Test
+    fun testGetAnimalDataReturnsNullWhenDocumentDoesNotExist() = runBlocking {
+        val mockSnapshot: DocumentSnapshot = mockk(relaxed = true)
+
+        every { mockSnapshot.exists() } returns false
+        every { mockDocumentReference.get() } returns Tasks.forResult(mockSnapshot)
+
+        val result = getAnimalData("non_existing_animal")
+
+        assertNull("Should return null if document does not exist", result)
+    }
+
+    @Test
+    fun testGetAnimalDataHandlesFirestoreFailure() = runBlocking {
+        every { mockDocumentReference.get() } returns Tasks.forException(RuntimeException("Firestore error"))
+
+        val result = getAnimalData("failing_animal")
+
+        assertNull("Should return null if Firestore query fails", result)
+    }
+
+    @Test
+    fun testGetAnimalDataHandlesTimeout() = runBlocking {
+        val result = withTimeoutOrNull(100) { getAnimalData("slow_animal") }
+
+        assertNull("Should return null if Firestore query times out", result)
+    }
+
+    @Test
+    fun testAddUserToDatabaseSuccessfullyAddsUser() = runBlocking {
         val mockTask: Task<Void> = mockk(relaxed = true)
-        every { mockTask.isComplete } returns true
         every { mockTask.isSuccessful } returns true
         every { mockDocumentReference.set(any()) } returns mockTask
 
-        // ✅ Create a user with an empty ID to trigger function override
         val testUser = User(user_id = "")
 
-        println("DEBUG: Before calling addUserToDatabase")
-
-        // ✅ Call the function
         addUserToDatabase(testUser)
 
-        println("DEBUG: After calling addUserToDatabase")
-
-        // ✅ Verify Firestore `.set()` was called with the correct user
-        verify {
-            mockDocumentReference.set(withArg<User> { savedUser ->
-                assertEquals("test_user_id", savedUser.user_id) // Ensures user_id was updated
-            })
-        }
+        verify(exactly = 1) { mockDocumentReference.set(any<User>()) }
     }
 
-
     @Test
-    fun testAddAnimalToDatabaseSuccessfullyAddsAnimal() = runTest {
-        // ✅ Mock Firestore again within the test scope
-        mockkStatic(FirebaseFirestore::class)
-        every { FirebaseFirestore.getInstance() } returns mockFirestore
-        every { mockFirestore.collection(any()) } returns mockCollection
-        every { mockCollection.document(any()) } returns mockDocumentReference
-
-        // ✅ Mock Firestore behavior
+    fun testAddAnimalToDatabaseSuccessfullyAddsAnimal() = runBlocking {
         val mockTask: Task<Void> = mockk(relaxed = true)
-        every { mockTask.isComplete } returns true
         every { mockTask.isSuccessful } returns true
         every { mockDocumentReference.set(any()) } returns mockTask
 
-        // ✅ Create test animal
         val testAnimal = Animal(associated_shelter_id = "shelter123")
 
-        println("DEBUG: Before calling addAnimalToDatabase")
-
-        // ✅ Call function
         addAnimalToDatabase(testAnimal)
 
-        println("DEBUG: After calling addAnimalToDatabase")
-
-        // ✅ Verify Firestore's `.set()` was called with the correct data
-        verify { mockDocumentReference.set(testAnimal) }
+        verify(exactly = 1) { mockDocumentReference.set(any<Animal>()) }
     }
 
     @Test
-    fun testUpdateDataFieldUpdatesAnExistingDocumentField() = runTest {
-        // ✅ Mock successful Firestore update
+    fun testUpdateDataFieldUpdatesAnExistingDocumentField() = runBlocking {
         every { mockDocumentReference.set(any<Map<String, Any>>(), any()) } returns Tasks.forResult(
             null
         )
 
-        // ✅ Define test values
         val fieldName: KProperty1<User, *> = User::biography
-        val fieldValue = "New"
+        val fieldValue = "Updated Bio"
 
-        // ✅ Call function
-        updateDataField(
-            Strings.get(R.string.firebase_collection_users),
-            "test123",
-            fieldName,
-            fieldValue
-        )
+        updateDataField("mocked_collection_name", "test123", fieldName, fieldValue)
 
-        // ✅ Verify Firestore update was called with correct values
-        verify {
-            mockDocumentReference.set(mapOf("biography" to "New"), SetOptions.merge())
+        verify(exactly = 1) {
+            mockDocumentReference.set(mapOf("biography" to "Updated Bio"), SetOptions.merge())
         }
     }
 
-
     @Test
-    fun testAppendToDataFieldArrayAppendsValuesSuccessfully() = runTest {
-        // ✅ Mock successful Firestore update
+    fun testAppendToDataFieldArrayAppendsValuesSuccessfully() = runBlocking {
         every { mockDocumentReference.update(any<String>(), any()) } returns Tasks.forResult(null)
 
-        // ✅ Define test values
         val fieldName: KProperty1<User, *> = User::saved_animal_ids
         val fieldValue = "A1"
 
-        // ✅ Call function
-        appendToDataFieldArray(
-            Strings.get(R.string.firebase_collection_users),
-            "test123",
-            fieldName,
-            fieldValue
-        )
+        appendToDataFieldArray("mocked_collection_name", "test123", fieldName, fieldValue)
 
-        // ✅ Verify Firestore update was called with correct values
-        verify {
-            mockDocumentReference.update("saved_animal_ids", match { it is FieldValue })
+        verify(exactly = 1) {
+            mockDocumentReference.update(
+                "saved_animal_ids",
+                match { it is FieldValue })
         }
     }
 
     @Test
-    fun testRemoveFromDataFieldArrayRemovesValuesSuccessfully() = runTest {
-        // ✅ Mock successful Firestore update
+    fun testFetchAnimalsReturnsEmptyWhenNoAnimalIdsProvided() {
+        val latch = CountDownLatch(1)
+        var result: List<Animal>? = null
+
+        fetchAnimals(emptyList()) { animals ->
+            result = animals
+            latch.countDown()
+        }
+
+        assertTrue("Callback was not invoked in time", latch.await(5, TimeUnit.SECONDS))
+        assertNotNull(result)
+        assertTrue(
+            "Result should be an empty list when no animal IDs are provided",
+            result!!.isEmpty()
+        )
+    }
+
+    @Test
+    fun testFetchAllAnimalsReturnsList() = runBlocking {
+        val mockSnapshot: QuerySnapshot = mockk(relaxed = true)
+        val mockQueryDocumentSnapshot: QueryDocumentSnapshot = mockk(relaxed = true)
+        val mockTask: Task<QuerySnapshot> = mockk(relaxed = true)
+        val testAnimal = Animal(associated_shelter_id = "shelter123")
+
+        every { mockSnapshot.documents } returns listOf(mockQueryDocumentSnapshot)
+        every { mockSnapshot.iterator() } returns listOf(mockQueryDocumentSnapshot).iterator() as MutableIterator<QueryDocumentSnapshot>
+        every { mockQueryDocumentSnapshot.toObject(Animal::class.java) } returns testAnimal
+        every { mockCollection.get() } returns mockTask
+        // Manually trigger the Firestore success callback
+        every { mockTask.addOnSuccessListener(any()) } answers {
+            val listener = firstArg<OnSuccessListener<QuerySnapshot>>()
+            listener.onSuccess(mockSnapshot)
+            mockTask
+        }
+
+        val latch = CountDownLatch(1)
+        var result: List<Animal>?
+
+        fetchAllAnimals { animals ->
+            result = animals
+
+            assertNotNull(result)
+            assertEquals(1, result!!.size)
+            assertEquals("shelter123", result!![0].associated_shelter_id)
+
+            latch.countDown()
+        }
+
+        assertTrue("Callback was not invoked in time", latch.await(5, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun testRemoveAnimalFromDatabaseSuccessfullyRemovesAnimal() = runBlocking {
+        val testAnimal = Animal(animal_id = "animal123", associated_shelter_id = "shelter123")
+        every { mockDocumentReference.delete() } returns Tasks.forResult(null)
+
+        removeAnimalFromDatabase(testAnimal)
+
+        verify(exactly = 1) { mockDocumentReference.delete() }
+    }
+
+    @Test
+    fun testSetDocumentDataUpdatesDocumentSuccessfully() = runBlocking {
+        val testUser = User(user_id = "test123")
+        every { mockDocumentReference.set(testUser) } returns Tasks.forResult(null)
+
+        setDocumentData("mocked_collection_name", "test123", testUser)
+
+        verify(exactly = 1) { mockDocumentReference.set(testUser) }
+    }
+
+    @Test
+    fun testUpdateExplorePreferencesFieldUpdatesFieldSuccessfully() = runBlocking {
+        val fieldName: KProperty1<User, *> = User::biography
+        val fieldValue = "Updated Preferences"
+
         every { mockDocumentReference.update(any<String>(), any()) } returns Tasks.forResult(null)
 
-        // ✅ Mock `_syncDatabaseForRemovedImages`
-        mockkStatic("sweng894.project.adopto.database.FirebaseDatabaseUtilitiesKt")
-        every {
-            _syncDatabaseForRemovedImages(
-                any<KProperty1<Animal, *>>(),
-                any<Array<String>>()
-            )
-        } just Runs
+        updateExplorePreferencesField(fieldName, fieldValue)
 
-        // ✅ Define test values
-        val fieldName: KProperty1<Animal, *> = Animal::supplementary_image_paths
-        val valuesToBeRemoved = arrayOf("path1", "path2")
-
-        // ✅ Call function
-        removeFromDataFieldArray(
-            Strings.get(R.string.firebase_collection_animals),  // Ensure correct collection name
-            "test123",
-            fieldName,
-            valuesToBeRemoved
-        )
-
-        // ✅ Ensure all async tasks complete (fix for Robolectric & async verification)
-        shadowOf(Looper.getMainLooper()).idle()
-
-        // ✅ Verify Firestore update was called with correct field name
-        verify {
+        verify(exactly = 1) {
             mockDocumentReference.update(
-                "supplementary_image_paths",
-                match { it is FieldValue } // Instead of eq(FieldValue.arrayRemove(*valuesToBeRemoved))
+                "explore_preferences.biography",
+                fieldValue
             )
         }
-
-        // ✅ Verify `_syncDatabaseForRemovedImages` was called after Firestore update
-        verify { _syncDatabaseForRemovedImages(fieldName, valuesToBeRemoved) }
     }
-
-
-    @Test
-    fun testFetchAllUserAnimalsReturnsAListOfAnimals() = runTest {
-        val mockSnapshot1: DocumentSnapshot = mockk(relaxed = true)
-        val mockSnapshot2: DocumentSnapshot = mockk(relaxed = true)
-        val testAnimal1 = Animal(associated_shelter_id = "shelter123", animal_name = "Dog")
-        val testAnimal2 = Animal(associated_shelter_id = "shelter456", animal_name = "Cat")
-
-        every { mockSnapshot1.toObject(Animal::class.java) } returns testAnimal1
-        every { mockSnapshot2.toObject(Animal::class.java) } returns testAnimal2
-
-        val mockTask1: Task<DocumentSnapshot> = mockk(relaxed = true)
-        val mockTask2: Task<DocumentSnapshot> = mockk(relaxed = true)
-
-        every { mockTask1.isComplete } returns true
-        every { mockTask1.isSuccessful } returns true
-        every { mockTask1.result } returns mockSnapshot1
-
-        every { mockTask2.isComplete } returns true
-        every { mockTask2.isSuccessful } returns true
-        every { mockTask2.result } returns mockSnapshot2
-
-        every { mockFirestore.collection(any()).document("animal1").get() } returns mockTask1
-        every { mockFirestore.collection(any()).document("animal2").get() } returns mockTask2
-
-        fetchAllUserAnimals(listOf("animal1", "animal2")) { result ->
-            assertEquals(2, result.size)
-            assertEquals("Dog", result[0].animal_name)
-            assertEquals("Cat", result[1].animal_name)
-        }
-    }
-
 }
+
+

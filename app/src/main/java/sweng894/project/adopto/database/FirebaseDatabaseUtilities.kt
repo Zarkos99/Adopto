@@ -1,6 +1,7 @@
 package sweng894.project.adopto.database
 
 import android.util.Log
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -66,6 +67,7 @@ fun getUserData(
                 onUserFound.invoke(user)
             } else {
                 Log.d("FIREBASE DEBUG", "User document does not exist.")
+                onUserFound.invoke(null)
             }
         }
 }
@@ -96,7 +98,7 @@ suspend fun getAnimalData(animal_id: String): Animal? {
     }
 }
 
-fun fetchAllUserAnimals(
+fun fetchAnimals(
     user_animal_ids: List<String>,
     on_complete: (List<Animal>) -> Unit
 ) {
@@ -108,7 +110,8 @@ fun fetchAllUserAnimals(
         return
     }
 
-    val batchRequests = user_animal_ids.map { animalId ->
+    // Allocate each animal_id to a firebase get() query
+    val batchRequests: List<Task<DocumentSnapshot>> = user_animal_ids.map { animalId ->
         firebase_database.collection(Strings.get(R.string.firebase_collection_animals))
             .document(animalId)
             .get()

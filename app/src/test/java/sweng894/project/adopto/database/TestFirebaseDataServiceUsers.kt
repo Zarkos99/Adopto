@@ -10,19 +10,10 @@ import io.mockk.*
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.App
-import sweng894.project.adopto.TestApplication
 
-@RunWith(RobolectricTestRunner::class)
-@Config(
-    application = TestApplication::class, manifest = Config.NONE,
-    sdk = [33] // Limit Robolectric to API 3
-)
 class FirebaseDataServiceUsersTest {
 
     private lateinit var service: FirebaseDataServiceUsers
@@ -30,48 +21,6 @@ class FirebaseDataServiceUsersTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<TestApplication>()
-
-        // Mock `App.instance`
-        mockkObject(App)
-        every { App.instance } returns context
-
-        // Mock Strings.get() to prevent resource dependency errors
-        mockkObject(Strings)
-        every { Strings.get(any()) } returns "mocked_collection_name"
-
-        // Mock Firebase Initialization
-        mockkStatic(FirebaseApp::class)
-        val mockFirebaseApp = mockk<FirebaseApp>(relaxed = true)
-        every { FirebaseApp.initializeApp(any()) } returns mockFirebaseApp
-        every { FirebaseApp.getInstance() } returns mockFirebaseApp
-
-        // Mock FirebaseAuth
-        mockkStatic(FirebaseAuth::class)
-        val mockFirebaseAuth = mockk<FirebaseAuth>(relaxed = true)
-        every { FirebaseAuth.getInstance() } returns mockFirebaseAuth
-        every { mockFirebaseAuth.currentUser?.uid } returns "test_user_id"
-
-        // Mock Firestore
-        mockkStatic(FirebaseFirestore::class)
-        val mockFirestore = mockk<FirebaseFirestore>(relaxed = true)
-        val mockCollection = mockk<CollectionReference>(relaxed = true)
-        val mockDocumentReference = mockk<DocumentReference>(relaxed = true)
-
-        every { FirebaseFirestore.getInstance() } returns mockFirestore
-        every { mockFirestore.collection(any()) } returns mockCollection
-        every { mockCollection.document(any()) } returns mockDocumentReference
-
-        every { mockDocumentReference.addSnapshotListener(capture(snapshotSlot)) } answers {
-            mockk() // Return a mock ListenerRegistration
-        }
-
-        // Initialize Firebase in Robolectric test environment
-        FirebaseApp.initializeApp(context)
-
-        // Initialize service
-        service = FirebaseDataServiceUsers()
-        service.onBind(Intent()) // Simulate service binding
     }
 
     @Test

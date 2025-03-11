@@ -45,7 +45,9 @@ android {
     }
     testOptions {
         unitTests {
-            isIncludeAndroidResources = true // Robolectric needs this to load the R resources.
+            isIncludeAndroidResources = true
+            isReturnDefaultValues =
+                true // Avoids getMainLooper test initialization error: https://stackoverflow.com/questions/58057769/method-getmainlooper-in-android-os-looper-not-mocked-still-occuring-even-after-a
         }
     }
 }
@@ -86,10 +88,10 @@ dependencies {
     testImplementation(libs.mockito.inline)
     testImplementation(libs.kotlin.mockito.kotlin)
     testImplementation(libs.androidx.core.testing)
-    testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.firebase.auth)
     testImplementation(libs.google.firebase.auth)
+    testImplementation(libs.junit)
 
 
     androidTestImplementation(libs.androidx.junit)

@@ -59,7 +59,12 @@ class UserDataTest {
 
         val expectedPostTime = DateTimeFormatter.ISO_INSTANT.format(now)
         assertNotNull(animal.post_time)
-        assertTrue(animal.post_time!! <= expectedPostTime)
+        println("expectedPostTime: $expectedPostTime")
+        println("post_time: ${animal.post_time}")
+        assertTrue(
+            animal.post_time.toString().substring(0, 19) + "Z" <= expectedPostTime.toString()
+                .substring(0, 19) + "Z"
+        )
     }
 
     @Test

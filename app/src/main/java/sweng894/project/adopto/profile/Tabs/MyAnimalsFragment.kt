@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +15,7 @@ import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.fetchAllUserAnimals
+import sweng894.project.adopto.database.fetchAnimals
 import sweng894.project.adopto.databinding.ProfileSavedAnimalsFragmentBinding
 
 class MyAnimalsFragment : Fragment() {
@@ -118,7 +117,7 @@ class MyAnimalsFragment : Fragment() {
         val user = m_firebase_data_service.current_user_data
         val user_animal_ids = user?.hosted_animal_ids ?: emptyList()
 
-        fetchAllUserAnimals(user_animal_ids) { animal_list ->
+        fetchAnimals(user_animal_ids) { animal_list ->
             activity?.runOnUiThread {
                 m_animals_list_adaptor.updateAnimals(animal_list) // Update adapter with data
             }
