@@ -14,9 +14,9 @@ class NavigationBaseActivity : AppCompatActivity() {
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private lateinit var binding: NavigationBaseActivityBinding
+    lateinit var binding: NavigationBaseActivityBinding
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = NavigationBaseActivityBinding.inflate(layoutInflater)

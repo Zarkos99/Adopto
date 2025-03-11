@@ -25,6 +25,7 @@ fun uploadUserProfileImageAndUpdateUserImagePath(
     val current_user = firebaseDataService.current_user_data
 
     if (!current_user?.profile_image_path.isNullOrEmpty()) {
+        println("Profile picture already exists, removing it.")
         // Delete the previous profile image
         deleteImagesFromCloudStorage(arrayOf(current_user?.profile_image_path!!))
     }
@@ -113,10 +114,11 @@ fun deleteImagesFromCloudStorage(image_paths_to_remove: Array<String>) {
     image_paths_to_remove.forEach { image_path_to_remove ->
         if (image_path_to_remove.isNotEmpty()) {
             val image_ref = storage_ref.child(image_path_to_remove)
-            image_ref.delete().addOnFailureListener {
-                // Handle unsuccessful deletion
-                Log.e("Image Storage Deletion Error", "Unable to delete image: $it")
-            }
+            image_ref.delete()
+                .addOnFailureListener {
+                    // Handle unsuccessful deletion
+                    Log.e("Image Storage Deletion Error", "Unable to delete image: $it")
+                }
         }
     }
 }
