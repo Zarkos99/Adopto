@@ -1,5 +1,7 @@
 package sweng894.project.adopto.database
 
+import android.util.Log
+import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
@@ -9,6 +11,7 @@ import com.google.firebase.storage.FirebaseStorage
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -67,6 +70,11 @@ class FirebaseDatabaseUtilitiesTest {
         // Mock Task execution to avoid calling `TaskExecutors.MAIN_THREAD`
         mockkStatic(Tasks::class)
         every { Tasks.forResult(null) } returns mockk(relaxed = true)
+    }
+    
+    @After
+    fun tearDown() {
+        unmockkStatic(FirebaseStorage::class)
     }
 
     @Test
@@ -342,6 +350,206 @@ class FirebaseDatabaseUtilitiesTest {
         setDocumentData("mocked_collection_name", "test123", testUser)
 
         verify(exactly = 1) { mockDocumentReference.set(testUser) }
+    }
+
+    @Test
+    fun testRemoveFromDataFieldArraySuccessfullyRemovesValues() = runBlocking {
+        // Arrange
+        val mockTask: Task<Void> = Tasks.forResult(null)
+        val fieldName: KProperty1<User, *> = User::saved_animal_ids
+        val valuesToBeRemoved = arrayOf("A1", "A2")
+        val onRemovalSuccessMock: (() -> Unit) = mockk(relaxed = true)
+
+        every { mockDocumentReference.update(any<String>(), any()) } returns mockTask
+
+        every { mockTask.addOnSuccessListener(any()) } answers {
+            val listener = firstArg<OnSuccessListener<Void>>()
+            listener.onSuccess(null)
+            mockTask
+        }
+
+        // Act
+        removeFromDataFieldArray(
+            "mocked_collection_name",
+            "test123",
+            fieldName,
+            valuesToBeRemoved,
+            onRemovalSuccessMock
+        )
+
+        // Assert
+        verify(exactly = 1) {
+            mockDocumentReference.update(
+                fieldName.name,
+                match { it is FieldValue }) // ✅ Fix applied here
+        }
+
+        verify(exactly = 1) { onRemovalSuccessMock.invoke() }
+    }
+
+    @Test
+    fun testRemoveFromDataFieldArrayFails() = runBlocking {
+        // Arrange
+        val errorMessage = "Firestore update failed"
+        val exception = RuntimeException(errorMessage)
+        val fieldName: KProperty1<User, *> = User::saved_animal_ids
+        val valuesToBeRemoved = arrayOf("A1", "A2")
+
+        val mockTask: Task<Void> = mockk(relaxed = true)
+
+        every { mockDocumentReference.update(any<String>(), any()) } returns mockTask
+        every { mockTask.addOnFailureListener(any()) } answers {
+            val listener = firstArg<OnFailureListener>()
+            listener.onFailure(exception) // Manually trigger failure
+            mockTask
+        }
+
+        // Act
+        removeFromDataFieldArray("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
+
+        // Assert
+        verify(exactly = 1) {
+            mockDocumentReference.update(fieldName.name, match { it is FieldValue })
+        }
+    }
+
+    @Test
+    fun testRemoveFromDataFieldArraySyncsRemovedImages() = runBlocking {
+        // Arrange
+        mockkStatic(::deleteImagesFromCloudStorage)
+        every { deleteImagesFromCloudStorage(any()) } just Runs
+
+        val fieldName: KProperty1<User, *> = User::profile_image_path // Contains "image"
+        val valuesToBeRemoved = arrayOf("image1.jpg", "image2.png")
+        val mockTask: Task<Void> = Tasks.forResult(null)
+
+        every { mockDocumentReference.update(any<String>(), any()) } returns mockTask
+        every { mockTask.addOnSuccessListener(any()) } answers {
+            val listener = firstArg<OnSuccessListener<Void>>()
+            listener.onSuccess(null)
+            mockTask
+        }
+
+        // Act
+        removeFromDataFieldArray("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
+
+        // Assert
+        verify(exactly = 1) { deleteImagesFromCloudStorage(valuesToBeRemoved) }
+    }
+
+    @Test
+    fun testRemoveFromDataFieldArrayDoesNotSyncIfNotImageField() = runBlocking {
+        // Arrange
+        mockkStatic(::deleteImagesFromCloudStorage)
+        every { deleteImagesFromCloudStorage(any()) } just Runs
+
+        val fieldName: KProperty1<User, *> = User::biography // Does NOT contain "image"
+        val valuesToBeRemoved = arrayOf("random_value1", "random_value2")
+        val mockTask: Task<Void> = Tasks.forResult(null)
+
+        every { mockDocumentReference.update(any<String>(), any()) } returns mockTask
+        every { mockTask.addOnSuccessListener(any()) } answers {
+            val listener = firstArg<OnSuccessListener<Void>>()
+            listener.onSuccess(null)
+            mockTask
+        }
+
+        // Act
+        removeFromDataFieldArray("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
+
+        // Assert
+        verify(exactly = 0) { deleteImagesFromCloudStorage(any()) }
+    }
+
+
+    @Test
+    fun testSyncDatabaseForRemovedImagesCallsDeleteImagesFromCloudStorageWhenFieldContainsImage() {
+        // Arrange
+        mockkStatic(::deleteImagesFromCloudStorage)
+        every { deleteImagesFromCloudStorage(any()) } just Runs
+
+        val valuesToBeRemoved = arrayOf("image1.jpg", "image2.png")
+        val fieldName: KProperty1<User, *> = User::profile_image_path // Contains "image"
+
+        // Act
+        _syncDatabaseForRemovedImages(fieldName, valuesToBeRemoved)
+
+        // Assert
+        verify(exactly = 1) { deleteImagesFromCloudStorage(valuesToBeRemoved) }
+    }
+
+    @Test
+    fun testSyncDatabaseForRemovedImagesDoesNotCallDeleteImagesFromCloudStorageWhenFieldDoesNotContainImage() {
+        // Arrange
+        mockkStatic(::deleteImagesFromCloudStorage)
+        every { deleteImagesFromCloudStorage(any()) } just Runs
+
+        val valuesToBeRemoved = arrayOf("random_value1", "random_value2")
+        val fieldName: KProperty1<User, *> = User::biography // Does NOT contain "image"
+
+        // Act
+        _syncDatabaseForRemovedImages(fieldName, valuesToBeRemoved)
+
+        // Assert
+        verify(exactly = 0) { deleteImagesFromCloudStorage(any()) }
+    }
+
+
+    @Test
+    fun testAppendToDataFieldMapSuccessfullyUpdatesField() = runBlocking {
+        val mockTask: Task<Void> = Tasks.forResult(null) // Correct return type
+
+        every { mockDocumentReference.update(any<String>(), any()) } returns Tasks.forResult(null)
+
+        every { mockTask.addOnSuccessListener(any()) } answers {
+            val listener = firstArg<OnSuccessListener<Void>>()
+            listener.onSuccess(null)
+            mockTask
+        }
+
+        val fieldName: KProperty1<User, *> = User::explore_preferences
+        val fieldKey = "preference_key"
+        val fieldValue = "preference_value"
+        val onSuccessMock: (() -> Unit) = mockk(relaxed = true)
+
+        appendToDataFieldMap(
+            "mocked_collection_name",
+            "test123",
+            fieldName,
+            fieldKey,
+            fieldValue,
+            onSuccessMock
+        )
+
+        verify(exactly = 1) {
+            mockDocumentReference.update("explore_preferences.preference_key", fieldValue)
+        }
+
+        verify(exactly = 1) { onSuccessMock.invoke() } // This should now be correctly triggered
+    }
+
+    @Test
+    fun testAppendToDataFieldMapDoesNotUpdateInvalidCollection() = runBlocking {
+        mockkStatic(Log::class)
+        every { Log.e(any(), any()) } returns 0
+
+        val fieldName: KProperty1<User, *> = User::explore_preferences
+        val fieldKey = "invalid_key"
+        val fieldValue = "invalid_value"
+
+        appendToDataFieldMap(
+            "invalid_collection",
+            "test123",
+            fieldName,
+            fieldKey,
+            fieldValue
+        )
+
+        verify(exactly = 0) { mockDocumentReference.update(any<String>(), any()) }
+
+        verify(exactly = 1) {
+            Log.e("DEVELOPMENT BUG", "Not a valid collection input.")
+        }
     }
 
     @Test

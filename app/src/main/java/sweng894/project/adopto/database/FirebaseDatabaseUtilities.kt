@@ -332,8 +332,8 @@ fun <T> removeFromDataFieldArray(
         .addOnSuccessListener {
             println("Successfully removed values from ${field_name.name}")
             _syncDatabaseForRemovedImages(field_name, values_to_be_removed)
+            onRemovalSuccess?.invoke()
         }.addOnFailureListener { println("Error updating field: ${it.message}") }
-        .addOnSuccessListener { onRemovalSuccess?.invoke() }
 }
 
 fun <T> _syncDatabaseForRemovedImages(
@@ -364,10 +364,10 @@ fun <T, V> appendToDataFieldMap(
 
     document_ref.update("${field_name.name}.$field_key", field_value)
         .addOnSuccessListener { onUploadSuccess?.invoke() }
-        .addOnFailureListener {
+        .addOnFailureListener { e ->
             Log.w(
                 "FirebaseDatabaseUtilities ERROR",
-                "Failed to update ${field_name.name} to $field_value"
+                "Failed to update ${field_name.name} to $field_value", e
             )
         }
 }

@@ -11,6 +11,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.UploadTask
 import io.mockk.*
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import sweng894.project.adopto.Strings
@@ -35,7 +36,7 @@ class FirebaseStorageUtilsTest {
         every { FirebaseApp.initializeApp(any()) } returns mockFirebaseApp
         every { FirebaseApp.getInstance() } returns mockFirebaseApp
 
-        // ✅ Mock FirebaseAuth.getInstance() properly
+        // Mock FirebaseAuth.getInstance() properly
         mockkStatic(FirebaseAuth::class)
         val mockFirebaseAuth = mockk<FirebaseAuth>(relaxed = true)
         every { FirebaseAuth.getInstance() } returns mockFirebaseAuth
@@ -68,6 +69,12 @@ class FirebaseStorageUtilsTest {
         // Mock Glide usage (for loading images)
         mockImageView = mockk(relaxed = true)
     }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(FirebaseStorage::class)
+    }
+
 
     @Test
     fun uploadUserProfileImageAndUpdateUserImagePath() {
@@ -126,13 +133,13 @@ class FirebaseStorageUtilsTest {
     fun uploadAnimalImageAndUpdateAnimalSupplementaryImage() {
         val animalId = "testAnimal123"
         val successListenerSlot =
-            slot<OnSuccessListener<UploadTask.TaskSnapshot>>() // ✅ Capture OnSuccessListener
+            slot<OnSuccessListener<UploadTask.TaskSnapshot>>() // Capture OnSuccessListener
 
         // Mock upload behavior
         every { mockStorageRef.child(any()) } returns mockStorageRef
         every { mockStorageRef.putFile(mockUri) } returns mockUploadTask
         every { mockUploadTask.addOnSuccessListener(capture(successListenerSlot)) } answers {
-            successListenerSlot.captured.onSuccess(mockk(relaxed = true)) // ✅ Trigger success manually
+            successListenerSlot.captured.onSuccess(mockk(relaxed = true)) // Trigger success manually
             mockUploadTask
         }
 
@@ -144,9 +151,14 @@ class FirebaseStorageUtilsTest {
         verify(exactly = 1) { mockStorageRef.putFile(mockUri) }
     }
 
+    /* TODO: When running all tests in database directory, this test occasionally fails due to
+        .delete() not being called. This is likely due to interference from other test mocks.*/
     @Test
     fun deleteImagesFromCloudStorageDeletesImages() {
         val imagePaths = arrayOf("path1", "path2")
+
+        // Reset mocks before defining behavior
+        clearMocks(mockStorageRef)
 
         // Create mock StorageReferences for each path
         val mockImageRef1 = mockk<StorageReference>(relaxed = true)
