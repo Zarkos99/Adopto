@@ -65,8 +65,9 @@ class UserProfileCreationActivity : AppCompatActivity() {
                 false
             )
 
-            val animal_types = resources.getStringArray(R.array.animal_types)
-            val animal_sizes = resources.getStringArray(R.array.animal_sizes)
+            //Set as lists because Parcelable doesn't support arrays
+            val animal_types = resources.getStringArray(R.array.animal_types).toList()
+            val animal_sizes = resources.getStringArray(R.array.animal_sizes).toList()
             updateExplorePreferencesField(ExplorationPreferences::animal_types, animal_types)
             updateExplorePreferencesField(ExplorationPreferences::animal_sizes, animal_sizes)
 

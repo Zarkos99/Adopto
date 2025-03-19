@@ -2,6 +2,7 @@ package sweng894.project.adopto.profile.Tabs
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +10,6 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Animal
-import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivity
 
@@ -19,17 +19,15 @@ import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivit
  */
 class ProfileAnimalsAdapter(
     private val context: Context,
-    private val firebase_data_service: FirebaseDataServiceUsers,
-    private val is_hosted_animals: Boolean
 ) :
     RecyclerView.Adapter<ProfileAnimalsAdapter.ViewHolder>() {
 
     // IMPORTANT: Must include only existing animals, as the viewholder binding is positionally based
-    private val animalList: MutableList<Animal> = mutableListOf() // Store animals
+    private val animal_list: MutableList<Animal> = mutableListOf() // Store animals
 
     fun updateAnimals(new_animals: List<Animal>) {
-        animalList.clear()
-        animalList.addAll(new_animals)
+        animal_list.clear()
+        animal_list.addAll(new_animals)
         notifyDataSetChanged() // Refresh UI when data updates
     }
 
@@ -47,7 +45,7 @@ class ProfileAnimalsAdapter(
      * Handles binding of the view holder for each item in the recyclerview
      */
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val animal = animalList[position]
+        val animal = animal_list[position]
         if (!animal.profile_image_path.isNullOrEmpty()) {
             loadCloudStoredImageIntoImageView(
                 context,
@@ -59,11 +57,7 @@ class ProfileAnimalsAdapter(
         // Provides logic to track all selected products as the user selects them
         holder.setItemClickListener(object : ViewHolder.ItemClickListener {
             override fun onItemClick(v: View, pos: Int) {
-                val current_animal_id = if (is_hosted_animals) {
-                    firebase_data_service.current_user_data?.hosted_animal_ids?.get(holder.adapterPosition)
-                } else {
-                    firebase_data_service.current_user_data?.saved_animal_ids?.get(holder.adapterPosition)
-                }
+                val current_animal_id = animal_list[holder.adapterPosition].animal_id
 
                 // Go to animal page
                 val intent = Intent(
@@ -79,7 +73,7 @@ class ProfileAnimalsAdapter(
     /**
      * Gets all of the items in the recyclerview
      */
-    override fun getItemCount(): Int = animalList.size
+    override fun getItemCount(): Int = animal_list.size
 
     /**
      * Handles logic for a ViewHolder instance

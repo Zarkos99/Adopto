@@ -1,5 +1,7 @@
 package sweng894.project.adopto.profile.animalprofile
 
+import android.app.Activity
+import android.app.ComponentCaller
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -55,6 +57,8 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                     m_selected_animal = it
                     populateTextViewsWithAnimalInfo(it)
                 }
+            } else if (result.resultCode == RESULT_CANCELED) {
+                finish()
             }
         }
 
@@ -69,7 +73,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
         // Retrieve data using the same key
         m_animal_id = intent.getStringExtra("animal_id")
-        
+
         getUserData(getCurrentUserId()) { user ->
             m_current_user = user
 
@@ -147,26 +151,6 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                 // TODO: Initiate adoption
             }
         }
-    }
-
-    suspend fun getCurrentUserData(): User? {
-        var user_data: User? = null
-
-        try {
-            user_data = getUserData(getCurrentUserId())
-        } catch (e: Exception) {
-            Log.w("AnimalProfileViewingActivity", "Error fetching user: ${e.message}")
-
-            // If db query fails, display a message to the user
-            Toast.makeText(
-                this@AnimalProfileViewingActivity,
-                "Database Query error: ${e.message}",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-
-
-        return user_data
     }
 
     fun getAnimalAndExecuteCallback(animal_id: String?, onGetDataSuccess: (() -> Unit)? = null) {

@@ -153,6 +153,26 @@ fun fetchAllAnimals(onComplete: (List<Animal>) -> Unit) {
         }
 }
 
+fun fetchAnimalsByShelter(
+    shelter_id: String,
+    onSuccess: ((List<Animal>) -> Unit)? = null,
+    onFailure: ((Exception) -> Unit)? = null
+) {
+    val firebaseDatabase = Firebase.firestore
+
+    firebaseDatabase.collection(Strings.get(R.string.firebase_collection_animals))
+        .whereEqualTo(Animal::associated_shelter_id.name, shelter_id)
+        .get()
+        .addOnSuccessListener { querySnapshot ->
+            val animal_list = querySnapshot.documents.mapNotNull { it.toObject(Animal::class.java) }
+            onSuccess?.invoke(animal_list)
+        }
+        .addOnFailureListener { exception ->
+            onFailure?.invoke(exception)
+        }
+}
+
+
 fun addUserToDatabase(new_user: User) {
     val firebase_database = Firebase.firestore
     val user_id = getCurrentUserId()
@@ -172,8 +192,10 @@ fun addUserToDatabase(new_user: User) {
         }
 }
 
-fun addAnimalToDatabase(
-    new_animal: Animal
+fun addAnimalToDatabaseAndAssociateToShelter(
+    new_animal: Animal,
+    onUploadSuccess: (() -> Unit)? = null
+
 ) {
     val firebase_database = Firebase.firestore
 
@@ -189,7 +211,7 @@ fun addAnimalToDatabase(
             getCurrentUserId(),
             User::hosted_animal_ids,
             new_animal.animal_id
-        )
+        ) { onUploadSuccess?.invoke() }
     }
         .addOnFailureListener {
             Log.w(
@@ -382,12 +404,18 @@ fun <T> updateExplorePreferencesField(
     val field_path =
         "explore_preferences.${field_name.name}" // Constructs the dot notation field path
 
+    var value_mod = value
+    if (value is Array<*>) {
+        Log.w("Parcelable Warning", "Parcelable does not support arrays. Converting to list.")
+        value_mod = value.toList()
+    }
+
     firebase_database.collection(Strings.get(R.string.firebase_collection_users))
         .document(getCurrentUserId())
-        .update(field_path, value)
+        .update(field_path, value_mod)
         .addOnSuccessListener {
             onSuccess?.invoke()
-            Log.d("FirestoreUpdate", "Successfully updated $field_path to $value")
+            Log.d("FirestoreUpdate", "Successfully updated $field_path to $value_mod")
         }
         .addOnFailureListener { exception ->
             onFailure?.invoke(exception)

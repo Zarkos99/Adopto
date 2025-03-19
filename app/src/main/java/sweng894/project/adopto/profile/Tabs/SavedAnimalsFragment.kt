@@ -96,8 +96,7 @@ class SavedAnimalsFragment : Fragment() {
     fun initializeRecyclerViewAdapter() {
         val saved_animals_recycler_view = binding.savedAnimals
         // Initialize recyclerview adaptor
-        m_animals_list_adaptor =
-            ProfileAnimalsAdapter(requireContext(), m_firebase_data_service, false)
+        m_animals_list_adaptor = ProfileAnimalsAdapter(requireContext())
         saved_animals_recycler_view.adapter = m_animals_list_adaptor
     }
 

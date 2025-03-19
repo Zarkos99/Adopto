@@ -71,7 +71,7 @@ class FirebaseDatabaseUtilitiesTest {
         mockkStatic(Tasks::class)
         every { Tasks.forResult(null) } returns mockk(relaxed = true)
     }
-    
+
     @After
     fun tearDown() {
         unmockkStatic(FirebaseStorage::class)
@@ -243,7 +243,7 @@ class FirebaseDatabaseUtilitiesTest {
 
         val testAnimal = Animal(associated_shelter_id = "shelter123")
 
-        addAnimalToDatabase(testAnimal)
+        addAnimalToDatabaseAndAssociateToShelter(testAnimal)
 
         verify(exactly = 1) { mockDocumentReference.set(any<Animal>()) }
     }

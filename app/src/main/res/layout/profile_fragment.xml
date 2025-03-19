@@ -45,11 +45,17 @@
             <!-- public username display -->
             <TextView
                 android:id="@+id/public_username"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:gravity="start"
                 android:textColor="@color/primary_text"
-                android:textSize="30sp" />
+                android:textSize="25sp"
+                android:singleLine="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true" />
         </LinearLayout>
 
         <!-- Preferences button -->
@@ -66,7 +72,8 @@
         android:layout_marginStart="5sp"
         android:layout_marginEnd="5sp"
         android:layout_marginBottom="10sp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:descendantFocusability="blocksDescendants">
 
         <TextView
             android:id="@+id/biography_field"

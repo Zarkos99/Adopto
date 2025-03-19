@@ -15,8 +15,8 @@ data class User(
     var is_shelter: Boolean = false,
     var biography: String? = "",
     var profile_image_path: String? = "",
-    var saved_animal_ids: ArrayList<String> = ArrayList(),
-    var hosted_animal_ids: ArrayList<String> = ArrayList(),
+    var saved_animal_ids: MutableList<String> = mutableListOf(),
+    var hosted_animal_ids: MutableList<String> = mutableListOf(),
     var viewed_animals: Map<String, String> = mapOf(), //animal_id, timestamp
     var zip_code: String? = "",
     var need_info: Boolean = false,
@@ -29,8 +29,8 @@ data class User(
 data class ExplorationPreferences(
     var min_animal_age: Double? = 0.0,
     var max_animal_age: Double? = 30.0,
-    var animal_sizes: ArrayList<String> = ArrayList(),
-    var animal_types: ArrayList<String> = ArrayList(),
+    var animal_sizes: MutableList<String> = mutableListOf(),
+    var animal_types: MutableList<String> = mutableListOf(),
 ) : Parcelable
 
 @Parcelize
@@ -45,7 +45,7 @@ data class Animal(
     var health_summary: String? = "",
     var biography: String? = "",
     var profile_image_path: String? = "",
-    var supplementary_image_paths: ArrayList<String> = ArrayList(),
+    var supplementary_image_paths: MutableList<String> = mutableListOf(),
     var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
 ) : Parcelable {
 }

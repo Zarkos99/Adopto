@@ -11,8 +11,8 @@ import androidx.core.widget.doAfterTextChanged
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.userProfileChangeRequest
-import sweng894.project.adopto.authentication.AuthenticationActivity
 import sweng894.project.adopto.R
+import sweng894.project.adopto.authentication.AuthenticationActivity
 import sweng894.project.adopto.databinding.ProfilePreferencesActivityBinding
 
 class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :
@@ -82,7 +82,7 @@ class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.g
             val intent =
                 Intent(this, AuthenticationActivity::class.java)
             startActivity(intent)
-            this.finish()
+            finishAffinity(); // Closes all activities in the current task
         }
     }
 

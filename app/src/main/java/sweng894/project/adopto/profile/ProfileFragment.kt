@@ -264,6 +264,7 @@ class ProfileFragment : Fragment() {
 
         public_username_text_view.text =
             if (!current_user?.displayName.isNullOrEmpty()) current_user?.displayName else current_user?.email
+        public_username_text_view.isSelected = true // Required for marquee text to function
         biography_text_view.text = current_database_user_info?.biography
     }
 }

@@ -68,6 +68,8 @@ class ExploreFragment : Fragment(), CardStackListener {
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
             m_firebase_data_service = (service as FirebaseDataServiceUsers.LocalBinder).getService()
 
+            loadAnimals() // execute on service connection
+
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
                 loadAnimals()
@@ -118,7 +120,6 @@ class ExploreFragment : Fragment(), CardStackListener {
         initializeCardHeight()
         setupCardStackView()
         animal_list.clear()
-        loadAnimals()
     }
 
 

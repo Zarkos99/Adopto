@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -96,8 +97,7 @@ class MyAnimalsFragment : Fragment() {
     fun initializeRecyclerViewAdapter() {
         val saved_animals_recycler_view = binding.savedAnimals
         // Initialize recyclerview adaptor
-        m_animals_list_adaptor =
-            ProfileAnimalsAdapter(requireContext(), m_firebase_data_service, true)
+        m_animals_list_adaptor = ProfileAnimalsAdapter(requireContext())
         saved_animals_recycler_view.adapter = m_animals_list_adaptor
     }
 

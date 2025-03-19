@@ -17,7 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.addAnimalToDatabase
+import sweng894.project.adopto.database.addAnimalToDatabaseAndAssociateToShelter
+import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.uploadAnimalImageAndUpdateAnimal
 import sweng894.project.adopto.databinding.AnimalProfileCreationLayoutBinding
 
@@ -34,7 +35,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_select_additional_images_intent: ActivityResultLauncher<String>
     private lateinit var m_additional_images_adaptor: AnimalProfileCreationImagesAdapter
-    private lateinit var m_new_profile_image_uri: Uri
+    private var m_new_profile_image_uri: Uri? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -130,6 +131,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         }
 
         create_button_view.setOnClickListener {
+            Log.d("### DEBUG", "First call: $m_new_profile_image_uri")
             handleCreateAnimalProfile()
         }
     }
@@ -139,18 +141,15 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         val new_name = m_name_input_edit_text.text.toString()
         val new_age_str = m_age_input_edit_text.text.toString() // Optional Field
         val new_health = m_health_input_edit_text.text.toString() //Optional Field
-        val new_description = m_description_input_edit_text.text.toString()
+        val new_description = m_description_input_edit_text.text.toString() //Optional Field
         val new_size = m_size_input_field.selectedItem.toString()
         val new_type = m_type_input_field.selectedItem.toString()
-        val new_breed = m_breed_input_field.toString() //Optional Field
+        val new_breed = m_breed_input_field.text.toString() //Optional Field
 
         var error = false
 
         // Default to fake values if fields are empty
         if (new_name.isEmpty()) {
-            error = true
-        }
-        if (new_description.isEmpty()) {
             error = true
         }
         if (new_size.isEmpty()) {
@@ -178,6 +177,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         }
 
         val new_animal = Animal(
+            associated_shelter_id = getCurrentUserId(),
             animal_name = new_name,
             animal_age = new_age,
             health_summary = new_health,
@@ -186,6 +186,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             animal_type = new_type,
             animal_breed = new_breed
         )
+
         return new_animal
     }
 
@@ -196,7 +197,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             return
         }
 
-        if (m_new_profile_image_uri.toString().isEmpty()) {
+        if (m_new_profile_image_uri == null || m_new_profile_image_uri.toString().isEmpty()) {
             //Display error message
             Toast.makeText(
                 this,
@@ -217,10 +218,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             return
         }
 
-        addAnimalToDatabase(new_animal)
-
-        // Send profile image to database and get cloud storage path, create animal with that path
-        uploadAnimalImageAndUpdateAnimal(new_animal.animal_id, m_new_profile_image_uri, true)
+        addAnimalToDatabaseAndAssociateToShelter(new_animal)
 
         // For each image in recyclerview, upload to cloud storage, and obtain cloud storage image path.
         // Store those paths in ArrayList<String> and create animal with those paths
@@ -228,6 +226,17 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             uploadAnimalImageAndUpdateAnimal(new_animal.animal_id, image)
         }
 
-        finish()
+        // Send profile image to database and get cloud storage path, create animal with that path
+        uploadAnimalImageAndUpdateAnimal(
+            new_animal.animal_id,
+            m_new_profile_image_uri!!,
+            true
+        ) {
+            Log.d(
+                "TRACE",
+                "New animal ${new_animal.animal_name} profile image successfully uploaded!"
+            )
+            finish()
+        }
     }
 }

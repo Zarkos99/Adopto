@@ -7,8 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
+import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.ExplorationPreferences
 import sweng894.project.adopto.data.User
+import sweng894.project.adopto.database.fetchAnimalsByShelter
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.updateDataField
 import sweng894.project.adopto.database.updateExplorePreferencesField
@@ -65,13 +67,34 @@ class ShelterProfileCreationActivity : AppCompatActivity() {
                 false
             )
 
-            val animal_types = resources.getStringArray(R.array.animal_types)
-            val animal_sizes = resources.getStringArray(R.array.animal_sizes)
+            //Set as lists because Parcelable doesn't support arrays
+            val animal_types = resources.getStringArray(R.array.animal_types).toList()
+            val animal_sizes = resources.getStringArray(R.array.animal_sizes).toList()
             updateExplorePreferencesField(ExplorationPreferences::animal_types, animal_types)
             updateExplorePreferencesField(ExplorationPreferences::animal_sizes, animal_sizes)
 
+            // Reassociate animals with the current shelter's id if the shelter's data ever accidentally gets cleared
+            reassociateUnlinkedAnimalsToShelter()
+
             openActivity(NavigationBaseActivity::class.java)
         }
+    }
+
+    private fun reassociateUnlinkedAnimalsToShelter() {
+        fetchAnimalsByShelter(
+            getCurrentUserId(),
+            onSuccess = { animal_list: List<Animal> ->
+                val hosted_animal_ids = animal_list.map { it.animal_id }
+
+                updateDataField(
+                    Strings.get(
+                        R.string.firebase_collection_users
+                    ),
+                    getCurrentUserId(),
+                    User::hosted_animal_ids,
+                    hosted_animal_ids
+                )
+            })
     }
 
     private fun openActivity(activity_class: Class<out AppCompatActivity>) {

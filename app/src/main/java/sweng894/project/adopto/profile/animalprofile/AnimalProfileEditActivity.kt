@@ -102,7 +102,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
             val intent = Intent().apply {
                 putExtra("updated_animal", m_current_animal)
             }
-            setResult(RESULT_OK, intent)
+            setResult(RESULT_CANCELED, intent)
             finish()
         }
     }
@@ -134,24 +134,24 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         val new_name = m_name_input_field.text.toString()
         val new_age_str = m_age_input_field.text.toString() // Optional Field
         val new_health = m_health_input_field.text.toString() //Optional Field
-        val new_description = m_description_input_field.text.toString()
+        val new_description = m_description_input_field.text.toString() //Optional Field
         val new_size = m_size_input_field.selectedItem.toString()
         val new_type = m_type_input_field.selectedItem.toString()
-        val new_breed = m_breed_input_field.toString() //Optional Field
+        val new_breed = m_breed_input_field.text.toString() //Optional Field
 
         var error = false
 
         // Default to fake values if fields are empty
         if (new_name.isEmpty()) {
-            error = true
-        }
-        if (new_description.isEmpty()) {
+            Log.d("TRACE", "Animal Name cannot be empty.")
             error = true
         }
         if (new_size.isEmpty()) {
+            Log.d("TRACE", "Animal Size cannot be empty.")
             error = true
         }
         if (new_type.isEmpty()) {
+            Log.d("TRACE", "Animal Type cannot be empty.")
             error = true
         }
 
@@ -160,6 +160,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
             new_age = new_age_str.toDouble()
         } catch (e: Exception) {
             //Display error message
+            Log.d("TRACE", "Animal Age is non-numeric.")
             Toast.makeText(
                 this,
                 "Invalid age input. Ensure age is numerical.",
@@ -172,7 +173,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
             return null
         }
 
-        val new_animal = m_current_animal
+        val new_animal = m_current_animal.copy()
         new_animal.animal_name = new_name
         new_animal.animal_age = new_age
         new_animal.health_summary = new_health
@@ -196,7 +197,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
     fun enableButton(button: Button) {
         button.isEnabled = true
         button.isClickable = true
-        button.setTextColor(ContextCompat.getColor(this, R.color.black))
+        button.setTextColor(m_delete_profile_button.currentTextColor)
         button.background = m_delete_profile_button.background
     }
 
