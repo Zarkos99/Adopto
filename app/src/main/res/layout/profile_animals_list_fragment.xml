@@ -14,13 +14,11 @@
     <!--    Combination of layout_height = 0dp and layout_weight = 1 allows
     recyclerview to adapt in height to take up only unused space  -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/saved_animals"
+        android:id="@+id/animals_list"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_gravity="top|start"
-        android:layout_marginStart="5sp"
-        android:layout_marginEnd="5sp"
         android:orientation="horizontal"
         tools:listitem="@layout/profile_animals_item" />
 </LinearLayout>

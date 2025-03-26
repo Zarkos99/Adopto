@@ -109,12 +109,17 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Saved Animals" />
+            android:text="Saved" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="My Animals" />
+            android:text="Adopting" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hosted" />
     </com.google.android.material.tabs.TabLayout>
 
     <!-- ViewPager2 to display fragments based on selected tab -->

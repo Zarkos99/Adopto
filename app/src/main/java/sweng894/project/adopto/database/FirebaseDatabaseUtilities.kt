@@ -6,6 +6,7 @@ import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
@@ -15,6 +16,7 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
+import sweng894.project.adopto.data.VectorUtils
 import kotlin.reflect.KProperty1
 
 fun getCurrentUserId(): String {
@@ -422,4 +424,142 @@ fun <T> updateExplorePreferencesField(
             Log.e("FirestoreUpdate", "Error updating $field_path", exception)
         }
 }
+
+fun recalculatePreferenceVector() {
+    val TAG = "PreferenceVector"
+    val user_ref = Firebase.firestore.collection(Strings.get(R.string.firebase_collection_users))
+        .document(getCurrentUserId())
+
+    user_ref.get().addOnSuccessListener { snapshot ->
+        val user = snapshot.toObject(User::class.java)
+        if (user == null) {
+            Log.e(TAG, "User not found or failed to deserialize.")
+            return@addOnSuccessListener
+        }
+
+        val liked_animal_ids = user.liked_animal_ids
+        Log.d(TAG, "Liked animal IDs: $liked_animal_ids")
+
+        if (liked_animal_ids.isEmpty()) {
+            Log.d(TAG, "No liked animals – skipping vector recalculation.")
+            return@addOnSuccessListener
+        }
+
+        Firebase.firestore.collection(Strings.get(R.string.firebase_collection_animals))
+            .whereIn(FieldPath.documentId(), liked_animal_ids)
+            .get()
+            .addOnSuccessListener { animalDocs ->
+                Log.d(TAG, "Fetched ${animalDocs.size()} liked animals from Firestore")
+
+                val vectors = animalDocs.mapNotNull { doc ->
+                    val animal = doc.toObject(Animal::class.java)
+                    if (animal.animal_type == null || animal.animal_size == null || animal.animal_age == null) {
+                        Log.w(
+                            "PreferenceVector",
+                            "Missing data in animal ${animal.animal_id}, skipping"
+                        )
+                        return@mapNotNull null
+                    }
+
+                    val vector = VectorUtils.animalToVector(animal)
+                    Log.d("PreferenceVector", "Vector for ${animal.animal_id}: $vector")
+                    vector
+                }
+
+                if (vectors.isEmpty()) {
+                    Log.d(TAG, "No valid vectors generated – skipping update.")
+                    return@addOnSuccessListener
+                }
+
+                val avg_vector = VectorUtils.averageVectors(vectors)
+                val vectorMap = avg_vector.mapIndexed { i, v -> i.toString() to v }.toMap()
+
+                Log.d(TAG, "Average preference vector: $vectorMap")
+
+                user_ref.update(User::preference_vector.name, vectorMap)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "Preference vector updated successfully.")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Failed to update preference vector: ${e.message}", e)
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to fetch liked animals: ${e.message}", e)
+            }
+    }.addOnFailureListener { e ->
+        Log.e(TAG, "Failed to fetch user data: ${e.message}", e)
+    }
+}
+
+
+fun getRecommendations(onResult: (List<Animal>) -> Unit) {
+    val TAG = "RecommendationEngine"
+
+    val user_ref = Firebase.firestore.collection(Strings.get(R.string.firebase_collection_users))
+        .document(getCurrentUserId())
+
+    user_ref.get().addOnSuccessListener { userSnap ->
+        val user = userSnap.toObject(User::class.java) ?: return@addOnSuccessListener
+
+        Log.d(TAG, "Fetched user: ${user.user_id}")
+        Log.d(TAG, "Liked IDs: ${user.liked_animal_ids}")
+        Log.d(TAG, "Viewed IDs: ${user.viewed_animals.keys}")
+        Log.d(TAG, "Hosted IDs: ${user.hosted_animal_ids}")
+        Log.d(TAG, "Adopting IDs: ${user.adopting_animal_ids}")
+
+        val user_vector_map = user.preference_vector
+        if (user_vector_map.isEmpty()) {
+            Log.d(TAG, "User vector is empty – no recommendations to generate.")
+            return@addOnSuccessListener
+        }
+
+        val user_vector = user_vector_map.toSortedMap().values.toList()
+        Log.d(TAG, "User preference vector: $user_vector")
+
+        val excluded_animal_ids = mutableSetOf<String>().apply {
+            addAll(user.liked_animal_ids)
+            addAll(user.viewed_animals.keys)
+            addAll(user.hosted_animal_ids)
+            addAll(user.adopting_animal_ids)
+        }
+        Log.d(TAG, "Excluding animal IDs: $excluded_animal_ids")
+
+        Firebase.firestore.collection(Strings.get(R.string.firebase_collection_animals))
+            .get()
+            .addOnSuccessListener { animalDocs ->
+                Log.d(TAG, "Fetched ${animalDocs.size()} animals from Firestore")
+
+                val scored_animals = animalDocs.mapNotNull { doc ->
+                    val animal = doc.toObject(Animal::class.java)
+                    if (animal.animal_id in excluded_animal_ids) {
+                        Log.d(TAG, "Skipping excluded animal: ${animal.animal_id}")
+                        return@mapNotNull null
+                    }
+
+                    val animal_vector = VectorUtils.animalToVector(animal)
+                    val score = VectorUtils.cosineSimilarity(user_vector, animal_vector)
+
+                    Log.d(TAG, "Scored animal ${animal.animal_id}: $score")
+                    animal to score
+                }.sortedByDescending { it.second }
+
+                val topAnimals = scored_animals.take(20).map { it.first }
+
+                Log.d(
+                    TAG,
+                    "Top ${topAnimals.size} recommended animals: ${topAnimals.map { it.animal_id }}"
+                )
+
+                onResult(topAnimals)
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to fetch animals: ${e.message}", e)
+            }
+    }.addOnFailureListener { e ->
+        Log.e(TAG, "Failed to fetch user data: ${e.message}", e)
+    }
+}
+
+
 

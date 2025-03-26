@@ -30,7 +30,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/preferences_title"
-        android:layout_above="@id/save_preferences_button"
         android:layout_marginStart="30sp"
         android:layout_marginEnd="30sp"
         android:orientation="vertical">
@@ -109,7 +108,7 @@
             android:layout_marginEnd="40sp"
             android:text="Cancel"
             android:height="60sp" />
-        
+
         <Button
             android:id="@+id/save_preferences_button"
             android:layout_width="wrap_content"

@@ -31,8 +31,9 @@ import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.appendToDataFieldArray
-import sweng894.project.adopto.database.fetchAllAnimals
 import sweng894.project.adopto.database.getCurrentUserId
+import sweng894.project.adopto.database.getRecommendations
+import sweng894.project.adopto.database.recalculatePreferenceVector
 import sweng894.project.adopto.databinding.ExploreFragmentBinding
 import sweng894.project.adopto.profile.ExplorePreferencesActivity
 import java.time.Instant
@@ -45,7 +46,7 @@ class ExploreFragment : Fragment(), CardStackListener {
 
     private lateinit var m_skip_button: FloatingActionButton
     private lateinit var m_rewind_button: FloatingActionButton
-    private lateinit var m_save_animal_button: FloatingActionButton
+    private lateinit var m_like_animal_button: FloatingActionButton
 
     private lateinit var manager: CardStackLayoutManager
     private lateinit var adapter: AnimalCardAdapter
@@ -68,6 +69,7 @@ class ExploreFragment : Fragment(), CardStackListener {
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
             m_firebase_data_service = (service as FirebaseDataServiceUsers.LocalBinder).getService()
 
+            recalculatePreferenceVector()
             loadAnimals() // execute on service connection
 
             // Populate user info on future updates
@@ -140,7 +142,7 @@ class ExploreFragment : Fragment(), CardStackListener {
     private fun initializeScrollControls() {
         m_skip_button = binding.skipButton
         m_rewind_button = binding.rewindButton
-        m_save_animal_button = binding.saveAnimalButton
+        m_like_animal_button = binding.likeAnimalButton
 
         m_skip_button.setOnClickListener {
             val setting = SwipeAnimationSetting.Builder()
@@ -160,7 +162,7 @@ class ExploreFragment : Fragment(), CardStackListener {
             manager.setSwipeAnimationSetting(setting)
             binding.cardStackView.swipe()
         }
-        m_save_animal_button.setOnClickListener {
+        m_like_animal_button.setOnClickListener {
             val setting = SwipeAnimationSetting.Builder()
                 .setDirection(Direction.Right)
                 .setDuration(Duration.Normal.duration)
@@ -215,7 +217,7 @@ class ExploreFragment : Fragment(), CardStackListener {
             return
         }
 
-        fetchAllAnimals { all_animals ->
+        getRecommendations { recommended_animals ->
             val current_user = m_firebase_data_service.current_user_data
             val viewed_animals =
                 current_user?.viewed_animals ?: emptyMap() // Animals the user has seen
@@ -225,17 +227,15 @@ class ExploreFragment : Fragment(), CardStackListener {
             val time_threshold = current_time.minusSeconds(7 * 24 * 60 * 60) // 7 days ago
 
             // Filter out animals that are:
-            // 1. Already favorited (saved)
+            // 1. Already liked
             // 2. Hosted by the user
             // 3. Recently viewed (within time_threshold)
-            val filtered_animals = all_animals.filter { animal ->
+            val filtered_animals = recommended_animals.filter { animal ->
                 val viewed_time_str = viewed_animals[animal.animal_id]
                 val viewed_time =
                     viewed_time_str?.let { Instant.parse(it) } // Convert ISO string to Instant
 
-                current_user?.saved_animal_ids?.contains(animal.animal_id) != true
-                        && current_user?.hosted_animal_ids?.contains(animal.animal_id) != true
-                        && (viewed_time == null || viewed_time.isBefore(time_threshold))
+                viewed_time == null || viewed_time.isBefore(time_threshold)
             }
 
             if (animal_list.isEmpty()) { // Fetch data only if the list is empty
@@ -262,7 +262,7 @@ class ExploreFragment : Fragment(), CardStackListener {
             }
 
             Direction.Right -> {
-                saveAnimalMatch(animal)
+                likeAnimal(animal)
                 is_animal_viewed = true
             }
 
@@ -301,20 +301,24 @@ class ExploreFragment : Fragment(), CardStackListener {
         binding.cardStackView.rewind()
     }
 
-    private fun saveAnimalMatch(animal: Animal) {
-        // Save animal
+    private fun likeAnimal(animal: Animal) {
+        // Like animal
         appendToDataFieldArray(
             Strings.get(
                 R.string.firebase_collection_users
             ),
             getCurrentUserId(),
-            User::saved_animal_ids,
+            User::liked_animal_ids,
             animal.animal_id
         )
 
+        // Recalculate and store preference vector
+        recalculatePreferenceVector()
+        loadAnimals()
+
         Toast.makeText(
             requireContext(),
-            "Matched with ${animal.animal_name}!",
+            "Liked ${animal.animal_name}",
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -323,7 +327,6 @@ class ExploreFragment : Fragment(), CardStackListener {
         super.onDestroyView()
         _binding = null
     }
-
 
     override fun onCardRewound() {
         Log.d("CardStackView", "onCardRewound: ${manager.topPosition}")

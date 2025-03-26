@@ -15,7 +15,7 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import sweng894.project.adopto.App
+import sweng894.project.adopto.AdoptoApp
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
@@ -63,9 +63,9 @@ class FirebaseDatabaseUtilitiesTest {
         every { mockFirebaseAuth.currentUser?.uid } returns "test_user_id"
 
         // Mock App instance to avoid "App.instance is not initialized" error
-        mockkObject(App)
-        every { App.isInitialized() } returns true
-        every { App.instance } returns mockk(relaxed = true)
+        mockkObject(AdoptoApp)
+        every { AdoptoApp.isInitialized() } returns true
+        every { AdoptoApp.instance } returns mockk(relaxed = true)
 
         // Mock Task execution to avoid calling `TaskExecutors.MAIN_THREAD`
         mockkStatic(Tasks::class)
@@ -268,7 +268,7 @@ class FirebaseDatabaseUtilitiesTest {
     fun testAppendToDataFieldArrayAppendsValuesSuccessfully() = runBlocking {
         every { mockDocumentReference.update(any<String>(), any()) } returns Tasks.forResult(null)
 
-        val fieldName: KProperty1<User, *> = User::saved_animal_ids
+        val fieldName: KProperty1<User, *> = User::liked_animal_ids
         val fieldValue = "A1"
 
         appendToDataFieldArray("mocked_collection_name", "test123", fieldName, fieldValue)
@@ -356,7 +356,7 @@ class FirebaseDatabaseUtilitiesTest {
     fun testRemoveFromDataFieldArraySuccessfullyRemovesValues() = runBlocking {
         // Arrange
         val mockTask: Task<Void> = Tasks.forResult(null)
-        val fieldName: KProperty1<User, *> = User::saved_animal_ids
+        val fieldName: KProperty1<User, *> = User::liked_animal_ids
         val valuesToBeRemoved = arrayOf("A1", "A2")
         val onRemovalSuccessMock: (() -> Unit) = mockk(relaxed = true)
 
@@ -392,7 +392,7 @@ class FirebaseDatabaseUtilitiesTest {
         // Arrange
         val errorMessage = "Firestore update failed"
         val exception = RuntimeException(errorMessage)
-        val fieldName: KProperty1<User, *> = User::saved_animal_ids
+        val fieldName: KProperty1<User, *> = User::liked_animal_ids
         val valuesToBeRemoved = arrayOf("A1", "A2")
 
         val mockTask: Task<Void> = mockk(relaxed = true)

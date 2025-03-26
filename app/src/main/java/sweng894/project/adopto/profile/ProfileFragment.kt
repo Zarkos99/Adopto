@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
+import sweng894.project.adopto.profile.Tabs.AdoptingAnimalsFragment
 import sweng894.project.adopto.profile.Tabs.MyAnimalsFragment
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
 import sweng894.project.adopto.profile.Tabs.SavedAnimalsFragment
@@ -168,7 +169,7 @@ class ProfileFragment : Fragment() {
         val view_pager = binding.viewPager
 
         val is_shelter = m_firebase_data_service.current_user_data?.is_shelter ?: false
-        val tab_count = if (is_shelter) 2 else 1
+        val tab_count = if (is_shelter) 3 else 2
 
         val tab_adapter = ProfileTabAdapter(requireActivity(), tab_count)
         view_pager.adapter = tab_adapter
@@ -179,8 +180,9 @@ class ProfileFragment : Fragment() {
         // Sync TabLayout with ViewPager2
         TabLayoutMediator(tab_layout, view_pager) { tab, position ->
             tab.text = when {
-                position == 0 -> "Saved Animals"
-                is_shelter && position == 1 -> "My Animals"
+                position == 0 -> "Saved"
+                position == 1 -> "Adopting"
+                is_shelter && position == 2 -> "Hosted"
                 else -> null
             }
         }.attach()
@@ -189,15 +191,21 @@ class ProfileFragment : Fragment() {
         tab_layout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 when (tab?.position) {
-                    0 -> { // "Saved Animals" tab
+                    0 -> { // "Saved" tab
                         val fragment =
                             childFragmentManager.findFragmentByTag("f0") as? SavedAnimalsFragment
                         fragment?.fetchAndDisplayUserSavedAnimals() // Refresh data
                     }
 
-                    1 -> { // "My Animals" tab
+                    1 -> { // "Adopting" tab
                         val fragment =
-                            childFragmentManager.findFragmentByTag("f1") as? MyAnimalsFragment
+                            childFragmentManager.findFragmentByTag("f1") as? AdoptingAnimalsFragment
+                        fragment?.fetchAndDisplayUserAdoptingAnimals() // Refresh data
+                    }
+
+                    2 -> { // "My Animals" tab
+                        val fragment =
+                            childFragmentManager.findFragmentByTag("f2") as? MyAnimalsFragment
                         fragment?.fetchAndDisplayUserHostedAnimals() // Refresh data
                     }
                 }
@@ -214,7 +222,13 @@ class ProfileFragment : Fragment() {
 
                     1 -> {
                         val fragment =
-                            childFragmentManager.findFragmentByTag("f1") as? MyAnimalsFragment
+                            childFragmentManager.findFragmentByTag("f1") as? AdoptingAnimalsFragment
+                        fragment?.fetchAndDisplayUserAdoptingAnimals()
+                    }
+
+                    2 -> {
+                        val fragment =
+                            childFragmentManager.findFragmentByTag("f2") as? MyAnimalsFragment
                         fragment?.fetchAndDisplayUserHostedAnimals()
                     }
                 }

@@ -16,10 +16,10 @@ import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.fetchAnimals
-import sweng894.project.adopto.databinding.ProfileSavedAnimalsFragmentBinding
+import sweng894.project.adopto.databinding.ProfileAnimalsListFragmentBinding
 
 class SavedAnimalsFragment : Fragment() {
-    private var _binding: ProfileSavedAnimalsFragmentBinding? = null
+    private var _binding: ProfileAnimalsListFragmentBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -87,21 +87,21 @@ class SavedAnimalsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = ProfileSavedAnimalsFragmentBinding.inflate(inflater, container, false)
+        _binding = ProfileAnimalsListFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         return root
     }
 
     fun initializeRecyclerViewAdapter() {
-        val saved_animals_recycler_view = binding.savedAnimals
+        val saved_animals_recycler_view = binding.animalsList
         // Initialize recyclerview adaptor
         m_animals_list_adaptor = ProfileAnimalsAdapter(requireContext())
         saved_animals_recycler_view.adapter = m_animals_list_adaptor
     }
 
     fun initializeRecyclerViewLayoutManager() {
-        val saved_animals_recycler_view = binding.savedAnimals
+        val saved_animals_recycler_view = binding.animalsList
         // Initialize FlexBox Layout Manager for recyclerview to allow wrapping items to next line
         val layout_manager = FlexboxLayoutManager(requireContext())
         layout_manager.apply {
@@ -114,7 +114,7 @@ class SavedAnimalsFragment : Fragment() {
 
     fun fetchAndDisplayUserSavedAnimals() {
         val user = m_firebase_data_service.current_user_data
-        val user_animal_ids = user?.saved_animal_ids ?: emptyList()
+        val user_animal_ids = user?.liked_animal_ids ?: emptyList()
 
         fetchAnimals(user_animal_ids) { animal_list ->
             activity?.runOnUiThread {

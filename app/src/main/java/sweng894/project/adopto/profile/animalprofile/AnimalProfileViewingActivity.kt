@@ -1,7 +1,5 @@
 package sweng894.project.adopto.profile.animalprofile
 
-import android.app.Activity
-import android.app.ComponentCaller
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -115,31 +113,32 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                     binding.addImageButton.visibility = View.VISIBLE
                 }
 
-                val save_animal_button = binding.saveAnimalButton
+                val save_animal_button = binding.likeAnimalButton
                 // Ensure hosting shelter cannot save their own animals
                 save_animal_button.visibility =
                     if (m_selected_animal?.associated_shelter_id != getCurrentUserId()) View.VISIBLE else View.GONE
                 instantiateSaveAnimalButton()
+                instantiateAdoptButton()
 
                 save_animal_button.setOnClickListener {
-                    if (m_current_user?.saved_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
+                    if (m_current_user?.liked_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
                         removeFromDataFieldArray(
                             Strings.get(R.string.firebase_collection_users),
                             getCurrentUserId(),
-                            User::saved_animal_ids,
+                            User::liked_animal_ids,
                             arrayOf(m_selected_animal!!.animal_id)
                         ) {
-                            m_current_user?.saved_animal_ids?.remove(m_selected_animal!!.animal_id)
+                            m_current_user?.liked_animal_ids?.remove(m_selected_animal!!.animal_id)
                             instantiateSaveAnimalButton()
                         }
                     } else {
                         appendToDataFieldArray(
                             Strings.get(R.string.firebase_collection_users),
                             getCurrentUserId(),
-                            User::saved_animal_ids,
+                            User::liked_animal_ids,
                             m_selected_animal!!.animal_id
                         ) {
-                            m_current_user?.saved_animal_ids?.add(m_selected_animal!!.animal_id)
+                            m_current_user?.liked_animal_ids?.add(m_selected_animal!!.animal_id)
                             instantiateSaveAnimalButton()
                         }
                     }
@@ -148,7 +147,41 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
             val adopt_button = binding.adoptButton
             adopt_button.setOnClickListener {
-                // TODO: Initiate adoption
+
+                if (m_current_user?.adopting_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
+                    removeFromDataFieldArray(
+                        Strings.get(R.string.firebase_collection_users),
+                        getCurrentUserId(),
+                        User::adopting_animal_ids,
+                        arrayOf(m_selected_animal!!.animal_id)
+                    ) {
+                        m_current_user?.adopting_animal_ids?.remove(m_selected_animal!!.animal_id)
+                        instantiateAdoptButton()
+
+
+                        Toast.makeText(
+                            this@AnimalProfileViewingActivity,
+                            "Withdrawing adoption interest. :(",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    appendToDataFieldArray(
+                        Strings.get(R.string.firebase_collection_users),
+                        getCurrentUserId(),
+                        User::adopting_animal_ids,
+                        m_selected_animal!!.animal_id
+                    ) {
+                        m_current_user?.adopting_animal_ids?.add(m_selected_animal!!.animal_id)
+                        instantiateAdoptButton()
+
+                        Toast.makeText(
+                            this@AnimalProfileViewingActivity,
+                            "Sending adoption interest! :)",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             }
         }
     }
@@ -244,12 +277,22 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
     }
 
     fun instantiateSaveAnimalButton() {
-        val save_animal_button = binding.saveAnimalButton
+        val save_animal_button = binding.likeAnimalButton
         // If user already has animal saved, show heart with check mark, otherwise heart with plus
-        if (m_current_user?.saved_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
+        if (m_current_user?.liked_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
             save_animal_button.setImageResource(R.drawable.ic_heart_check)
         } else {
             save_animal_button.setImageResource(R.drawable.ic_heart_plus)
+        }
+    }
+
+    fun instantiateAdoptButton() {
+        val adopt_button = binding.adoptButton
+        // If user already has animal saved, show heart with check mark, otherwise heart with plus
+        if (m_current_user?.adopting_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
+            adopt_button.text = "Adopting..."
+        } else {
+            adopt_button.text = "Adopt Me!"
         }
     }
 

@@ -15,7 +15,7 @@ class UserDataTest {
         assertFalse(user.is_shelter)
         assertEquals("", user.biography)
         assertEquals("", user.profile_image_path)
-        assertTrue(user.saved_animal_ids.isEmpty())
+        assertTrue(user.liked_animal_ids.isEmpty())
         assertTrue(user.hosted_animal_ids.isEmpty())
         assertEquals("", user.zip_code)
         assertFalse(user.need_info)
@@ -28,7 +28,7 @@ class UserDataTest {
             is_shelter = true,
             biography = "Loves animals",
             profile_image_path = "path/to/image.jpg",
-            saved_animal_ids = arrayListOf("a1", "a2"),
+            liked_animal_ids = arrayListOf("a1", "a2"),
             hosted_animal_ids = arrayListOf("h1"),
             zip_code = "12345",
             need_info = true
@@ -38,7 +38,7 @@ class UserDataTest {
         assertTrue(user.is_shelter)
         assertEquals("Loves animals", user.biography)
         assertEquals("path/to/image.jpg", user.profile_image_path)
-        assertEquals(listOf("a1", "a2"), user.saved_animal_ids)
+        assertEquals(listOf("a1", "a2"), user.liked_animal_ids)
         assertEquals(listOf("h1"), user.hosted_animal_ids)
         assertEquals("12345", user.zip_code)
         assertTrue(user.need_info)

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +18,7 @@ import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.fetchAnimals
 import sweng894.project.adopto.databinding.ProfileAnimalsListFragmentBinding
 
-class MyAnimalsFragment : Fragment() {
+class AdoptingAnimalsFragment : Fragment() {
     private var _binding: ProfileAnimalsListFragmentBinding? = null
 
     // This property is only valid between onCreateView and
@@ -43,11 +42,11 @@ class MyAnimalsFragment : Fragment() {
             initializeRecyclerViewLayoutManager()
 
             // Fetch and display animals when data is ready
-            fetchAndDisplayUserHostedAnimals()
+            fetchAndDisplayUserAdoptingAnimals()
 
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
-                fetchAndDisplayUserHostedAnimals() // Refresh when Firebase updates
+                fetchAndDisplayUserAdoptingAnimals() // Refresh when Firebase updates
             }
         }
 
@@ -80,7 +79,7 @@ class MyAnimalsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (m_service_connected) {
-            fetchAndDisplayUserHostedAnimals() // Refresh when View is created
+            fetchAndDisplayUserAdoptingAnimals() // Refresh when View is created
         }
     }
 
@@ -95,14 +94,14 @@ class MyAnimalsFragment : Fragment() {
     }
 
     fun initializeRecyclerViewAdapter() {
-        val saved_animals_recycler_view = binding.animalsList
+        val animals_recycler_view = binding.animalsList
         // Initialize recyclerview adaptor
         m_animals_list_adaptor = ProfileAnimalsAdapter(requireContext())
-        saved_animals_recycler_view.adapter = m_animals_list_adaptor
+        animals_recycler_view.adapter = m_animals_list_adaptor
     }
 
     fun initializeRecyclerViewLayoutManager() {
-        val saved_animals_recycler_view = binding.animalsList
+        val animals_recycler_view = binding.animalsList
         // Initialize FlexBox Layout Manager for recyclerview to allow wrapping items to next line
         val layout_manager = FlexboxLayoutManager(requireContext())
         layout_manager.apply {
@@ -110,12 +109,12 @@ class MyAnimalsFragment : Fragment() {
             justifyContent = JustifyContent.FLEX_START
             flexWrap = FlexWrap.WRAP
         }
-        saved_animals_recycler_view.layoutManager = layout_manager
+        animals_recycler_view.layoutManager = layout_manager
     }
 
-    fun fetchAndDisplayUserHostedAnimals() {
+    fun fetchAndDisplayUserAdoptingAnimals() {
         val user = m_firebase_data_service.current_user_data
-        val user_animal_ids = user?.hosted_animal_ids ?: emptyList()
+        val user_animal_ids = user?.adopting_animal_ids ?: emptyList()
 
         fetchAnimals(user_animal_ids) { animal_list ->
             activity?.runOnUiThread {

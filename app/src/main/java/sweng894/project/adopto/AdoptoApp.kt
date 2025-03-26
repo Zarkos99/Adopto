@@ -2,11 +2,12 @@ package sweng894.project.adopto
 
 import android.app.Application
 import androidx.annotation.StringRes
+import sweng894.project.adopto.data.VectorUtils
 
-open class App : Application() {
+open class AdoptoApp : Application() {
     companion object {
-        var _instance: App? = null
-        val instance: App
+        var _instance: AdoptoApp? = null
+        val instance: AdoptoApp
             get() = _instance
                 ?: throw IllegalStateException("App instance is not initialized. Ensure it is declared in AndroidManifest.xml.")
 
@@ -15,6 +16,7 @@ open class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        VectorUtils.initializeTypeEncoding(this)
         _instance = this
     }
 }
@@ -24,9 +26,9 @@ open class App : Application() {
  */
 object Strings {
     fun get(@StringRes stringRes: Int, vararg formatArgs: Any = emptyArray()): String {
-        if (!App.isInitialized()) {
+        if (!AdoptoApp.isInitialized()) {
             throw IllegalStateException("App.instance is not initialized. Ensure App is properly configured in the manifest.")
         }
-        return App.instance.getString(stringRes, *formatArgs)
+        return AdoptoApp.instance.getString(stringRes, *formatArgs)
     }
 }
