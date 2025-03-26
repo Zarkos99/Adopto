@@ -21,11 +21,11 @@ object VectorUtils {
     }
 
     fun animalToVector(animal: Animal): List<Double> {
-        val typeValue = TYPE_ENCODING[animal.animal_type] ?: 0.0
-        val ageValue = animal.animal_age ?: 0.0
-        val sizeValue = SIZE_ENCODING[animal.animal_size] ?: 0.0
+        val type_value = TYPE_ENCODING[animal.animal_type] ?: 0.0
+        val age_value = animal.animal_age ?: 0.0
+        val size_value = SIZE_ENCODING[animal.animal_size] ?: 0.0
 
-        val vector = listOf(typeValue, ageValue, sizeValue)
+        val vector = listOf(type_value, age_value, size_value)
 
         Log.d(TAG, "Converted animal (${animal.animal_id}) to vector: $vector")
         return vector

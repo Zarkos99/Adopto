@@ -74,6 +74,7 @@ class ExploreFragment : Fragment(), CardStackListener {
 
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
+                Log.d("ExploreFragment", "Firebase callback update received")
                 loadAnimals()
             }
         }
@@ -218,30 +219,10 @@ class ExploreFragment : Fragment(), CardStackListener {
         }
 
         getRecommendations { recommended_animals ->
-            val current_user = m_firebase_data_service.current_user_data
-            val viewed_animals =
-                current_user?.viewed_animals ?: emptyMap() // Animals the user has seen
+            animal_list.clear()
+            animal_list.addAll(recommended_animals)
+            adapter.notifyDataSetChanged()
 
-            // Define time threshold to "re-show" animals (e.g., 7 days)
-            val current_time = Instant.now()
-            val time_threshold = current_time.minusSeconds(7 * 24 * 60 * 60) // 7 days ago
-
-            // Filter out animals that are:
-            // 1. Already liked
-            // 2. Hosted by the user
-            // 3. Recently viewed (within time_threshold)
-            val filtered_animals = recommended_animals.filter { animal ->
-                val viewed_time_str = viewed_animals[animal.animal_id]
-                val viewed_time =
-                    viewed_time_str?.let { Instant.parse(it) } // Convert ISO string to Instant
-
-                viewed_time == null || viewed_time.isBefore(time_threshold)
-            }
-
-            if (animal_list.isEmpty()) { // Fetch data only if the list is empty
-                animal_list.addAll(filtered_animals)
-                adapter.notifyDataSetChanged()
-            }
         }
     }
 

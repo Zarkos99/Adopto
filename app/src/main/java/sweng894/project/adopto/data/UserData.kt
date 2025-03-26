@@ -1,8 +1,10 @@
 package sweng894.project.adopto.data
 
 import android.os.Parcelable
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.PropertyName
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -19,7 +21,7 @@ data class User(
     var adopting_animal_ids: MutableList<String> = mutableListOf(), // Animals user is seeking to adopt
     var hosted_animal_ids: MutableList<String> = mutableListOf(), // Animals hosted by a shelter (SHELTER ONLY)
     var viewed_animals: Map<String, String> = mapOf(), //animal_id, timestamp
-    var zip_code: String? = "",
+    var location: @RawValue GeoPoint? = null,
     var need_info: Boolean = false,
     @get:PropertyName("explore_preferences")
     @set:PropertyName("explore_preferences")
@@ -33,6 +35,7 @@ data class ExplorationPreferences(
     var max_animal_age: Double? = 30.0,
     var animal_sizes: MutableList<String> = mutableListOf(),
     var animal_types: MutableList<String> = mutableListOf(),
+    var search_radius: Double? = 50.0
 ) : Parcelable
 
 @Parcelize
@@ -48,6 +51,7 @@ data class Animal(
     var biography: String? = "",
     var profile_image_path: String? = "",
     var supplementary_image_paths: MutableList<String> = mutableListOf(),
-    var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+    var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+    var location: @RawValue GeoPoint? = null
 ) : Parcelable {
 }

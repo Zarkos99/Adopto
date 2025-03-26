@@ -8,6 +8,7 @@ import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.ExplorationPreferences
+import sweng894.project.adopto.data.LocationUtilities.zipToGeoPoint
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.updateDataField
@@ -53,8 +54,8 @@ class UserProfileCreationActivity : AppCompatActivity() {
             updateDataField(
                 Strings.get(R.string.firebase_collection_users),
                 getCurrentUserId(),
-                User::zip_code,
-                m_zip_code_edit_text.text.toString()
+                User::location,
+                zipToGeoPoint(this, m_zip_code_edit_text.text.toString())
             )
 
             // No longer require additional info

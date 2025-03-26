@@ -369,7 +369,7 @@ class FirebaseDatabaseUtilitiesTest {
         }
 
         // Act
-        removeFromDataFieldArray(
+        removeFromDataFieldList(
             "mocked_collection_name",
             "test123",
             fieldName,
@@ -405,7 +405,7 @@ class FirebaseDatabaseUtilitiesTest {
         }
 
         // Act
-        removeFromDataFieldArray("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
+        removeFromDataFieldList("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
 
         // Assert
         verify(exactly = 1) {
@@ -431,7 +431,7 @@ class FirebaseDatabaseUtilitiesTest {
         }
 
         // Act
-        removeFromDataFieldArray("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
+        removeFromDataFieldList("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
 
         // Assert
         verify(exactly = 1) { deleteImagesFromCloudStorage(valuesToBeRemoved) }
@@ -455,7 +455,7 @@ class FirebaseDatabaseUtilitiesTest {
         }
 
         // Act
-        removeFromDataFieldArray("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
+        removeFromDataFieldList("mocked_collection_name", "test123", fieldName, valuesToBeRemoved)
 
         // Assert
         verify(exactly = 0) { deleteImagesFromCloudStorage(any()) }

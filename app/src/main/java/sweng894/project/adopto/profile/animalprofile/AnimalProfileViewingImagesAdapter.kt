@@ -14,7 +14,7 @@ import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.database.deleteImagesFromCloudStorage
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
-import sweng894.project.adopto.database.removeFromDataFieldArray
+import sweng894.project.adopto.database.removeFromDataFieldList
 
 enum class AdapterClickability {
     NOT_CLICKABLE,
@@ -66,7 +66,7 @@ class AnimalProfileViewingImagesAdapter(
                 // Remove image from cloud storage and databased animal's additional images field
                 val image_to_delete = arrayOf(m_image_uris[position].path!!)
                 deleteImagesFromCloudStorage(image_to_delete)
-                removeFromDataFieldArray(
+                removeFromDataFieldList(
                     Strings.get(R.string.firebase_collection_animals),
                     current_animal.animal_id,
                     Animal::supplementary_image_paths,

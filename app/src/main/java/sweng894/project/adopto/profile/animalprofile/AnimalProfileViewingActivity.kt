@@ -122,7 +122,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
                 save_animal_button.setOnClickListener {
                     if (m_current_user?.liked_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
-                        removeFromDataFieldArray(
+                        removeFromDataFieldList(
                             Strings.get(R.string.firebase_collection_users),
                             getCurrentUserId(),
                             User::liked_animal_ids,
@@ -149,7 +149,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
             adopt_button.setOnClickListener {
 
                 if (m_current_user?.adopting_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
-                    removeFromDataFieldArray(
+                    removeFromDataFieldList(
                         Strings.get(R.string.firebase_collection_users),
                         getCurrentUserId(),
                         User::adopting_animal_ids,

@@ -8,6 +8,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
@@ -17,6 +18,11 @@ import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.data.VectorUtils
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.reflect.KProperty1
 
 fun getCurrentUserId(): String {
@@ -241,7 +247,7 @@ fun removeAnimalFromDatabase(
             "TRACE",
             "Successfully deleted animal from database. Removing animal_id from user's hosted_animal_ids"
         )
-        removeFromDataFieldArray(
+        removeFromDataFieldList(
             Strings.get(R.string.firebase_collection_animals),
             getCurrentUserId(),
             User::hosted_animal_ids,
@@ -288,7 +294,7 @@ fun <T> updateDataField(
     collection: String,
     document_id: String,
     field_name: KProperty1<T, *>,
-    field_value: Any,
+    field_value: Any?,
     onUploadSuccess: (() -> Unit)? = null
 ) {
     val validCollections = setOf(
@@ -341,7 +347,7 @@ fun <T> appendToDataFieldArray(
 /**
  * Removes items from array type data fields. If data fields are arrays of image paths, this will also delete the images on the cloud storage.
  */
-fun <T> removeFromDataFieldArray(
+fun <T> removeFromDataFieldList(
     collection: String,
     document_id: String,
     field_name: KProperty1<T, *>,
@@ -510,8 +516,8 @@ fun getRecommendations(onResult: (List<Animal>) -> Unit) {
 
         val user_vector_map = user.preference_vector
         if (user_vector_map.isEmpty()) {
-            Log.d(TAG, "User vector is empty – no recommendations to generate.")
-            return@addOnSuccessListener
+            Log.d(TAG, "User preference vector is empty, recalculating preference vector")
+            recalculatePreferenceVector()
         }
 
         val user_vector = user_vector_map.toSortedMap().values.toList()
@@ -519,21 +525,38 @@ fun getRecommendations(onResult: (List<Animal>) -> Unit) {
 
         val excluded_animal_ids = mutableSetOf<String>().apply {
             addAll(user.liked_animal_ids)
-            addAll(user.viewed_animals.keys)
             addAll(user.hosted_animal_ids)
             addAll(user.adopting_animal_ids)
+
+            //Exclude animals already shown to the user less than 30 days ago
+            val thirty_days_millis = 30L * 24 * 60 * 60 * 1000
+            val now = System.currentTimeMillis()
+
+            user.viewed_animals.forEach { (animal_id, timestamp_str) ->
+                val viewed_at = timestamp_str.toLongOrNull()
+                if (viewed_at != null && now - viewed_at <= thirty_days_millis) {
+                    add(animal_id)
+                }
+            }
         }
         Log.d(TAG, "Excluding animal IDs: $excluded_animal_ids")
 
         Firebase.firestore.collection(Strings.get(R.string.firebase_collection_animals))
             .get()
-            .addOnSuccessListener { animalDocs ->
-                Log.d(TAG, "Fetched ${animalDocs.size()} animals from Firestore")
+            .addOnSuccessListener { animal_docs ->
+                Log.d(TAG, "Fetched ${animal_docs.size()} animals from Firestore")
 
-                val scored_animals = animalDocs.mapNotNull { doc ->
+                val scored_animals = animal_docs.mapNotNull { doc ->
                     val animal = doc.toObject(Animal::class.java)
                     if (animal.animal_id in excluded_animal_ids) {
                         Log.d(TAG, "Skipping excluded animal: ${animal.animal_id}")
+                        return@mapNotNull null
+                    }
+                    if (!animalWithinSearchParameters(user, animal)) {
+                        Log.d(
+                            TAG,
+                            "Skipping animal outside of search parameters: ${animal.animal_id}"
+                        )
                         return@mapNotNull null
                     }
 
@@ -561,5 +584,76 @@ fun getRecommendations(onResult: (List<Animal>) -> Unit) {
     }
 }
 
+fun animalWithinSearchParameters(user: User, animal: Animal): Boolean {
+    val user_location = user.location
+    val radius_km = user.explore_preferences?.search_radius ?: 0.0
+    val allowed_sizes = user.explore_preferences?.animal_sizes
+    val allowed_types = user.explore_preferences?.animal_types
+    val min_age = user.explore_preferences?.min_animal_age
+    val max_age = user.explore_preferences?.max_animal_age
 
+    Log.d("search_prefs", "Checking animal ${animal.animal_id} against preferences")
+
+    // Location filter
+    if (user_location != null && animal.location != null) {
+        val distance = haversineDistance(user_location, animal.location!!)
+        Log.d("search_prefs", "Distance to animal: $distance km (max allowed: $radius_km)")
+        if (distance > radius_km) {
+            Log.d("search_prefs", "Filtered out by distance")
+            return false
+        }
+    }
+
+    // Size filter
+    if (allowed_sizes != null) {
+        Log.d("search_prefs", "Allowed sizes: $allowed_sizes, Animal size: ${animal.animal_size}")
+        if (animal.animal_size != null && animal.animal_size !in allowed_sizes) {
+            Log.d("search_prefs", "Filtered out by size")
+            return false
+        }
+    }
+
+    // Type filter
+    if (allowed_types != null) {
+        Log.d("search_prefs", "Allowed types: $allowed_types, Animal type: ${animal.animal_type}")
+        if (animal.animal_type != null && animal.animal_type !in allowed_types) {
+            Log.d("search_prefs", "Filtered out by type")
+            return false
+        }
+    }
+
+    // Minimum age filter
+    if (min_age != null && animal.animal_age != null) {
+        Log.d("search_prefs", "Minimum age: $min_age, Animal age: ${animal.animal_age}")
+        if (animal.animal_age!! < min_age) {
+            Log.d("search_prefs", "Filtered out by minimum age")
+            return false
+        }
+    }
+
+    // Maximum age filter
+    if (max_age != null && animal.animal_age != null) {
+        Log.d("search_prefs", "Maximum age: $max_age, Animal age: ${animal.animal_age}")
+        if (animal.animal_age!! > max_age) {
+            Log.d("search_prefs", "Filtered out by maximum age")
+            return false
+        }
+    }
+
+    Log.d("search_prefs", "Animal ${animal.animal_id} passed all filters")
+    return true
+}
+
+
+fun haversineDistance(a: GeoPoint, b: GeoPoint): Double {
+    val R = 6371.0 // Earth radius in km
+    val d_lat = Math.toRadians(b.latitude - a.latitude)
+    val d_lon = Math.toRadians(b.longitude - a.longitude)
+    val lat1 = Math.toRadians(a.latitude)
+    val lat2 = Math.toRadians(b.latitude)
+
+    val a_calc = sin(d_lat / 2).pow(2) + sin(d_lon / 2).pow(2) * cos(lat1) * cos(lat2)
+    val c = 2 * atan2(sqrt(a_calc), sqrt(1 - a_calc))
+    return R * c
+}
 
