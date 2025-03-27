@@ -131,7 +131,6 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         }
 
         create_button_view.setOnClickListener {
-            Log.d("### DEBUG", "First call: $m_new_profile_image_uri")
             handleCreateAnimalProfile()
         }
     }
@@ -184,7 +183,8 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             biography = new_description,
             animal_size = new_size,
             animal_type = new_type,
-            animal_breed = new_breed
+            animal_breed = new_breed,
+            location = m_firebase_data_service.current_user_data?.location
         )
 
         return new_animal

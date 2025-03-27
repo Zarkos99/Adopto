@@ -73,7 +73,7 @@ class AuthenticationActivity : AppCompatActivity() {
                                     Log.d("TRACE", "User fetched: ${user_data.user_id}")
                                     if (user_data.need_info) {
                                         // Sign in success, need additional account info, display account information View
-                                        openActivity(NewAccountInfoActivity::class.java)
+                                        openActivity(IsShelterActivity::class.java)
                                     } else {
                                         // Sign in successful and no need for additional info, display navigation default view
                                         openActivity(NavigationBaseActivity::class.java)
@@ -82,7 +82,7 @@ class AuthenticationActivity : AppCompatActivity() {
                                     Log.w("AuthenticationActivity", "User not found")
                                     // Sign in successful but no user data
                                     addUserToDatabase(User(need_info = true))
-                                    openActivity(NewAccountInfoActivity::class.java)
+                                    openActivity(IsShelterActivity::class.java)
                                 }
                             } catch (e: Exception) {
                                 Log.w("AuthenticationActivity", "Error fetching user: ${e.message}")
@@ -139,7 +139,7 @@ class AuthenticationActivity : AppCompatActivity() {
                         // Display navigation default View - enlarged map
                         addUserToDatabase(User(need_info = true))
 
-                        openActivity(NewAccountInfoActivity::class.java)
+                        openActivity(IsShelterActivity::class.java)
                     } else { // Failed Registration
                         // Display a message to the user
                         Toast.makeText(

@@ -30,8 +30,10 @@ import com.google.android.libraries.places.widget.AutocompleteActivity
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.R
+import sweng894.project.adopto.custom.PlacesAutocompleteHelper
+import sweng894.project.adopto.custom.PlacesAutocompleteHelper.AUTOCOMPLETE_REQUEST_CODE
+import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityResult
 import sweng894.project.adopto.data.Animal
-import sweng894.project.adopto.data.LocationUtilities
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.fetchAllAnimals
@@ -50,7 +52,6 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
     private val M_DEFAULT_INITIAL_LAT = 0.0
     private val M_DEFAULT_INITIAL_LONG = 0.0
     private val M_DEFAULT_SEARCH_RADIUS_MILES = 25.0
-    private val AUTOCOMPLETE_REQUEST_CODE = 1001
 
 
     private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
@@ -98,16 +99,24 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         _binding = GeoMapFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.getRoot()
 
-        val search_button = binding.btnLocationSearch
 
         // Bind to LocalService.
         Intent(requireContext(), FirebaseDataServiceUsers::class.java).also { intent ->
             requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
 
+        val search_button = binding.btnLocationSearch
         search_button.tooltipText = "Search for a city or ZIP code"
         search_button.setOnClickListener {
-            launchPlacesAutocomplete()
+            PlacesAutocompleteHelper.launchFromFragment(this) { place ->
+                val lat_lng = place.latLng
+                Log.d("GeoMapFragment", "User picked: ${place.name} at $lat_lng")
+                if (lat_lng != null) {
+                    m_location = GeoPoint(lat_lng.latitude, lat_lng.longitude)
+                    moveCameraAndZoomForSearchRadius()
+                    applyMarkersToMap()
+                }
+            }
         }
 
         val map_fragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
@@ -129,31 +138,8 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == AUTOCOMPLETE_REQUEST_CODE) {
-            when (resultCode) {
-                Activity.RESULT_OK -> {
-                    val place = Autocomplete.getPlaceFromIntent(data!!)
-                    val latLng = place.latLng
-                    if (latLng != null) {
-                        m_location = GeoPoint(latLng.latitude, latLng.longitude)
-                        moveCameraAndZoomForSearchRadius()
-                        applyMarkersToMap()
-                    }
-                }
-
-                AutocompleteActivity.RESULT_ERROR -> {
-                    val status = Autocomplete.getStatusFromIntent(data!!)
-                    Log.e("GeoMapFragment", "Autocomplete error: ${status.statusMessage}")
-                }
-
-                Activity.RESULT_CANCELED -> {
-                    // User canceled the autocomplete
-                }
-            }
-        }
+        handleActivityResult(requestCode, resultCode, data)
     }
-
 
     override fun onStart() {
         super.onStart()
@@ -169,21 +155,6 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         m_map_ready = false
     }
 
-    private fun launchPlacesAutocomplete() {
-        val fields = listOf(
-            Place.Field.ID,
-            Place.Field.NAME,
-            Place.Field.LAT_LNG,
-            Place.Field.ADDRESS
-        )
-
-        val intent = Autocomplete.IntentBuilder(
-            AutocompleteActivityMode.OVERLAY, fields
-        ).build(requireContext())
-
-        startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE)
-    }
-
 
     fun instantiateDefaultMapLocation() {
         if (m_is_firebase_service_bound && m_map_ready) {
@@ -196,17 +167,23 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
     fun moveCameraAndZoomForSearchRadius() {
         if (m_is_firebase_service_bound && m_map_ready) {
             val user_data = m_firebase_data_service.current_user_data
-            m_map.moveCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                    LatLng(m_location.latitude, m_location.longitude),
-                    radiusToZoom(
-                        user_data?.explore_preferences?.search_radius_miles
-                            ?: M_DEFAULT_SEARCH_RADIUS_MILES
-                    )
-                )
+            val zoom = radiusToZoom(
+                user_data?.explore_preferences?.search_radius_miles
+                    ?: M_DEFAULT_SEARCH_RADIUS_MILES
+            )
+            val latLng = LatLng(m_location.latitude, m_location.longitude)
+
+            Log.d("GeoMapFragment", "Moving camera to $latLng with zoom $zoom")
+
+            m_map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom))
+        } else {
+            Log.w(
+                "GeoMapFragment",
+                "Camera move skipped – mapReady=$m_map_ready, serviceBound=$m_is_firebase_service_bound"
             )
         }
     }
+
 
     fun radiusToZoom(radius_in_miles: Double): Float {
         // Approximate: Earth's circumference ≈ 24,901 miles

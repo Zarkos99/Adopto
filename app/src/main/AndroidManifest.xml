@@ -56,7 +56,7 @@
         </activity>
 
         <activity
-            android:name=".authentication.NewAccountInfoActivity"
+            android:name=".authentication.IsShelterActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -65,7 +65,7 @@
         </activity>
 
         <activity
-            android:name=".authentication.ShelterProfileCreationActivity"
+            android:name=".authentication.UserProfileCreationActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

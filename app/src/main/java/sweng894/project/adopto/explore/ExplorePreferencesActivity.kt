@@ -37,6 +37,7 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
 
         m_user_explore_preferences = intent.getParcelableExtra("explore_preferences")!!
 
+        initializeSearchRadiusSlider()
         initializeAgeSlider()
         setupMultiSelectListeners()
 
@@ -88,6 +89,13 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
     }
 
 
+    fun initializeSearchRadiusSlider() {
+        val search_radius_slider = binding.searchRadiusSlider
+        search_radius_slider.value =
+            m_user_explore_preferences?.search_radius_miles?.toFloat() ?: 25.0.toFloat()
+        search_radius_slider.addOnChangeListener { _, _, _ -> calculateSaveButtonClickability() }
+    }
+
     fun initializeAgeSlider() {
         val age_slider = binding.ageRangeSlider
         age_slider.setValues(
@@ -103,7 +111,8 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
                 min_animal_age = binding.ageRangeSlider.values[0].toDouble(),
                 max_animal_age = binding.ageRangeSlider.values[1].toDouble(),
                 animal_sizes = m_selected_sizes,
-                animal_types = m_selected_types
+                animal_types = m_selected_types,
+                search_radius_miles = binding.searchRadiusSlider.value.toDouble()
             )
         return explore_preferences
     }

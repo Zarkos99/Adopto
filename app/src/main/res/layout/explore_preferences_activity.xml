@@ -37,7 +37,24 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15sp"
+            android:gravity="center"
+            android:text="Search Radius (miles): "
+            android:textSize="25sp"
+            android:textColor="@color/primary_text" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/search_radius_slider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:value="25"
+            android:valueFrom="1"
+            android:valueTo="250"
+            android:stepSize="1"
+            app:thumbTint="@color/primary_button" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:gravity="center"
             android:text="Age: "
             android:textSize="25sp"

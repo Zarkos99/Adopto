@@ -13,23 +13,29 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10sp"
         android:layout_marginBottom="10sp"
-        android:text="Describe yourself:"
+        android:text="Describe your organization:"
         android:layout_gravity="start"
         android:textSize="25sp"
         android:textStyle="bold"
         android:textColor="@color/primary_text" />
 
-    <EditText
-        android:id="@+id/biography_field"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="80sp"
-        android:layout_marginStart="20sp"
-        android:layout_marginEnd="22sp"
-        android:background="@color/card_background"
-        android:gravity="start"
-        android:textColorHint="@color/secondary_text"
-        android:textColor="@color/secondary_text"
-        android:textSize="20sp" />
+        android:fillViewport="true">
+
+        <EditText
+            android:id="@+id/biography_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20sp"
+            android:layout_marginEnd="22sp"
+            android:background="@color/card_background"
+            android:gravity="start"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
+            android:textSize="20sp" />
+    </ScrollView>
 
     <TextView
         android:layout_width="wrap_content"
@@ -37,24 +43,29 @@
         android:layout_marginTop="20sp"
         android:layout_marginStart="10sp"
         android:layout_marginBottom="10sp"
-        android:text="Zip Code:"
+        android:text="Location:"
         android:layout_gravity="start"
         android:textSize="25sp"
         android:textStyle="bold"
         android:textColor="@color/primary_text" />
 
-    <EditText
-        android:id="@+id/zip_code_field"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="40sp"
-        android:layout_marginStart="20sp"
-        android:layout_marginEnd="22sp"
-        android:background="@color/card_background"
-        android:gravity="start"
-        android:textColorHint="@color/secondary_text"
-        android:textColor="@color/secondary_text"
-        android:autofillHints="postalCode"
-        android:textSize="20sp" />
+        android:layout_height="60sp"
+        android:fillViewport="true">
+
+        <TextView
+            android:id="@+id/location_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20sp"
+            android:layout_marginEnd="22sp"
+            android:background="@color/card_background"
+            android:gravity="start"
+            android:textColorHint="@color/secondary_text"
+            android:textColor="@color/secondary_text"
+            android:textSize="20sp" />
+    </ScrollView>
 
     <Button
         android:id="@+id/done_button"

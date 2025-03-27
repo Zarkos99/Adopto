@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:background="@color/primary_background"
-    tools:context=".authentication.NewAccountInfoActivity">
+    tools:context=".authentication.IsShelterActivity">
 
     <TextView
         android:layout_width="wrap_content"

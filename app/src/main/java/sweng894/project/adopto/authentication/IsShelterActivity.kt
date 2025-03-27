@@ -2,11 +2,12 @@ package sweng894.project.adopto.authentication
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.databinding.AuthNewAccountInfoLayoutBinding
 
-class NewAccountInfoActivity : AppCompatActivity() {
+class IsShelterActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
 
@@ -26,16 +27,17 @@ class NewAccountInfoActivity : AppCompatActivity() {
         val no_button_view = binding.noButton
 
         yes_button_view.setOnClickListener {
-            openActivity(ShelterProfileCreationActivity::class.java)
+            openActivity(true)
         }
 
         no_button_view.setOnClickListener {
-            openActivity(UserProfileCreationActivity::class.java)
+            openActivity(false)
         }
     }
 
-    private fun openActivity(activity_class: Class<out AppCompatActivity>) {
-        val intent = Intent(this, activity_class)
+    private fun openActivity(is_shelter: Boolean) {
+        val intent = Intent(this, UserProfileCreationActivity::class.java)
+        intent.putExtra("is_shelter", is_shelter)
         startActivity(intent)
         finish()
     }

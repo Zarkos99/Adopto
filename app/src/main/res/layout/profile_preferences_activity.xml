@@ -71,6 +71,30 @@
             android:textSize="20sp"
             android:background="@color/card_background" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location:"
+            android:layout_gravity="start"
+            android:textSize="25sp"
+            android:textColor="@color/primary_text" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="60sp"
+            android:fillViewport="true">
+
+            <TextView
+                android:id="@+id/location_field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/card_background"
+                android:gravity="start"
+                android:textColorHint="@color/secondary_text"
+                android:textColor="@color/secondary_text"
+                android:textSize="20sp" />
+        </ScrollView>
+
     </LinearLayout>
 
     <Button
