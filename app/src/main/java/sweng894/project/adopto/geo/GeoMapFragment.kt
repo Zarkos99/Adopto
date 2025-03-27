@@ -1,5 +1,6 @@
 package sweng894.project.adopto.geo
 
+import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -23,6 +24,10 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.AutocompleteActivity
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Animal
@@ -45,6 +50,8 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
     private val M_DEFAULT_INITIAL_LAT = 0.0
     private val M_DEFAULT_INITIAL_LONG = 0.0
     private val M_DEFAULT_SEARCH_RADIUS_MILES = 25.0
+    private val AUTOCOMPLETE_REQUEST_CODE = 1001
+
 
     private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
     private lateinit var m_map: GoogleMap
@@ -91,35 +98,17 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         _binding = GeoMapFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.getRoot()
 
-        val search_view = binding.geoSearchField
+        val search_button = binding.btnLocationSearch
 
         // Bind to LocalService.
         Intent(requireContext(), FirebaseDataServiceUsers::class.java).also { intent ->
             requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
 
-        instantiateSearchView()
-        search_view.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                val trimmed_query = query?.trim() ?: return false
-                val new_geo_point = LocationUtilities.zipToGeoPoint(requireContext(), trimmed_query)
-
-                if (new_geo_point != null) {
-                    m_location = new_geo_point
-                    moveCameraAndZoomForSearchRadius()
-                    applyMarkersToMap()
-                } else {
-                    Toast.makeText(requireContext(), "Location not found!", Toast.LENGTH_SHORT)
-                        .show()
-                }
-
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                return false
-            }
-        })
+        search_button.tooltipText = "Search for a city or ZIP code"
+        search_button.setOnClickListener {
+            launchPlacesAutocomplete()
+        }
 
         val map_fragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         map_fragment.getMapAsync(this)
@@ -138,6 +127,34 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == AUTOCOMPLETE_REQUEST_CODE) {
+            when (resultCode) {
+                Activity.RESULT_OK -> {
+                    val place = Autocomplete.getPlaceFromIntent(data!!)
+                    val latLng = place.latLng
+                    if (latLng != null) {
+                        m_location = GeoPoint(latLng.latitude, latLng.longitude)
+                        moveCameraAndZoomForSearchRadius()
+                        applyMarkersToMap()
+                    }
+                }
+
+                AutocompleteActivity.RESULT_ERROR -> {
+                    val status = Autocomplete.getStatusFromIntent(data!!)
+                    Log.e("GeoMapFragment", "Autocomplete error: ${status.statusMessage}")
+                }
+
+                Activity.RESULT_CANCELED -> {
+                    // User canceled the autocomplete
+                }
+            }
+        }
+    }
+
+
     override fun onStart() {
         super.onStart()
         Intent(requireContext(), FirebaseDataServiceUsers::class.java).also { intent ->
@@ -152,43 +169,21 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         m_map_ready = false
     }
 
-    fun instantiateSearchView() {
-        val search_view = binding.geoSearchField
-        search_view.post {
-            val search_edit_text =
-                search_view.findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
-            if (search_edit_text != null) {
-                search_edit_text.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.secondary_text
-                    )
-                )
-                search_edit_text.setHintTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.secondary_text
-                    )
-                )
-            } else {
-                Log.w("GeoMapFragment", "SearchView's EditText not found.")
-            }
+    private fun launchPlacesAutocomplete() {
+        val fields = listOf(
+            Place.Field.ID,
+            Place.Field.NAME,
+            Place.Field.LAT_LNG,
+            Place.Field.ADDRESS
+        )
 
-            search_view.isIconified = false
+        val intent = Autocomplete.IntentBuilder(
+            AutocompleteActivityMode.OVERLAY, fields
+        ).build(requireContext())
 
-            // Custom Insets to fix visual bug that would push map upwards when keyboard appears
-            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-                val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-                binding.geoSearchField.setPadding(
-                    binding.geoSearchField.paddingLeft,
-                    binding.geoSearchField.paddingTop,
-                    binding.geoSearchField.paddingRight,
-                    imeInsets.bottom + 20 // 20dp extra padding for margin
-                )
-                insets
-            }
-        }
+        startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE)
     }
+
 
     fun instantiateDefaultMapLocation() {
         if (m_is_firebase_service_bound && m_map_ready) {
