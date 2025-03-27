@@ -11,9 +11,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.SearchView
+import androidx.appcompat.widget.SearchView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -87,7 +89,7 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         savedInstanceState: Bundle?
     ): View {
         _binding = GeoMapFragmentBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        val root: View = binding.getRoot()
 
         val search_view = binding.geoSearchField
 
@@ -170,6 +172,20 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
                 )
             } else {
                 Log.w("GeoMapFragment", "SearchView's EditText not found.")
+            }
+
+            search_view.isIconified = false
+
+            // Custom Insets to fix visual bug that would push map upwards when keyboard appears
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+                val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+                binding.geoSearchField.setPadding(
+                    binding.geoSearchField.paddingLeft,
+                    binding.geoSearchField.paddingTop,
+                    binding.geoSearchField.paddingRight,
+                    imeInsets.bottom + 20 // 20dp extra padding for margin
+                )
+                insets
             }
         }
     }

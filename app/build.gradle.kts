@@ -81,6 +81,7 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.androidx.junit.ktx)
     implementation(libs.card.stack.view)
+    implementation(libs.places)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk) // Mockk for unit tests

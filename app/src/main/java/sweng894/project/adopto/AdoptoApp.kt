@@ -2,6 +2,7 @@ package sweng894.project.adopto
 
 import android.app.Application
 import androidx.annotation.StringRes
+import com.google.android.libraries.places.api.Places
 import sweng894.project.adopto.data.VectorUtils
 
 open class AdoptoApp : Application() {
@@ -18,6 +19,11 @@ open class AdoptoApp : Application() {
         super.onCreate()
         VectorUtils.initializeTypeEncoding(this)
         _instance = this
+
+        // Initialize Google Places
+        if (!Places.isInitialized()) {
+            Places.initialize(applicationContext, getString(R.string.google_places_key))
+        }
     }
 }
 
