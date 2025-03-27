@@ -498,8 +498,7 @@ fun recalculatePreferenceVector() {
     }
 }
 
-
-fun getRecommendations(onResult: (List<Animal>) -> Unit) {
+fun getRecommendations(location: GeoPoint? = null, onResult: (List<Animal>) -> Unit) {
     val TAG = "RecommendationEngine"
 
     val user_ref = Firebase.firestore.collection(Strings.get(R.string.firebase_collection_users))
@@ -541,6 +540,13 @@ fun getRecommendations(onResult: (List<Animal>) -> Unit) {
         }
         Log.d(TAG, "Excluding animal IDs: $excluded_animal_ids")
 
+        val effective_location = location ?: user.location
+        if (effective_location == null) {
+            Log.w(TAG, "No user location provided or stored – location filtering will be skipped.")
+        } else {
+            Log.d(TAG, "Using effective location for filtering: $effective_location")
+        }
+
         Firebase.firestore.collection(Strings.get(R.string.firebase_collection_animals))
             .get()
             .addOnSuccessListener { animal_docs ->
@@ -552,7 +558,8 @@ fun getRecommendations(onResult: (List<Animal>) -> Unit) {
                         Log.d(TAG, "Skipping excluded animal: ${animal.animal_id}")
                         return@mapNotNull null
                     }
-                    if (!animalWithinSearchParameters(user, animal)) {
+
+                    if (!animalWithinSearchParameters(user, animal, effective_location)) {
                         Log.d(
                             TAG,
                             "Skipping animal outside of search parameters: ${animal.animal_id}"
@@ -584,9 +591,8 @@ fun getRecommendations(onResult: (List<Animal>) -> Unit) {
     }
 }
 
-fun animalWithinSearchParameters(user: User, animal: Animal): Boolean {
-    val user_location = user.location
-    val radius_km = user.explore_preferences?.search_radius ?: 0.0
+fun animalWithinSearchParameters(user: User, animal: Animal, user_location: GeoPoint?): Boolean {
+    val radius_km = user.explore_preferences?.search_radius_miles ?: 0.0
     val allowed_sizes = user.explore_preferences?.animal_sizes
     val allowed_types = user.explore_preferences?.animal_types
     val min_age = user.explore_preferences?.min_animal_age

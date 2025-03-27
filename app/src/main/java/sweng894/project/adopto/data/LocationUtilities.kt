@@ -10,10 +10,10 @@ object LocationUtilities {
 
     private const val TAG = "LocationUtilities"
 
-    fun zipToGeoPoint(context: Context, zipCode: String): GeoPoint? {
+    fun zipToGeoPoint(context: Context, zip_code: String): GeoPoint? {
         val geocoder = Geocoder(context, Locale.getDefault())
         return try {
-            val results = geocoder.getFromLocationName(zipCode, 1)
+            val results = geocoder.getFromLocationName(zip_code, 1)
             if (!results.isNullOrEmpty()) {
                 val loc = results[0]
                 GeoPoint(loc.latitude, loc.longitude)

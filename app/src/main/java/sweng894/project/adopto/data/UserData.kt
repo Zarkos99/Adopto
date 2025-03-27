@@ -35,7 +35,7 @@ data class ExplorationPreferences(
     var max_animal_age: Double? = 30.0,
     var animal_sizes: MutableList<String> = mutableListOf(),
     var animal_types: MutableList<String> = mutableListOf(),
-    var search_radius: Double? = 50.0
+    var search_radius_miles: Double? = 20.0 // miles
 ) : Parcelable
 
 @Parcelize

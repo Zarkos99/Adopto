@@ -50,7 +50,7 @@ class ExploreFragment : Fragment(), CardStackListener {
 
     private lateinit var manager: CardStackLayoutManager
     private lateinit var adapter: AnimalCardAdapter
-    private val animal_list = mutableListOf<Animal>()
+    private val m_animal_list = mutableListOf<Animal>()
 
 
     // This property is only valid between onCreateView and
@@ -60,12 +60,12 @@ class ExploreFragment : Fragment(), CardStackListener {
 
     /** Start FirebaseDataService Setup **/
     private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
-    private var is_firebase_service_bound = false
+    private var m_is_firebase_service_bound = false
 
     /** Defines callbacks for service binding, passed to bindService().  */
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            is_firebase_service_bound = true
+            m_is_firebase_service_bound = true
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
             m_firebase_data_service = (service as FirebaseDataServiceUsers.LocalBinder).getService()
 
@@ -80,7 +80,7 @@ class ExploreFragment : Fragment(), CardStackListener {
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
-            is_firebase_service_bound = false
+            m_is_firebase_service_bound = false
         }
     }
 
@@ -122,7 +122,7 @@ class ExploreFragment : Fragment(), CardStackListener {
         initializeScrollControls()
         initializeCardHeight()
         setupCardStackView()
-        animal_list.clear()
+        m_animal_list.clear()
     }
 
 
@@ -203,14 +203,14 @@ class ExploreFragment : Fragment(), CardStackListener {
     private fun setupCardStackView() {
         manager = initializeManager()
 
-        adapter = AnimalCardAdapter(animal_list)
+        adapter = AnimalCardAdapter(m_animal_list)
         binding.cardStackView.layoutManager = manager
         binding.cardStackView.adapter = adapter
         binding.cardStackView.itemAnimator = DefaultItemAnimator()
     }
 
     private fun loadAnimals() {
-        if (!is_firebase_service_bound) {
+        if (!m_is_firebase_service_bound) {
             Log.d(
                 "TRACE",
                 "Firebase service not bound. Need user data to determine animal exploration filters."
@@ -219,8 +219,8 @@ class ExploreFragment : Fragment(), CardStackListener {
         }
 
         getRecommendations { recommended_animals ->
-            animal_list.clear()
-            animal_list.addAll(recommended_animals)
+            m_animal_list.clear()
+            m_animal_list.addAll(recommended_animals)
             adapter.notifyDataSetChanged()
 
         }
@@ -228,7 +228,7 @@ class ExploreFragment : Fragment(), CardStackListener {
 
     override fun onCardSwiped(direction: Direction) {
         Log.d("TRACE", "Card swiped $direction ")
-        val animal = animal_list[manager.topPosition - 1] // Current swiped animal
+        val animal = m_animal_list[manager.topPosition - 1] // Current swiped animal
         var is_animal_viewed = false
 
         when (direction) {

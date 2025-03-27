@@ -6,24 +6,32 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.SearchView
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.flexbox.FlexDirection
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.R
+import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.LocationUtilities
+import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
+import sweng894.project.adopto.database.fetchAllAnimals
+import sweng894.project.adopto.database.haversineDistance
 import sweng894.project.adopto.databinding.GeoMapFragmentBinding
+import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivity
+import kotlin.math.log2
 
 class GeoMapFragment : Fragment(), OnMapReadyCallback {
     private var _binding: GeoMapFragmentBinding? = null
@@ -32,15 +40,16 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var m_recycler_view: RecyclerView
-    private lateinit var m_recycler_view_container: ConstraintLayout
-    private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
-    private lateinit var m_geo_sunset_adapter: GeoListAdapter
-    private lateinit var mMap: GoogleMap
-    private var m_service_bound: Boolean = false
-    private var m_map_ready: Boolean = false
-    private var m_query = ""
+    private val M_DEFAULT_INITIAL_LAT = 0.0
+    private val M_DEFAULT_INITIAL_LONG = 0.0
+    private val M_DEFAULT_SEARCH_RADIUS_MILES = 25.0
 
+    private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
+    private lateinit var m_map: GoogleMap
+    private var m_is_firebase_service_bound: Boolean = false
+    private var m_map_ready: Boolean = false
+    private var m_location: GeoPoint = GeoPoint(M_DEFAULT_INITIAL_LAT, M_DEFAULT_INITIAL_LONG)
+    private var m_prev_user_data: User? = null
 
     /** Defines callbacks for service binding, passed to bindService().  */
     private val connection = object : ServiceConnection {
@@ -48,21 +57,27 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
             val binder = service as FirebaseDataServiceUsers.LocalBinder
             m_firebase_data_service = binder.getService()
-            m_service_bound = true
+            m_is_firebase_service_bound = true
 
-            initializeRecyclerViewLayoutManager()
-            initializeRecyclerViewAdapter()
-            applyMarkersToMap()
+            if (m_map_ready) {
+                instantiateDefaultMapLocation()
+                applyMarkersToMap()
+                setupMapMarkerListeners()
+            }
+
             // Listen to user data updates
             m_firebase_data_service.registerCallback {
-                // Handle data update
-                applyMarkersToMap()
-                calculatePostsForQuery()
+                if (m_prev_user_data?.explore_preferences?.search_radius_miles != m_firebase_data_service.current_user_data?.explore_preferences?.search_radius_miles) {
+                    // Handle search radius update
+                    moveCameraAndZoomForSearchRadius()
+                }
+
+                m_prev_user_data = m_firebase_data_service.current_user_data
             }
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
-            m_service_bound = false
+            m_is_firebase_service_bound = false
         }
     }
 
@@ -74,24 +89,29 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         _binding = GeoMapFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        m_recycler_view_container = binding.geoRecyclerViewContainer
-        val close_list_button = binding.closePostsList
-        m_recycler_view = binding.geoRecyclerView
-        m_recycler_view_container.visibility = View.GONE
-        val search_view = binding.geoSunsetsSearchField
+        val search_view = binding.geoSearchField
 
         // Bind to LocalService.
         Intent(requireContext(), FirebaseDataServiceUsers::class.java).also { intent ->
             requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
 
+        instantiateSearchView()
         search_view.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                val nonnull_query = query?.trim() ?: ""
-                m_query = nonnull_query
-                m_recycler_view_container.visibility = View.VISIBLE
-                calculatePostsForQuery()
-                return false
+                val trimmed_query = query?.trim() ?: return false
+                val new_geo_point = LocationUtilities.zipToGeoPoint(requireContext(), trimmed_query)
+
+                if (new_geo_point != null) {
+                    m_location = new_geo_point
+                    moveCameraAndZoomForSearchRadius()
+                    applyMarkersToMap()
+                } else {
+                    Toast.makeText(requireContext(), "Location not found!", Toast.LENGTH_SHORT)
+                        .show()
+                }
+
+                return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
@@ -99,22 +119,21 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
             }
         })
 
-        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
-        close_list_button.setOnClickListener {
-            m_recycler_view_container.visibility = View.GONE
-        }
+        val map_fragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        map_fragment.getMapAsync(this)
 
         return root
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
+        m_map = googleMap
         m_map_ready = true
-        val initialLocation = LatLng(-34.0, 151.0)
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, 10f))
-        applyMarkersToMap()
+
+        if (m_is_firebase_service_bound) {
+            instantiateDefaultMapLocation()
+            applyMarkersToMap()
+            setupMapMarkerListeners()
+        }
     }
 
     override fun onStart() {
@@ -127,59 +146,112 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
     override fun onStop() {
         super.onStop()
         requireActivity().unbindService(connection)
-        m_service_bound = false
+        m_is_firebase_service_bound = false
         m_map_ready = false
     }
 
-    private fun initializeRecyclerViewAdapter() {
-        // Initialize recyclerview adaptor
-        m_geo_sunset_adapter = GeoListAdapter(requireContext())
-        m_recycler_view.adapter = m_geo_sunset_adapter
-        calculatePostsForQuery()
-    }
-
-    private fun initializeRecyclerViewLayoutManager() {
-        // Initialize FlexBox Layout Manager for recyclerview to allow wrapping items to next line
-        val layout_manager = FlexboxLayoutManager(requireContext())
-        layout_manager.apply {
-            flexDirection = FlexDirection.ROW
-            justifyContent = JustifyContent.FLEX_START
+    fun instantiateSearchView() {
+        val search_view = binding.geoSearchField
+        search_view.post {
+            val search_edit_text =
+                search_view.findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
+            if (search_edit_text != null) {
+                search_edit_text.setTextColor(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.secondary_text
+                    )
+                )
+                search_edit_text.setHintTextColor(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.secondary_text
+                    )
+                )
+            } else {
+                Log.w("GeoMapFragment", "SearchView's EditText not found.")
+            }
         }
-        m_recycler_view.layoutManager = layout_manager
     }
 
-    private fun calculatePostsForQuery() {
-//        val user_posts = m_firebase_data_service.current_user_data?.posts
-//        val new_user_posts = arrayListOf<SunsetData>()
-//        user_posts?.forEach {
-//            if (m_query.isEmpty() || m_query == "*" || it.title?.lowercase() == m_query.lowercase()) new_user_posts.add(
-//                it
-//            )
-//        }
+    fun instantiateDefaultMapLocation() {
+        if (m_is_firebase_service_bound && m_map_ready) {
+            m_location =
+                m_firebase_data_service.current_user_data?.location ?: m_location
+            moveCameraAndZoomForSearchRadius()
+        }
+    }
 
-//        m_geo_sunset_adapter.sunset_posts = new_user_posts
-//        m_geo_sunset_adapter.notifyDataSetChanged()
+    fun moveCameraAndZoomForSearchRadius() {
+        if (m_is_firebase_service_bound && m_map_ready) {
+            val user_data = m_firebase_data_service.current_user_data
+            m_map.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(m_location.latitude, m_location.longitude),
+                    radiusToZoom(
+                        user_data?.explore_preferences?.search_radius_miles
+                            ?: M_DEFAULT_SEARCH_RADIUS_MILES
+                    )
+                )
+            )
+        }
+    }
+
+    fun radiusToZoom(radius_in_miles: Double): Float {
+        // Approximate: Earth's circumference ≈ 24,901 miles
+        // 256 pixels at zoom level 0 equals full world map (≈ 156543 meters/pixel at equator)
+        val scale = radius_in_miles / 1.0 // 1 mile per unit
+        return (16 - log2(scale)).toFloat()
     }
 
     private fun applyMarkersToMap() {
-//        if (m_service_bound && m_map_ready) {
-//            val current_user_posts = m_firebase_data_service.current_user_data?.posts
-//
-//            if (current_user_posts != null) {
-//                var new_lat_lng = LatLng(0.0, 0.0)
-//                for (post in current_user_posts) {
-//                    if (post.latitude != null && post.longitude != null) {
-//                        new_lat_lng =
-//                            LatLng(post.latitude.toDouble(), post.longitude.toDouble())
-//                        mMap.addMarker(
-//                            MarkerOptions()
-//                                .position(new_lat_lng)
-//                                .title(post.title)
-//                        )
-//                    }
-//                }
-//                mMap.moveCamera(CameraUpdateFactory.newLatLng(new_lat_lng))
-//            }
-//        }
+        if (m_is_firebase_service_bound && m_map_ready) {
+
+            getNearbyAnimalsForMap { animals ->
+                // Clear existing overlays and markers
+                m_map.clear()
+
+                for (animal in animals) {
+                    val latLng = LatLng(animal.location!!.latitude, animal.location!!.longitude)
+                    val marker = m_map.addMarker(
+                        MarkerOptions()
+                            .position(latLng)
+                            .title(animal.animal_name ?: "Unnamed Animal")
+                    )
+                    marker?.tag = animal.animal_id // Store ID for click callback
+                }
+            }
+        }
+    }
+
+    fun getNearbyAnimalsForMap(
+        onComplete: (List<Animal>) -> Unit
+    ) {
+        val user = m_firebase_data_service.current_user_data
+        val search_radius = user?.explore_preferences?.search_radius_miles ?: 0.0
+        val effective_location = m_location
+
+        fetchAllAnimals { all_animals ->
+            val nearby_animals = all_animals.filter { animal ->
+                animal.location != null &&
+                        haversineDistance(effective_location, animal.location!!) <= search_radius
+            }
+
+            Log.d("MapSearch", "Found ${nearby_animals.size} animals within $search_radius km")
+            onComplete(nearby_animals)
+        }
+    }
+
+    fun setupMapMarkerListeners() {
+        m_map.setOnMarkerClickListener { marker ->
+            val animalId = marker.tag as? String
+            if (animalId != null) {
+                val intent = Intent(requireContext(), AnimalProfileViewingActivity::class.java)
+                intent.putExtra("animal_id", animalId)
+                startActivity(intent)
+            }
+            true
+        }
+
     }
 }
