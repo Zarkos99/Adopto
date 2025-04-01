@@ -69,7 +69,6 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
         binding = AnimalProfileViewingLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Retrieve data using the same key
         m_animal_id = intent.getStringExtra("animal_id")
 
         getUserData(getCurrentUserId()) { user ->
@@ -187,33 +186,19 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
     }
 
     fun getAnimalAndExecuteCallback(animal_id: String?, onGetDataSuccess: (() -> Unit)? = null) {
-        lifecycleScope.launch {
-            try {
-                m_selected_animal = getAnimalData(animal_id!!)
-                if (m_selected_animal == null) {
-                    Log.e("AnimalProfileViewingActivity", "Database queried animal returned null.")
-                    //Display error message
-                    Toast.makeText(
-                        this@AnimalProfileViewingActivity,
-                        "Cannot find animal: $animal_id",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finish()
-                } else {
-                    onGetDataSuccess?.invoke()
-                }
-            } catch (e: Exception) {
-                Log.w(
-                    "AnimalProfileViewingActivity",
-                    "Error fetching animal $animal_id: ${e.message}"
-                )
-                // If db query fails, display a message to the user
+        getAnimalData(animal_id!!) { selected_animal ->
+            m_selected_animal = selected_animal
+            if (m_selected_animal == null) {
+                Log.e("AnimalProfileViewingActivity", "Database queried animal returned null.")
+                //Display error message
                 Toast.makeText(
                     this@AnimalProfileViewingActivity,
-                    "Database Query error: ${e.message}",
+                    "Cannot find animal: $animal_id",
                     Toast.LENGTH_LONG
                 ).show()
                 finish()
+            } else {
+                onGetDataSuccess?.invoke()
             }
         }
     }

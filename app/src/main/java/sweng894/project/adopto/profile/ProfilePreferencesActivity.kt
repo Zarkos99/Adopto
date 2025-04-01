@@ -8,14 +8,10 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
@@ -28,6 +24,7 @@ import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.updateDataField
+import sweng894.project.adopto.database.updateUserDisplayName
 import sweng894.project.adopto.databinding.ProfilePreferencesActivityBinding
 
 class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :
@@ -99,17 +96,15 @@ class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.g
 
             val current_auth_user = auth.currentUser
             if (current_auth_user?.displayName != new_display_name) {
-                current_auth_user?.updateProfile(userProfileChangeRequest {
-                    displayName = new_display_name
-                })
+                updateUserDisplayName(new_display_name)
             }
             if (current_auth_user?.email != new_email) {
                 current_auth_user?.verifyBeforeUpdateEmail(new_email)
                     ?.addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            Log.d("NewEmailVerification", "New email successfully verified")
+                            Log.d("UserProfileCreationActivity", "New email successfully verified")
                         } else {
-                            Log.e("NewEmailVerification", "New email failed to verify")
+                            Log.e("UserProfileCreationActivity", "New email failed to verify")
                         }
                     }
             }
@@ -150,7 +145,8 @@ class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.g
 
 
     fun initializeLocationTextView() {
-        val current_user_location = m_firebase_data_service.current_user_data?.location
+        val current_user_location =
+            m_firebase_data_service.current_user_data?.location
         if (current_user_location != null) {
             binding.locationField.text = geoPointToFormattedAddress(this, current_user_location)
         }

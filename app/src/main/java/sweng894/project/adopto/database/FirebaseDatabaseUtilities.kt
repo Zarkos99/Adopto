@@ -1,10 +1,13 @@
 package sweng894.project.adopto.database
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
@@ -35,31 +38,18 @@ fun getCurrentUserId(): String {
     return user_id.toString()
 }
 
-/**
- * Get user data synchronously. Will lock main thread here to wait for data to return.
- */
-suspend fun getUserData(user_id: String): User? {
-    return withTimeoutOrNull(10000) {  // 🔥 Timeout after 10 seconds
-        try {
-            val document = Firebase.firestore
-                .collection(Strings.get(R.string.firebase_collection_users))
-                .document(user_id)
-                .get()
-                .await()
+fun updateUserDisplayName(new_display_name: String) {
+    val firebase_user = Firebase.auth.currentUser
+    firebase_user?.updateProfile(userProfileChangeRequest {
+        displayName = new_display_name
+    })
 
-            if (document.exists()) {
-                document.toObject(User::class.java)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            println("ERROR: Firestore query failed - ${e.message}")
-            null
-        }
-    } ?: run {
-        println("ERROR: Firestore query timed out after 5 seconds")
-        null
-    }
+    updateDataField(
+        Strings.get(R.string.firebase_collection_users),
+        getCurrentUserId(),
+        User::display_name,
+        new_display_name
+    )
 }
 
 fun getUserData(
@@ -80,30 +70,49 @@ fun getUserData(
         }
 }
 
+fun fetchAllShelters(include_current_user: Boolean = false, onComplete: (List<User>) -> Unit) {
+    val firebase_database = Firebase.firestore
+    val user_list = mutableListOf<User>()
 
-suspend fun getAnimalData(animal_id: String): Animal? {
-    return withTimeoutOrNull(10000) {  // 🔥 Timeout after 10 seconds
-        try {
-            val document = Firebase.firestore
-                .collection(Strings.get(R.string.firebase_collection_animals))
-                .document(animal_id)
-                .get()
-                .await()
+    // Fetch all documents from the "Users" collection
+    firebase_database.collection(Strings.get(R.string.firebase_collection_users))
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+                val user = document.toObject(User::class.java)
+                if (user.is_shelter) {
+                    if (include_current_user || getCurrentUserId() != user.user_id) {
+                        user_list.add(user)
+                    }
+                }
+            }
+            onComplete(user_list) // Return the list after fetching all documents
+        }
+        .addOnFailureListener { exception ->
+            Log.e("FirebaseDatabaseUtilities ERROR", "Failed to fetch users data.", exception)
+            onComplete(emptyList()) // Return empty list if an error occurs
+        }
+}
 
+fun getAnimalData(animal_id: String, onComplete: (Animal?) -> Unit) {
+    // Firestore query
+    Firebase.firestore
+        .collection(Strings.get(R.string.firebase_collection_animals))
+        .document(animal_id)
+        .get()
+        .addOnSuccessListener { document ->
             if (document.exists()) {
-                document.toObject(Animal::class.java)
+                val animal = document.toObject(Animal::class.java)
+                onComplete(animal)
             } else {
                 Log.w("getAnimalData", "Document does not exist, returning null.")
-                null
+                onComplete(null)
             }
-        } catch (e: Exception) {
-            println("ERROR: Firestore query failed - ${e.message}")
-            null
         }
-    } ?: run {
-        println("ERROR: Firestore query timed out or failed to find animal: $animal_id")
-        null
-    }
+        .addOnFailureListener { e ->
+            println("ERROR: Firestore query failed - ${e.message}")
+            onComplete(null)
+        }
 }
 
 fun fetchAnimals(
@@ -652,7 +661,7 @@ fun animalWithinSearchParameters(user: User, animal: Animal, user_location: GeoP
 
 
 fun haversineDistance(a: GeoPoint, b: GeoPoint): Double {
-    val R = 6371.0 // Earth radius in km
+    val R = 3958.8 // Earth radius in miles
     val d_lat = Math.toRadians(b.latitude - a.latitude)
     val d_lon = Math.toRadians(b.longitude - a.longitude)
     val lat1 = Math.toRadians(a.latitude)

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,11 +15,33 @@ import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
+import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.fetchAnimals
+import sweng894.project.adopto.database.getUserData
 import sweng894.project.adopto.databinding.ProfileAnimalsListFragmentBinding
 
-class AdoptingAnimalsFragment : Fragment() {
+class ProfileAnimalsFragment : Fragment() {
+
+    companion object {
+        private val USER_INPUT = "user_id"
+        private val FRAGMENT_TYPE_INPUT = "fragment_type"
+
+        fun newInstance(
+            user_id: String?, // Optional argument, when provided, use this over the firebase user service
+            fragment_list_type: AnimalFragmentListType //Non-optional argument
+        ): ProfileAnimalsFragment {
+            val fragment = ProfileAnimalsFragment()
+            val args = Bundle()
+            if (!user_id.isNullOrEmpty()) {
+                args.putString(USER_INPUT, user_id)
+            }
+            args.putString(FRAGMENT_TYPE_INPUT, fragment_list_type.name)
+            fragment.arguments = args
+            return fragment
+        }
+    }
+
     private var _binding: ProfileAnimalsListFragmentBinding? = null
 
     // This property is only valid between onCreateView and
@@ -26,6 +49,9 @@ class AdoptingAnimalsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var m_animals_list_adaptor: ProfileAnimalsAdapter
+    private var m_user: User? = null
+    private var m_user_provided = false
+    private lateinit var m_fragment_list_type: AnimalFragmentListType
 
     /** Start FirebaseDataService Setup **/
     private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
@@ -42,11 +68,18 @@ class AdoptingAnimalsFragment : Fragment() {
             initializeRecyclerViewLayoutManager()
 
             // Fetch and display animals when data is ready
-            fetchAndDisplayUserAdoptingAnimals()
+            fetchAndDisplayUserAnimals()
+
+            if (!m_user_provided) {
+                Log.d(
+                    "ProfileAnimalsFragment",
+                    "Viewing user: ${m_firebase_data_service.current_user_data?.user_id}"
+                )
+            }
 
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
-                fetchAndDisplayUserAdoptingAnimals() // Refresh when Firebase updates
+                fetchAndDisplayUserAnimals() // Refresh when Firebase updates
             }
         }
 
@@ -54,14 +87,18 @@ class AdoptingAnimalsFragment : Fragment() {
     }
 
     private fun bindToFirebaseService() {
-        Intent(activity, FirebaseDataServiceUsers::class.java).also { intent ->
-            requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        if (m_user == null) {
+            Intent(activity, FirebaseDataServiceUsers::class.java).also { intent ->
+                requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            }
         }
     }
 
     private fun unbindFromFirebaseService() {
-        m_service_connected = false
-        requireActivity().unbindService(connection)
+        if (m_user == null) {
+            m_service_connected = false
+            requireActivity().unbindService(connection)
+        }
     }
 
     override fun onStart() {
@@ -79,7 +116,7 @@ class AdoptingAnimalsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (m_service_connected) {
-            fetchAndDisplayUserAdoptingAnimals() // Refresh when View is created
+            fetchAndDisplayUserAnimals() // Refresh when View is created
         }
     }
 
@@ -89,6 +126,34 @@ class AdoptingAnimalsFragment : Fragment() {
     ): View {
         _binding = ProfileAnimalsListFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
+        val user_id = arguments?.getString(USER_INPUT)
+        m_user_provided = arguments?.containsKey(USER_INPUT) == true
+
+        val type_name = arguments?.getString(FRAGMENT_TYPE_INPUT)
+        m_fragment_list_type = AnimalFragmentListType.valueOf(type_name ?: "UNKNOWN")
+
+        if (m_fragment_list_type == AnimalFragmentListType.UNKNOWN) {
+            Log.e(
+                "ProfileAnimalsFragment",
+                "Invalid Fragment List Type provided: $type_name. Returning early."
+            )
+            return root
+        }
+
+        if (m_user_provided) {
+            getUserData(user_id!!) { user ->
+                m_user = user
+                // Will not be initialized after firebase service has connected so initialize it here
+                initializeRecyclerViewAdapter()
+                initializeRecyclerViewLayoutManager()
+
+                // Fetch and display animals when data is ready
+                fetchAndDisplayUserAnimals()
+
+                Log.d("ProfileAnimalsFragment", "Viewing user: ${m_user?.user_id}")
+            }
+
+        }
 
         return root
     }
@@ -112,9 +177,34 @@ class AdoptingAnimalsFragment : Fragment() {
         animals_recycler_view.layoutManager = layout_manager
     }
 
-    fun fetchAndDisplayUserAdoptingAnimals() {
-        val user = m_firebase_data_service.current_user_data
-        val user_animal_ids = user?.adopting_animal_ids ?: emptyList()
+    fun fetchAndDisplayUserAnimals() {
+        val user: User?
+
+        if (m_user_provided) {
+            user = m_user
+        } else {
+            user = m_firebase_data_service.current_user_data
+        }
+
+        val user_animal_ids: List<String>
+
+        when (m_fragment_list_type) {
+            AnimalFragmentListType.LIKED -> {
+                user_animal_ids = (user?.liked_animal_ids ?: emptyList())
+            }
+
+            AnimalFragmentListType.ADOPTING -> {
+                user_animal_ids = (user?.adopting_animal_ids ?: emptyList())
+            }
+
+            AnimalFragmentListType.HOSTED -> {
+                user_animal_ids = (user?.hosted_animal_ids ?: emptyList())
+            }
+
+            else -> {
+                user_animal_ids = emptyList()
+            }
+        }
 
         fetchAnimals(user_animal_ids) { animal_list ->
             activity?.runOnUiThread {

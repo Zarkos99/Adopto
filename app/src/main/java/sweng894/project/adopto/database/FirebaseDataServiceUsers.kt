@@ -34,7 +34,7 @@ class FirebaseDataServiceUsers : Service() {
     /**
      * Execute all callbacks
      */
-    fun callCallbacks() {
+    private fun callCallbacks() {
         for (callback in m_user_data_update_callbacks) {
             callback()
         }

@@ -12,6 +12,7 @@ import java.util.UUID
 @Parcelize
 data class User(
     var user_id: String = "",
+    var display_name: String = "",
     @get:PropertyName("is_shelter")
     @set:PropertyName("is_shelter")
     var is_shelter: Boolean = false,
@@ -53,5 +54,4 @@ data class Animal(
     var supplementary_image_paths: MutableList<String> = mutableListOf(),
     var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
     var location: @RawValue GeoPoint? = null
-) : Parcelable {
-}
+) : Parcelable

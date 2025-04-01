@@ -7,8 +7,7 @@
     android:layout_height="match_parent"
     android:gravity="top"
     android:background="@color/primary_background"
-    android:fitsSystemWindows="true"
-    tools:context=".profile.ProfileFragment">
+    android:fitsSystemWindows="true">
 
     <!--    User Details  -->
     <LinearLayout
@@ -57,13 +56,6 @@
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true" />
         </LinearLayout>
-
-        <!-- Preferences button -->
-        <Button
-            android:id="@+id/preferences_button"
-            android:layout_width="50sp"
-            android:layout_height="wrap_content"
-            android:background="@drawable/baseline_settings_24" />
     </LinearLayout>
 
     <LinearLayout
@@ -84,18 +76,6 @@
             android:inputType="text"
             android:textColor="@color/primary_text"
             android:textSize="20sp" />
-
-        <Button
-            android:id="@+id/add_animal_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_marginEnd="10sp"
-            android:contentDescription="Add animal to a shelter profile"
-            android:textSize="20sp"
-            android:textColor="@color/secondary_text"
-            android:text="Post\nAnimal"
-            android:background="@drawable/button_style_primary" />
     </LinearLayout>
 
     <!-- TabLayout for switching between Saved Animals and My Animals -->
@@ -110,11 +90,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/liked_animals_tab_name" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/adopting_animals_tab_name" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"

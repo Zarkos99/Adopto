@@ -1,6 +1,5 @@
 package sweng894.project.adopto.geo
 
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -11,12 +10,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import androidx.appcompat.widget.SearchView
-import android.widget.Toast
-import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -24,22 +17,16 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.widget.Autocomplete
-import com.google.android.libraries.places.widget.AutocompleteActivity
-import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.R
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper
-import sweng894.project.adopto.custom.PlacesAutocompleteHelper.AUTOCOMPLETE_REQUEST_CODE
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityResult
-import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.fetchAllAnimals
+import sweng894.project.adopto.database.fetchAllShelters
 import sweng894.project.adopto.database.haversineDistance
 import sweng894.project.adopto.databinding.GeoMapFragmentBinding
-import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivity
+import sweng894.project.adopto.profile.UserProfileViewingActivity
 import kotlin.math.log2
 
 class GeoMapFragment : Fragment(), OnMapReadyCallback {
@@ -194,48 +181,56 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
 
     private fun applyMarkersToMap() {
         if (m_is_firebase_service_bound && m_map_ready) {
-
-            getNearbyAnimalsForMap { animals ->
+            getNearbySheltersForMap { shelters ->
                 // Clear existing overlays and markers
                 m_map.clear()
 
-                for (animal in animals) {
-                    val latLng = LatLng(animal.location!!.latitude, animal.location!!.longitude)
+                for (shelter in shelters) {
+                    val latLng = LatLng(shelter.location!!.latitude, shelter.location!!.longitude)
                     val marker = m_map.addMarker(
                         MarkerOptions()
                             .position(latLng)
-                            .title(animal.animal_name ?: "Unnamed Animal")
+                            .title(shelter.display_name.ifEmpty { "Unnamed Shelter" })
                     )
-                    marker?.tag = animal.animal_id // Store ID for click callback
+                    marker?.tag = shelter.user_id // Store ID for click callback
                 }
             }
         }
     }
 
-    fun getNearbyAnimalsForMap(
-        onComplete: (List<Animal>) -> Unit
+    fun getNearbySheltersForMap(
+        onComplete: (List<User>) -> Unit
     ) {
         val user = m_firebase_data_service.current_user_data
         val search_radius = user?.explore_preferences?.search_radius_miles ?: 0.0
         val effective_location = m_location
 
-        fetchAllAnimals { all_animals ->
-            val nearby_animals = all_animals.filter { animal ->
-                animal.location != null &&
-                        haversineDistance(effective_location, animal.location!!) <= search_radius
+        fetchAllShelters { all_shelters ->
+
+            Log.d("### DEBUG", "effective_location: $effective_location")
+            Log.d("### DEBUG", "all_shelters: $all_shelters")
+
+            val nearby_shelters = all_shelters.filter { shelter ->
+                shelter.location != null &&
+                        haversineDistance(
+                            effective_location,
+                            shelter.location!!
+                        ) <= search_radius
             }
 
-            Log.d("MapSearch", "Found ${nearby_animals.size} animals within $search_radius km")
-            onComplete(nearby_animals)
+            Log.d("### DEBUG", "nearby_shelters: $nearby_shelters")
+
+            Log.d("MapSearch", "Found ${nearby_shelters.size} shelters within $search_radius miles")
+            onComplete(nearby_shelters)
         }
     }
 
     fun setupMapMarkerListeners() {
         m_map.setOnMarkerClickListener { marker ->
-            val animalId = marker.tag as? String
-            if (animalId != null) {
-                val intent = Intent(requireContext(), AnimalProfileViewingActivity::class.java)
-                intent.putExtra("animal_id", animalId)
+            val shelter_id = marker.tag as? String
+            if (shelter_id != null) {
+                val intent = Intent(requireContext(), UserProfileViewingActivity::class.java)
+                intent.putExtra("shelter_id", shelter_id)
                 startActivity(intent)
             }
             true

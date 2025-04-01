@@ -5,9 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.addUserToDatabase
@@ -66,33 +64,24 @@ class AuthenticationActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(username, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        lifecycleScope.launch {
-                            try {
-                                val user_data = getUserData(getCurrentUserId())
-                                if (user_data != null) {
-                                    Log.d("TRACE", "User fetched: ${user_data.user_id}")
-                                    if (user_data.need_info) {
-                                        // Sign in success, need additional account info, display account information View
-                                        openActivity(IsShelterActivity::class.java)
-                                    } else {
-                                        // Sign in successful and no need for additional info, display navigation default view
-                                        openActivity(NavigationBaseActivity::class.java)
-                                    }
-                                } else {
-                                    Log.w("AuthenticationActivity", "User not found")
-                                    // Sign in successful but no user data
-                                    addUserToDatabase(User(need_info = true))
+                        getUserData(getCurrentUserId()) { user_data ->
+                            if (user_data != null) {
+                                Log.d(
+                                    "AuthenticationActivity",
+                                    "User fetched: ${user_data.user_id}"
+                                )
+                                if (user_data.need_info) {
+                                    // Sign in success, need additional account info, display account information View
                                     openActivity(IsShelterActivity::class.java)
+                                } else {
+                                    // Sign in successful and no need for additional info, display navigation default view
+                                    openActivity(NavigationBaseActivity::class.java)
                                 }
-                            } catch (e: Exception) {
-                                Log.w("AuthenticationActivity", "Error fetching user: ${e.message}")
-
-                                // If db query fails, display a message to the user
-                                Toast.makeText(
-                                    this@AuthenticationActivity,
-                                    "Database Query error: ${e.message}",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                            } else {
+                                Log.w("AuthenticationActivity", "User not found")
+                                // Sign in successful but no user data
+                                addUserToDatabase(User(need_info = true))
+                                openActivity(IsShelterActivity::class.java)
                             }
                         }
                     } else {
@@ -136,6 +125,10 @@ class AuthenticationActivity : AppCompatActivity() {
             auth.createUserWithEmailAndPassword(username, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) { // Registration success
+                        Log.d(
+                            "AuthenticationActivity",
+                            "Registration successful, adding user to database."
+                        )
                         // Display navigation default View - enlarged map
                         addUserToDatabase(User(need_info = true))
 

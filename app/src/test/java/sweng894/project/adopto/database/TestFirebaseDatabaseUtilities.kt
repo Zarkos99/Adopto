@@ -275,7 +275,7 @@ class FirebaseDatabaseUtilitiesTest {
 
         verify(exactly = 1) {
             mockDocumentReference.update(
-                "saved_animal_ids",
+                "liked_animal_ids",
                 match { it is FieldValue })
         }
     }

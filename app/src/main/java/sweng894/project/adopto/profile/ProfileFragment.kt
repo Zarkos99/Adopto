@@ -21,12 +21,11 @@ import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
+import sweng894.project.adopto.Strings
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.ProfileFragmentBinding
-import sweng894.project.adopto.profile.Tabs.AdoptingAnimalsFragment
-import sweng894.project.adopto.profile.Tabs.MyAnimalsFragment
+import sweng894.project.adopto.profile.Tabs.AnimalFragmentListType
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
-import sweng894.project.adopto.profile.Tabs.SavedAnimalsFragment
 import sweng894.project.adopto.profile.animalprofile.AnimalProfileCreationActivity
 
 
@@ -169,9 +168,16 @@ class ProfileFragment : Fragment() {
         val view_pager = binding.viewPager
 
         val is_shelter = m_firebase_data_service.current_user_data?.is_shelter ?: false
-        val tab_count = if (is_shelter) 3 else 2
 
-        val tab_adapter = ProfileTabAdapter(requireActivity(), tab_count)
+        val visible_tabs = mutableListOf(
+            AnimalFragmentListType.LIKED,
+            AnimalFragmentListType.ADOPTING
+        )
+        if (is_shelter) {
+            visible_tabs.add(AnimalFragmentListType.HOSTED)
+        }
+
+        val tab_adapter = ProfileTabAdapter(requireActivity(), visible_tabs)
         view_pager.adapter = tab_adapter
         view_pager.offscreenPageLimit = 1 // Ensures fragments are refreshed when switched
 
@@ -179,59 +185,25 @@ class ProfileFragment : Fragment() {
 
         // Sync TabLayout with ViewPager2
         TabLayoutMediator(tab_layout, view_pager) { tab, position ->
-            tab.text = when {
-                position == 0 -> "Saved"
-                position == 1 -> "Adopting"
-                is_shelter && position == 2 -> "Hosted"
-                else -> null
+            tab.text = when (tab_adapter.getTabTypeAt(position)) {
+                AnimalFragmentListType.LIKED -> Strings.get(R.string.liked_animals_tab_name)
+                AnimalFragmentListType.ADOPTING -> Strings.get(R.string.adopting_animals_tab_name)
+                AnimalFragmentListType.HOSTED -> Strings.get(R.string.hosted_animals_tab_name)
+                else -> "Unknown"
             }
         }.attach()
 
         // Listen for tab selection changes
         tab_layout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                when (tab?.position) {
-                    0 -> { // "Saved" tab
-                        val fragment =
-                            childFragmentManager.findFragmentByTag("f0") as? SavedAnimalsFragment
-                        fragment?.fetchAndDisplayUserSavedAnimals() // Refresh data
-                    }
-
-                    1 -> { // "Adopting" tab
-                        val fragment =
-                            childFragmentManager.findFragmentByTag("f1") as? AdoptingAnimalsFragment
-                        fragment?.fetchAndDisplayUserAdoptingAnimals() // Refresh data
-                    }
-
-                    2 -> { // "My Animals" tab
-                        val fragment =
-                            childFragmentManager.findFragmentByTag("f2") as? MyAnimalsFragment
-                        fragment?.fetchAndDisplayUserHostedAnimals() // Refresh data
-                    }
-                }
+                val position = tab?.position ?: return
+                tab_adapter.getFragmentAt(position)?.fetchAndDisplayUserAnimals()
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {
-                when (tab?.position) {
-                    0 -> {
-                        val fragment =
-                            childFragmentManager.findFragmentByTag("f0") as? SavedAnimalsFragment
-                        fragment?.fetchAndDisplayUserSavedAnimals()
-                    }
-
-                    1 -> {
-                        val fragment =
-                            childFragmentManager.findFragmentByTag("f1") as? AdoptingAnimalsFragment
-                        fragment?.fetchAndDisplayUserAdoptingAnimals()
-                    }
-
-                    2 -> {
-                        val fragment =
-                            childFragmentManager.findFragmentByTag("f2") as? MyAnimalsFragment
-                        fragment?.fetchAndDisplayUserHostedAnimals()
-                    }
-                }
+                val position = tab?.position ?: return
+                tab_adapter.getFragmentAt(position)?.fetchAndDisplayUserAnimals()
             }
         })
     }
