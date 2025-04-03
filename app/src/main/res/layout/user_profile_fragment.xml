@@ -8,7 +8,7 @@
     android:gravity="top"
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
-    tools:context=".profile.ProfileFragment">
+    tools:context=".profile.UserProfileFragment">
 
     <!--    User Details  -->
     <LinearLayout

@@ -28,6 +28,7 @@ import com.yuyakaido.android.cardstackview.SwipeableMethod
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.appendToDataFieldArray
@@ -253,7 +254,7 @@ class ExploreFragment : Fragment(), CardStackListener {
         if (is_animal_viewed) {
             //TODO: uncomment this to disallow users from seeing the same animal multiple times after debug is finished
 //            appendToDataFieldMap(
-//                Strings.get(R.string.firebase_collection_users),
+//                FirebaseCollections.USERS,
 //                getCurrentUserId(),
 //                User::viewed_animals,
 //                animal.animal_id,
@@ -285,9 +286,7 @@ class ExploreFragment : Fragment(), CardStackListener {
     private fun likeAnimal(animal: Animal) {
         // Like animal
         appendToDataFieldArray(
-            Strings.get(
-                R.string.firebase_collection_users
-            ),
+            FirebaseCollections.USERS,
             getCurrentUserId(),
             User::liked_animal_ids,
             animal.animal_id

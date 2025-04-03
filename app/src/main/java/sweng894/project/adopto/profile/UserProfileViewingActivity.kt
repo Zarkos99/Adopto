@@ -11,16 +11,17 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.*
-import sweng894.project.adopto.databinding.ProfileUserViewingActivityBinding
-import sweng894.project.adopto.profile.Tabs.AnimalFragmentListType
+import sweng894.project.adopto.databinding.UserProfileViewingActivityBinding
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
+import sweng894.project.adopto.profile.Tabs.ProfileTabType
+import sweng894.project.adopto.profile.Tabs.RefreshableTab
 
 
 class UserProfileViewingActivity : AppCompatActivity() {
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private lateinit var binding: ProfileUserViewingActivityBinding
+    private lateinit var binding: UserProfileViewingActivityBinding
 
     private var m_user: User? = null
     private var is_tab_layout_initialized = false
@@ -29,7 +30,7 @@ class UserProfileViewingActivity : AppCompatActivity() {
         savedInstanceState: Bundle?
     ) {
         super.onCreate(savedInstanceState)
-        binding = ProfileUserViewingActivityBinding.inflate(layoutInflater)
+        binding = UserProfileViewingActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val shelter_id = intent.getStringExtra("shelter_id")
@@ -57,10 +58,10 @@ class UserProfileViewingActivity : AppCompatActivity() {
         val is_shelter = m_user?.is_shelter ?: false
 
         val visible_tabs = mutableListOf(
-            AnimalFragmentListType.LIKED,
+            ProfileTabType.LIKED,
         )
         if (is_shelter) {
-            visible_tabs.add(AnimalFragmentListType.HOSTED)
+            visible_tabs.add(ProfileTabType.HOSTED)
         }
 
         val tab_adapter = ProfileTabAdapter(this, visible_tabs, m_user?.user_id)
@@ -72,8 +73,8 @@ class UserProfileViewingActivity : AppCompatActivity() {
         // Sync TabLayout with ViewPager2
         TabLayoutMediator(tab_layout, view_pager) { tab, position ->
             tab.text = when (tab_adapter.getTabTypeAt(position)) {
-                AnimalFragmentListType.LIKED -> Strings.get(R.string.liked_animals_tab_name)
-                AnimalFragmentListType.HOSTED -> Strings.get(R.string.hosted_animals_tab_name)
+                ProfileTabType.LIKED -> Strings.get(R.string.liked_animals_tab_name)
+                ProfileTabType.HOSTED -> Strings.get(R.string.hosted_animals_tab_name)
                 else -> "Unknown"
             }
         }.attach()
@@ -82,13 +83,19 @@ class UserProfileViewingActivity : AppCompatActivity() {
         tab_layout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 val position = tab?.position ?: return
-                tab_adapter.getFragmentAt(position)?.fetchAndDisplayUserAnimals()
+                val fragment = tab_adapter.getFragmentAt(position)
+                if (fragment is RefreshableTab) {
+                    fragment.refreshTabContent()
+                }
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {
                 val position = tab?.position ?: return
-                tab_adapter.getFragmentAt(position)?.fetchAndDisplayUserAnimals()
+                val fragment = tab_adapter.getFragmentAt(position)
+                if (fragment is RefreshableTab) {
+                    fragment.refreshTabContent()
+                }
             }
         })
     }

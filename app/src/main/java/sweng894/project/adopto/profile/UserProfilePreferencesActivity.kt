@@ -14,27 +14,27 @@ import androidx.core.widget.doAfterTextChanged
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.authentication.AuthenticationActivity
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.geoPointToFormattedAddress
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityResult
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.latLngToFormattedAddress
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.updateDataField
 import sweng894.project.adopto.database.updateUserDisplayName
-import sweng894.project.adopto.databinding.ProfilePreferencesActivityBinding
+import sweng894.project.adopto.databinding.UserProfilePreferencesActivityBinding
 
-class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :
+class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :
     AppCompatActivity() {
 
     private var m_location: GeoPoint? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private lateinit var binding: ProfilePreferencesActivityBinding
+    private lateinit var binding: UserProfilePreferencesActivityBinding
 
     /** Start FirebaseDataService Setup **/
     private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
@@ -76,7 +76,7 @@ class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.g
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         bindToFirebaseService()
-        binding = ProfilePreferencesActivityBinding.inflate(layoutInflater)
+        binding = UserProfilePreferencesActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         disableButton(binding.savePreferencesButton)
@@ -110,9 +110,7 @@ class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.g
             }
 
             updateDataField(
-                Strings.get(
-                    R.string.firebase_collection_users
-                ),
+                FirebaseCollections.USERS,
                 getCurrentUserId(),
                 User::location,
                 m_location
@@ -145,10 +143,10 @@ class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.g
 
 
     fun initializeLocationTextView() {
-        val current_user_location =
+        m_location =
             m_firebase_data_service.current_user_data?.location
-        if (current_user_location != null) {
-            binding.locationField.text = geoPointToFormattedAddress(this, current_user_location)
+        if (m_location != null) {
+            binding.locationField.text = geoPointToFormattedAddress(this, m_location!!)
         }
 
         val location_text_field = binding.locationField
@@ -174,9 +172,12 @@ class ProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.g
         val new_display_name = binding.displayNameInputField.text.toString()
         val new_email = binding.emailInputField.text.toString()
 
-        if (current_auth_user?.displayName != new_display_name || current_auth_user.email != new_email) {
-            enableButton(binding.savePreferencesButton)
-        } else if (current_user_location != m_location) {
+        val display_name_changed = current_auth_user?.displayName != new_display_name
+                || m_firebase_data_service.current_user_data?.display_name != new_display_name
+        val email_changed = current_auth_user?.email != new_email
+        val location_changed = current_user_location != m_location
+
+        if (display_name_changed || email_changed || location_changed) {
             enableButton(binding.savePreferencesButton)
         } else {
             disableButton(binding.savePreferencesButton)

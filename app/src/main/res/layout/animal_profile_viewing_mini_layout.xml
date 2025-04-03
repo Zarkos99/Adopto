@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    android:gravity="center_vertical"
+    android:background="@color/primary_background">
+
+    <ImageView
+        android:id="@+id/animal_profile_image"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginEnd="12dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/default_profile_pic"
+        android:background="@color/card_background"
+        android:contentDescription="Animal profile image" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/animal_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tofu"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_text" />
+
+        <TextView
+            android:id="@+id/animal_age"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2 years 4 months"
+            android:textSize="14sp"
+            android:textColor="@color/secondary_text" />
+
+        <TextView
+            android:id="@+id/animal_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Medium"
+            android:textSize="14sp"
+            android:textColor="@color/secondary_text" />
+
+        <TextView
+            android:id="@+id/animal_health"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Healthy"
+            android:textSize="14sp"
+            android:textColor="@color/secondary_text" />
+    </LinearLayout>
+</LinearLayout>

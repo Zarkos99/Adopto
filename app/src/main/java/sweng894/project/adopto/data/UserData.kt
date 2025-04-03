@@ -9,6 +9,14 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+object FirebaseCollections {
+    const val USERS = "Users"
+    const val ANIMALS = "Animals"
+    const val ADOPTIONS = "Adoptions"
+
+    val all = setOf(USERS, ANIMALS, ADOPTIONS)
+}
+
 @Parcelize
 data class User(
     var user_id: String = "",
@@ -54,4 +62,15 @@ data class Animal(
     var supplementary_image_paths: MutableList<String> = mutableListOf(),
     var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
     var location: @RawValue GeoPoint? = null
+) : Parcelable
+
+@Parcelize
+data class AnimalAdoptionInterest(
+    var interested_users: MutableList<AnimalAdoptionInterestedUser> = mutableListOf(), // Animals saved by user for later
+) : Parcelable
+
+@Parcelize
+data class AnimalAdoptionInterestedUser(
+    var user_id: String = "",
+    var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
 ) : Parcelable

@@ -2,7 +2,6 @@ package sweng894.project.adopto.profile.Tabs
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,10 +16,10 @@ import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivit
 /**
  * The adaptor for a recyclerview of sunset posts with the capability to have selectable items or not
  */
-class ProfileAnimalsAdapter(
+class UserProfileAnimalsAdapter(
     private val context: Context,
 ) :
-    RecyclerView.Adapter<ProfileAnimalsAdapter.ViewHolder>() {
+    RecyclerView.Adapter<UserProfileAnimalsAdapter.ViewHolder>() {
 
     // IMPORTANT: Must include only existing animals, as the viewholder binding is positionally based
     private val animal_list: MutableList<Animal> = mutableListOf() // Store animals

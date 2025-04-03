@@ -7,7 +7,18 @@
     android:gravity="top"
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
-    tools:context=".profile.ProfileFragment">
+    tools:context=".profile.UserProfileFragment">
+
+    <TextView
+        android:id="@+id/empty_list_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No animals saved yet."
+        android:textSize="16sp"
+        android:textColor="@color/secondary_text"
+        android:gravity="center"
+        android:padding="16dp"
+        android:visibility="gone" />
 
     <!--    Gallery of Saved Animals-->
     <!--    2D RecyclerView of personal user posted sunsets-->

@@ -1,4 +1,4 @@
-package sweng894.project.adopto.profile.animalprofile
+package sweng894.project.adopto.profile.Tabs
 
 import android.content.Context
 import android.net.Uri
@@ -10,11 +10,12 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.database.deleteImagesFromCloudStorage
 import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.database.removeFromDataFieldList
+import sweng894.project.adopto.database.syncDatabaseForRemovedImages
 
 enum class AdapterClickability {
     NOT_CLICKABLE,
@@ -64,14 +65,17 @@ class AnimalProfileViewingImagesAdapter(
             //If the delete item is selected, remove the item from the list
             holder.delete_image_button.setOnClickListener {
                 // Remove image from cloud storage and databased animal's additional images field
-                val image_to_delete = arrayOf(m_image_uris[position].path!!)
-                deleteImagesFromCloudStorage(image_to_delete)
+                val images_to_delete = arrayOf(m_image_uris[position].path!!)
+                deleteImagesFromCloudStorage(images_to_delete)
                 removeFromDataFieldList(
-                    Strings.get(R.string.firebase_collection_animals),
+                    FirebaseCollections.ANIMALS,
                     current_animal.animal_id,
                     Animal::supplementary_image_paths,
-                    image_to_delete
+                    images_to_delete
                 )
+                {
+                    syncDatabaseForRemovedImages(images_to_delete)
+                }
                 removeItem(position)
 
             }

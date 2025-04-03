@@ -10,6 +10,7 @@ import com.google.firebase.storage.storage
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 import java.util.UUID
 
@@ -34,7 +35,7 @@ fun uploadUserProfileImageAndUpdateUserImagePath(
     val storage_ref = m_firebase_storage.reference
 
     val storage_path_to_image =
-        "${Strings.get(R.string.firebase_collection_users)}/${getCurrentUserId()}/profile_image"
+        "${FirebaseCollections.USERS}/${getCurrentUserId()}/profile_image"
     val image_ref = storage_ref.child(storage_path_to_image)
     val upload_task = image_ref.putFile(file)
 
@@ -45,7 +46,7 @@ fun uploadUserProfileImageAndUpdateUserImagePath(
     }.addOnSuccessListener {
         // Set the image path to where it exists on the cloud storage
         updateDataField(
-            Strings.get(R.string.firebase_collection_users),
+            FirebaseCollections.USERS,
             getCurrentUserId(),
             User::profile_image_path,
             storage_path_to_image
@@ -71,10 +72,10 @@ fun uploadAnimalImageAndUpdateAnimal(
     val unique_id = UUID.randomUUID().toString()
 
     val storage_path_to_image = if (is_profile_image) {
-        "${Strings.get(R.string.firebase_collection_animals)}/Animal_$animal_id/profile_image"
+        "${FirebaseCollections.ANIMALS}/Animal_$animal_id/profile_image"
     } else {
         val image_name = "image_$unique_id"
-        "${Strings.get(R.string.firebase_collection_animals)}/Animal_${animal_id}/supplementary_images/${image_name}"
+        "${FirebaseCollections.ANIMALS}/Animal_${animal_id}/supplementary_images/${image_name}"
     }
     val image_ref = storage_ref.child(storage_path_to_image)
     val upload_task = image_ref.putFile(file)
@@ -87,7 +88,7 @@ fun uploadAnimalImageAndUpdateAnimal(
         // Set the image path to where it exists on the cloud storage
         if (is_profile_image) {
             updateDataField(
-                Strings.get(R.string.firebase_collection_animals),
+                FirebaseCollections.ANIMALS,
                 animal_id,
                 Animal::profile_image_path,
                 storage_path_to_image,
@@ -95,7 +96,7 @@ fun uploadAnimalImageAndUpdateAnimal(
             )
         } else {
             appendToDataFieldArray(
-                Strings.get(R.string.firebase_collection_animals),
+                FirebaseCollections.ANIMALS,
                 animal_id,
                 Animal::supplementary_image_paths,
                 storage_path_to_image,

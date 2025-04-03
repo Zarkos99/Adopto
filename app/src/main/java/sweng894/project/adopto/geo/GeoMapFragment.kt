@@ -26,7 +26,7 @@ import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.fetchAllShelters
 import sweng894.project.adopto.database.haversineDistance
 import sweng894.project.adopto.databinding.GeoMapFragmentBinding
-import sweng894.project.adopto.profile.UserProfileViewingActivity
+import sweng894.project.adopto.profile.UserMiniProfileFragmentOverlay
 import kotlin.math.log2
 
 class GeoMapFragment : Fragment(), OnMapReadyCallback {
@@ -206,10 +206,6 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         val effective_location = m_location
 
         fetchAllShelters { all_shelters ->
-
-            Log.d("### DEBUG", "effective_location: $effective_location")
-            Log.d("### DEBUG", "all_shelters: $all_shelters")
-
             val nearby_shelters = all_shelters.filter { shelter ->
                 shelter.location != null &&
                         haversineDistance(
@@ -217,8 +213,6 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
                             shelter.location!!
                         ) <= search_radius
             }
-
-            Log.d("### DEBUG", "nearby_shelters: $nearby_shelters")
 
             Log.d("MapSearch", "Found ${nearby_shelters.size} shelters within $search_radius miles")
             onComplete(nearby_shelters)
@@ -229,12 +223,16 @@ class GeoMapFragment : Fragment(), OnMapReadyCallback {
         m_map.setOnMarkerClickListener { marker ->
             val shelter_id = marker.tag as? String
             if (shelter_id != null) {
-                val intent = Intent(requireContext(), UserProfileViewingActivity::class.java)
-                intent.putExtra("shelter_id", shelter_id)
-                startActivity(intent)
+                // Launch a bottom sheet dialog or mini profile fragment
+                showShelterMiniProfile(shelter_id)
             }
             true
         }
+    }
 
+    private fun showShelterMiniProfile(shelterId: String) {
+        // You can launch a dialog or bottom sheet with the shelterId
+        val dialog = UserMiniProfileFragmentOverlay.newInstance(shelterId)
+        dialog.show(childFragmentManager, "shelter_mini_profile")
     }
 }

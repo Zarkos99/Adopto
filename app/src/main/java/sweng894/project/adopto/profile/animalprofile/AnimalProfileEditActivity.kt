@@ -15,6 +15,7 @@ import androidx.core.widget.doAfterTextChanged
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.database.removeAnimalFromDatabase
 import sweng894.project.adopto.database.setDocumentData
 import sweng894.project.adopto.databinding.AnimalProfileEditActivityBinding
@@ -85,7 +86,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
 
             if (updated_animal != null && m_current_animal != updated_animal) {
                 setDocumentData(
-                    Strings.get(R.string.firebase_collection_animals),
+                    FirebaseCollections.ANIMALS,
                     m_current_animal.animal_id,
                     updated_animal
                 ) {

@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/navigation_gallery"
-        android:name="sweng894.project.adopto.profile.ProfileFragment"
-        android:label="@string/title_gallery"
-        tools:layout="@layout/profile_fragment" />
+        android:name="sweng894.project.adopto.profile.UserProfileFragment"
+        android:label="@string/title_profile"
+        tools:layout="@layout/user_profile_fragment" />
 </navigation>

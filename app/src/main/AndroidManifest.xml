@@ -83,7 +83,7 @@
         </activity>
 
         <activity
-            android:name=".profile.ProfilePreferencesActivity"
+            android:name=".profile.UserProfilePreferencesActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

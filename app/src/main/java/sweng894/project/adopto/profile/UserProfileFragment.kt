@@ -23,14 +23,15 @@ import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.database.*
-import sweng894.project.adopto.databinding.ProfileFragmentBinding
-import sweng894.project.adopto.profile.Tabs.AnimalFragmentListType
+import sweng894.project.adopto.databinding.UserProfileFragmentBinding
+import sweng894.project.adopto.profile.Tabs.ProfileTabType
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
+import sweng894.project.adopto.profile.Tabs.RefreshableTab
 import sweng894.project.adopto.profile.animalprofile.AnimalProfileCreationActivity
 
 
-class ProfileFragment : Fragment() {
-    private var _binding: ProfileFragmentBinding? = null
+class UserProfileFragment : Fragment() {
+    private var _binding: UserProfileFragmentBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -111,13 +112,13 @@ class ProfileFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = ProfileFragmentBinding.inflate(inflater, container, false)
+        _binding = UserProfileFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val preferences_button_view = binding.preferencesButton
 
         preferences_button_view.setOnClickListener {
-            val intent = Intent(activity, ProfilePreferencesActivity::class.java)
+            val intent = Intent(activity, UserProfilePreferencesActivity::class.java)
             startActivity(intent)
             // Not calling finish() here so that AnimalProfileCreationActivity will come back to this fragment)
         }
@@ -170,11 +171,11 @@ class ProfileFragment : Fragment() {
         val is_shelter = m_firebase_data_service.current_user_data?.is_shelter ?: false
 
         val visible_tabs = mutableListOf(
-            AnimalFragmentListType.LIKED,
-            AnimalFragmentListType.ADOPTING
+            ProfileTabType.LIKED,
+            ProfileTabType.ADOPTING
         )
         if (is_shelter) {
-            visible_tabs.add(AnimalFragmentListType.HOSTED)
+            visible_tabs.add(ProfileTabType.HOSTED)
         }
 
         val tab_adapter = ProfileTabAdapter(requireActivity(), visible_tabs)
@@ -186,9 +187,9 @@ class ProfileFragment : Fragment() {
         // Sync TabLayout with ViewPager2
         TabLayoutMediator(tab_layout, view_pager) { tab, position ->
             tab.text = when (tab_adapter.getTabTypeAt(position)) {
-                AnimalFragmentListType.LIKED -> Strings.get(R.string.liked_animals_tab_name)
-                AnimalFragmentListType.ADOPTING -> Strings.get(R.string.adopting_animals_tab_name)
-                AnimalFragmentListType.HOSTED -> Strings.get(R.string.hosted_animals_tab_name)
+                ProfileTabType.LIKED -> Strings.get(R.string.liked_animals_tab_name)
+                ProfileTabType.ADOPTING -> Strings.get(R.string.adopting_animals_tab_name)
+                ProfileTabType.HOSTED -> Strings.get(R.string.hosted_animals_tab_name)
                 else -> "Unknown"
             }
         }.attach()
@@ -197,13 +198,19 @@ class ProfileFragment : Fragment() {
         tab_layout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 val position = tab?.position ?: return
-                tab_adapter.getFragmentAt(position)?.fetchAndDisplayUserAnimals()
+                val fragment = tab_adapter.getFragmentAt(position)
+                if (fragment is RefreshableTab) {
+                    fragment.refreshTabContent()
+                }
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {
                 val position = tab?.position ?: return
-                tab_adapter.getFragmentAt(position)?.fetchAndDisplayUserAnimals()
+                val fragment = tab_adapter.getFragmentAt(position)
+                if (fragment is RefreshableTab) {
+                    fragment.refreshTabContent()
+                }
             }
         })
     }

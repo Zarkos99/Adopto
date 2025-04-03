@@ -19,9 +19,9 @@ import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.fetchAnimals
 import sweng894.project.adopto.database.getUserData
-import sweng894.project.adopto.databinding.ProfileAnimalsListFragmentBinding
+import sweng894.project.adopto.databinding.UserProfileAnimalsListFragmentBinding
 
-class ProfileAnimalsFragment : Fragment() {
+class UserProfileAnimalsFragment : Fragment(), RefreshableTab {
 
     companion object {
         private val USER_INPUT = "user_id"
@@ -29,9 +29,9 @@ class ProfileAnimalsFragment : Fragment() {
 
         fun newInstance(
             user_id: String?, // Optional argument, when provided, use this over the firebase user service
-            fragment_list_type: AnimalFragmentListType //Non-optional argument
-        ): ProfileAnimalsFragment {
-            val fragment = ProfileAnimalsFragment()
+            fragment_list_type: ProfileTabType //Non-optional argument
+        ): UserProfileAnimalsFragment {
+            val fragment = UserProfileAnimalsFragment()
             val args = Bundle()
             if (!user_id.isNullOrEmpty()) {
                 args.putString(USER_INPUT, user_id)
@@ -42,16 +42,16 @@ class ProfileAnimalsFragment : Fragment() {
         }
     }
 
-    private var _binding: ProfileAnimalsListFragmentBinding? = null
+    private var _binding: UserProfileAnimalsListFragmentBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var m_animals_list_adaptor: ProfileAnimalsAdapter
+    private lateinit var m_animals_list_adaptor: UserProfileAnimalsAdapter
     private var m_user: User? = null
     private var m_user_provided = false
-    private lateinit var m_fragment_list_type: AnimalFragmentListType
+    private lateinit var m_fragment_list_type: ProfileTabType
 
     /** Start FirebaseDataService Setup **/
     private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
@@ -124,15 +124,15 @@ class ProfileAnimalsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = ProfileAnimalsListFragmentBinding.inflate(inflater, container, false)
+        _binding = UserProfileAnimalsListFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
         val user_id = arguments?.getString(USER_INPUT)
         m_user_provided = arguments?.containsKey(USER_INPUT) == true
 
         val type_name = arguments?.getString(FRAGMENT_TYPE_INPUT)
-        m_fragment_list_type = AnimalFragmentListType.valueOf(type_name ?: "UNKNOWN")
+        m_fragment_list_type = ProfileTabType.valueOf(type_name ?: "UNKNOWN")
 
-        if (m_fragment_list_type == AnimalFragmentListType.UNKNOWN) {
+        if (m_fragment_list_type == ProfileTabType.UNKNOWN) {
             Log.e(
                 "ProfileAnimalsFragment",
                 "Invalid Fragment List Type provided: $type_name. Returning early."
@@ -158,10 +158,14 @@ class ProfileAnimalsFragment : Fragment() {
         return root
     }
 
+    override fun refreshTabContent() {
+        fetchAndDisplayUserAnimals()
+    }
+
     fun initializeRecyclerViewAdapter() {
         val animals_recycler_view = binding.animalsList
         // Initialize recyclerview adaptor
-        m_animals_list_adaptor = ProfileAnimalsAdapter(requireContext())
+        m_animals_list_adaptor = UserProfileAnimalsAdapter(requireContext())
         animals_recycler_view.adapter = m_animals_list_adaptor
     }
 
@@ -189,15 +193,15 @@ class ProfileAnimalsFragment : Fragment() {
         val user_animal_ids: List<String>
 
         when (m_fragment_list_type) {
-            AnimalFragmentListType.LIKED -> {
+            ProfileTabType.LIKED -> {
                 user_animal_ids = (user?.liked_animal_ids ?: emptyList())
             }
 
-            AnimalFragmentListType.ADOPTING -> {
+            ProfileTabType.ADOPTING -> {
                 user_animal_ids = (user?.adopting_animal_ids ?: emptyList())
             }
 
-            AnimalFragmentListType.HOSTED -> {
+            ProfileTabType.HOSTED -> {
                 user_animal_ids = (user?.hosted_animal_ids ?: emptyList())
             }
 
@@ -208,6 +212,11 @@ class ProfileAnimalsFragment : Fragment() {
 
         fetchAnimals(user_animal_ids) { animal_list ->
             activity?.runOnUiThread {
+                if (animal_list.isEmpty()) {
+                    binding.emptyListTextView.visibility = View.VISIBLE
+                } else {
+                    binding.emptyListTextView.visibility = View.GONE
+                }
                 m_animals_list_adaptor.updateAnimals(animal_list) // Update adapter with data
             }
         }

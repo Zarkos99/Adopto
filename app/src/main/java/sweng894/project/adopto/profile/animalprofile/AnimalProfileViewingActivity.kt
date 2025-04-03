@@ -8,15 +8,20 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.coroutines.launch
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.*
 import sweng894.project.adopto.databinding.AnimalProfileViewingLayoutBinding
+import sweng894.project.adopto.profile.Tabs.AnimalProfileViewingImagesAdapter
+import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
+import sweng894.project.adopto.profile.Tabs.ProfileTabType
+import sweng894.project.adopto.profile.Tabs.RefreshableTab
+import sweng894.project.adopto.profile.UserProfileViewingActivity
 
 
 class AnimalProfileViewingActivity : AppCompatActivity() {
@@ -92,9 +97,10 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
             }
 
             getAnimalAndExecuteCallback(m_animal_id) {
-                initializeRecyclerViewAdapter(m_selected_animal!!)
+                initializeTabLayout()
                 populateTextViewsWithAnimalInfo(m_selected_animal!!)
                 populateProfileImage(m_selected_animal!!)
+                instantiateShelterInfo()
 
                 val edit_profile_button = binding.editProfileButton
                 edit_profile_button.setOnClickListener {
@@ -122,7 +128,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                 save_animal_button.setOnClickListener {
                     if (m_current_user?.liked_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
                         removeFromDataFieldList(
-                            Strings.get(R.string.firebase_collection_users),
+                            FirebaseCollections.USERS,
                             getCurrentUserId(),
                             User::liked_animal_ids,
                             arrayOf(m_selected_animal!!.animal_id)
@@ -132,7 +138,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                         }
                     } else {
                         appendToDataFieldArray(
-                            Strings.get(R.string.firebase_collection_users),
+                            FirebaseCollections.USERS,
                             getCurrentUserId(),
                             User::liked_animal_ids,
                             m_selected_animal!!.animal_id
@@ -146,17 +152,10 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
             val adopt_button = binding.adoptButton
             adopt_button.setOnClickListener {
-
                 if (m_current_user?.adopting_animal_ids?.contains(m_selected_animal?.animal_id) == true) {
-                    removeFromDataFieldList(
-                        Strings.get(R.string.firebase_collection_users),
-                        getCurrentUserId(),
-                        User::adopting_animal_ids,
-                        arrayOf(m_selected_animal!!.animal_id)
-                    ) {
+                    removeUserAdoptionInterest(m_selected_animal!!.animal_id) {
                         m_current_user?.adopting_animal_ids?.remove(m_selected_animal!!.animal_id)
                         instantiateAdoptButton()
-
 
                         Toast.makeText(
                             this@AnimalProfileViewingActivity,
@@ -165,12 +164,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                         ).show()
                     }
                 } else {
-                    appendToDataFieldArray(
-                        Strings.get(R.string.firebase_collection_users),
-                        getCurrentUserId(),
-                        User::adopting_animal_ids,
-                        m_selected_animal!!.animal_id
-                    ) {
+                    saveUserAdoptionInterest(m_selected_animal!!.animal_id, onUploadSuccess = {
                         m_current_user?.adopting_animal_ids?.add(m_selected_animal!!.animal_id)
                         instantiateAdoptButton()
 
@@ -179,14 +173,20 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                             "Sending adoption interest! :)",
                             Toast.LENGTH_SHORT
                         ).show()
-                    }
+                    }, onUploadFailure = {
+                        Toast.makeText(
+                            this@AnimalProfileViewingActivity,
+                            "Failed to save adoption interest. Try again later.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    })
                 }
             }
         }
     }
 
     fun getAnimalAndExecuteCallback(animal_id: String?, onGetDataSuccess: (() -> Unit)? = null) {
-        getAnimalData(animal_id!!) { selected_animal ->
+        getAnimalData(animal_id!!, onComplete = { selected_animal ->
             m_selected_animal = selected_animal
             if (m_selected_animal == null) {
                 Log.e("AnimalProfileViewingActivity", "Database queried animal returned null.")
@@ -196,11 +196,71 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
                     "Cannot find animal: $animal_id",
                     Toast.LENGTH_LONG
                 ).show()
-                finish()
+                // Don't finish() from activity, leave open with blank data so user can un-save the animal profile if they desire
             } else {
                 onGetDataSuccess?.invoke()
             }
+        }, onFailure = {
+            //Display error message
+            Toast.makeText(
+                this@AnimalProfileViewingActivity,
+                "Unable to display animal currently",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        })
+    }
+
+    fun initializeTabLayout() {
+        val tab_layout = binding.animalTabLayout
+        val view_pager = binding.animalViewPager
+
+        val is_associated_shelter =
+            m_current_user?.user_id == m_selected_animal?.associated_shelter_id
+
+        val visible_tabs = mutableListOf(
+            ProfileTabType.ANIMAL_IMAGES
+        )
+        if (is_associated_shelter) {
+            visible_tabs.add(ProfileTabType.INTERESTED_ADOPTERS)
         }
+
+        val tab_adapter = ProfileTabAdapter(this, visible_tabs, animal_id = m_animal_id)
+        view_pager.adapter = tab_adapter
+        view_pager.offscreenPageLimit = 1 // Ensures fragments are refreshed when switched
+
+        view_pager.adapter = tab_adapter
+
+        // Sync TabLayout with ViewPager2
+        TabLayoutMediator(tab_layout, view_pager) { tab, position ->
+            tab.text = when (tab_adapter.getTabTypeAt(position)) {
+                ProfileTabType.ANIMAL_IMAGES -> Strings.get(R.string.animal_images_tab_name)
+                ProfileTabType.INTERESTED_ADOPTERS -> Strings.get(R.string.interested_adopters_tab_name)
+                else -> "Unknown"
+            }
+        }.attach()
+
+        // Listen for tab selection changes
+        tab_layout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                val position = tab?.position ?: return
+                val fragment = tab_adapter.getFragmentAt(position)
+                if (fragment is RefreshableTab) {
+                    fragment.refreshTabContent()
+                }
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {
+                val position = tab?.position ?: return
+                val fragment = tab_adapter.getFragmentAt(position)
+                if (fragment is RefreshableTab) {
+                    fragment.refreshTabContent()
+                }
+            }
+        })
+
+        initializeAddImageButton()
     }
 
     fun populateProfileImage(current_animal: Animal) {
@@ -214,12 +274,14 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
     fun populateTextViewsWithAnimalInfo(current_animal: Animal) {
         val animal_name_view = binding.animalName
         val animal_age_view = binding.animalAge
+        val animal_size_view = binding.animalSize
         val animal_health_view = binding.animalHealth
         val animal_description_view = binding.animalDescription
 
         animal_name_view.text = current_animal.animal_name
 
         animal_age_view.text = convertDoubleToYearsMonths(current_animal.animal_age!!)
+        animal_size_view.text = current_animal.animal_size
         animal_health_view.text = current_animal.health_summary
         animal_description_view.text = current_animal.biography
     }
@@ -237,28 +299,41 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
         return years_val_str + years_str + months_val_str + months_str
     }
 
-    fun initializeRecyclerViewAdapter(current_animal: Animal) {
-        val animal_images_recycler_view = binding.additionalImages
+    fun instantiateShelterInfo() {
+        val shelter_profile_image_view = binding.shelterProfileImageView
+        val shelter_name_text_view = binding.shelterNameTextView
 
-        // Ensure smooth scrolling
-        animal_images_recycler_view.setHasFixedSize(true)
+        if (m_selected_animal?.associated_shelter_id.isNullOrEmpty()) {
+            Log.e(
+                "AnimalProfileViewingActivity",
+                "Invalid associated shelter id for animal: ${m_selected_animal?.associated_shelter_id} "
+            )
+            return
+        }
 
-        // Initialize recyclerview adaptor
-        val clickability =
-            if (m_selected_animal!!.associated_shelter_id == getCurrentUserId()) AdapterClickability.DOUBLE_CLICKABLE else AdapterClickability.NOT_CLICKABLE
-        m_adapter =
-            AnimalProfileViewingImagesAdapter(this, current_animal, clickability)
-        animal_images_recycler_view.adapter = m_adapter
-        animal_images_recycler_view.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        getUserData(m_selected_animal?.associated_shelter_id!!) { shelter ->
+            loadCloudStoredImageIntoImageView(
+                this,
+                shelter?.profile_image_path,
+                shelter_profile_image_view
+            )
 
-        val image_uris =
-            ArrayList(m_selected_animal?.supplementary_image_paths?.map {
-                Uri.parse(it)
-            } ?: emptyList())
-        m_adapter?.setItems(image_uris)
+            shelter_name_text_view.text =
+                if (shelter?.display_name.isNullOrEmpty()) "Unnamed Shelter" else shelter?.display_name
+        }
 
-        initializeAddImageButton()
+        shelter_profile_image_view.setOnClickListener {
+            openShelterProfile()
+        }
+        shelter_name_text_view.setOnClickListener {
+            openShelterProfile()
+        }
+    }
+
+    fun openShelterProfile() {
+        val intent = Intent(this, UserProfileViewingActivity::class.java)
+        intent.putExtra("shelter_id", m_selected_animal?.associated_shelter_id)
+        startActivity(intent)
     }
 
     fun instantiateSaveAnimalButton() {

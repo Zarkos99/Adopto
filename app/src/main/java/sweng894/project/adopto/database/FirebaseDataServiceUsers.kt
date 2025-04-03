@@ -10,6 +10,7 @@ import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 
 /**
@@ -52,7 +53,7 @@ class FirebaseDataServiceUsers : Service() {
     override fun onBind(intent: Intent): IBinder {
         val user_ref =
             m_firebase_database.collection(
-                Strings.get(R.string.firebase_collection_users)
+                FirebaseCollections.USERS
             ).document(getCurrentUserId())
 
         user_ref.addSnapshotListener { snapshot, e ->

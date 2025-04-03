@@ -14,6 +14,7 @@ import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityRes
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.latLngToFormattedAddress
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.ExplorationPreferences
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.fetchAnimalsByShelter
 import sweng894.project.adopto.database.getCurrentUserId
@@ -49,7 +50,7 @@ class UserProfileCreationActivity : AppCompatActivity() {
 
         done_button_view.setOnClickListener {
             updateDataField(
-                Strings.get(R.string.firebase_collection_users),
+                FirebaseCollections.USERS,
                 getCurrentUserId(),
                 User::is_shelter,
                 m_is_shelter
@@ -57,14 +58,14 @@ class UserProfileCreationActivity : AppCompatActivity() {
 
             // Save biography to database
             updateDataField(
-                Strings.get(R.string.firebase_collection_users),
+                FirebaseCollections.USERS,
                 getCurrentUserId(),
                 User::biography,
                 m_biography_edit_text.text.toString()
             )
             // Save zip code to database
             updateDataField(
-                Strings.get(R.string.firebase_collection_users),
+                FirebaseCollections.USERS,
                 getCurrentUserId(),
                 User::location,
                 m_location
@@ -72,7 +73,7 @@ class UserProfileCreationActivity : AppCompatActivity() {
 
             // No longer require additional info
             updateDataField(
-                Strings.get(R.string.firebase_collection_users),
+                FirebaseCollections.USERS,
                 getCurrentUserId(),
                 User::need_info,
                 false
@@ -119,9 +120,7 @@ class UserProfileCreationActivity : AppCompatActivity() {
                 val hosted_animal_ids = animal_list.map { it.animal_id }
 
                 updateDataField(
-                    Strings.get(
-                        R.string.firebase_collection_users
-                    ),
+                    FirebaseCollections.USERS,
                     getCurrentUserId(),
                     User::hosted_animal_ids,
                     hosted_animal_ids

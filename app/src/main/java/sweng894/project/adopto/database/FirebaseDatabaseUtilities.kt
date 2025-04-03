@@ -19,6 +19,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.AnimalAdoptionInterest
+import sweng894.project.adopto.data.AnimalAdoptionInterestedUser
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.data.VectorUtils
 import kotlin.math.atan2
@@ -45,7 +48,7 @@ fun updateUserDisplayName(new_display_name: String) {
     })
 
     updateDataField(
-        Strings.get(R.string.firebase_collection_users),
+        FirebaseCollections.USERS,
         getCurrentUserId(),
         User::display_name,
         new_display_name
@@ -57,7 +60,7 @@ fun getUserData(
     onUserFound: (User?) -> Unit
 ) {
     Firebase.firestore
-        .collection(Strings.get(R.string.firebase_collection_users))
+        .collection(FirebaseCollections.USERS)
         .document(user_id)
         .get().addOnSuccessListener { document ->
             if (document.exists()) {
@@ -75,7 +78,7 @@ fun fetchAllShelters(include_current_user: Boolean = false, onComplete: (List<Us
     val user_list = mutableListOf<User>()
 
     // Fetch all documents from the "Users" collection
-    firebase_database.collection(Strings.get(R.string.firebase_collection_users))
+    firebase_database.collection(FirebaseCollections.USERS)
         .get()
         .addOnSuccessListener { result ->
             for (document in result) {
@@ -94,10 +97,14 @@ fun fetchAllShelters(include_current_user: Boolean = false, onComplete: (List<Us
         }
 }
 
-fun getAnimalData(animal_id: String, onComplete: (Animal?) -> Unit) {
+fun getAnimalData(
+    animal_id: String,
+    onComplete: (Animal?) -> Unit,
+    onFailure: (() -> Unit)? = null
+) {
     // Firestore query
     Firebase.firestore
-        .collection(Strings.get(R.string.firebase_collection_animals))
+        .collection(FirebaseCollections.ANIMALS)
         .document(animal_id)
         .get()
         .addOnSuccessListener { document ->
@@ -111,7 +118,7 @@ fun getAnimalData(animal_id: String, onComplete: (Animal?) -> Unit) {
         }
         .addOnFailureListener { e ->
             println("ERROR: Firestore query failed - ${e.message}")
-            onComplete(null)
+            onFailure?.invoke()
         }
 }
 
@@ -129,7 +136,7 @@ fun fetchAnimals(
 
     // Allocate each animal_id to a firebase get() query
     val batchRequests: List<Task<DocumentSnapshot>> = user_animal_ids.map { animalId ->
-        firebase_database.collection(Strings.get(R.string.firebase_collection_animals))
+        firebase_database.collection(FirebaseCollections.ANIMALS)
             .document(animalId)
             .get()
     }
@@ -155,7 +162,7 @@ fun fetchAllAnimals(onComplete: (List<Animal>) -> Unit) {
     val animal_list = mutableListOf<Animal>()
 
     // Fetch all documents from the "Animals" collection
-    firebaseDatabase.collection(Strings.get(R.string.firebase_collection_animals))
+    firebaseDatabase.collection(FirebaseCollections.ANIMALS)
         .get()
         .addOnSuccessListener { result ->
             for (document in result) {
@@ -177,7 +184,7 @@ fun fetchAnimalsByShelter(
 ) {
     val firebaseDatabase = Firebase.firestore
 
-    firebaseDatabase.collection(Strings.get(R.string.firebase_collection_animals))
+    firebaseDatabase.collection(FirebaseCollections.ANIMALS)
         .whereEqualTo(Animal::associated_shelter_id.name, shelter_id)
         .get()
         .addOnSuccessListener { querySnapshot ->
@@ -199,7 +206,7 @@ fun addUserToDatabase(new_user: User) {
     }
 
     firebase_database.collection(
-        Strings.get(R.string.firebase_collection_users)
+        FirebaseCollections.USERS
     ).document(user_id).set(new_user)
         .addOnFailureListener {
             Log.w(
@@ -207,6 +214,185 @@ fun addUserToDatabase(new_user: User) {
                 "Failed to create document"
             )
         }
+}
+
+fun fetchInterestedAdoptersForAnimal(
+    animal_id: String,
+    onComplete: (List<User>) -> Unit
+) {
+    val db = Firebase.firestore
+    val user_list = mutableListOf<User>()
+
+    // Get the list of interested user IDs from the ADOPTIONS collection
+    db.collection(FirebaseCollections.ADOPTIONS)
+        .document(animal_id)
+        .get()
+        .addOnSuccessListener { document ->
+            if (document.exists()) {
+                val interest = document.toObject(AnimalAdoptionInterest::class.java)
+                val user_ids = interest?.interested_users?.map { it.user_id } ?: emptyList()
+
+                if (user_ids.isEmpty()) {
+                    onComplete(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                // Query each user by ID
+                db.collection(FirebaseCollections.USERS)
+                    .whereIn(User::user_id.name, user_ids)
+                    .get()
+                    .addOnSuccessListener { users_result ->
+                        for (user_doc in users_result) {
+                            val user = user_doc.toObject(User::class.java)
+                            user_list.add(user)
+                        }
+                        onComplete(user_list)
+                    }
+                    .addOnFailureListener {
+                        Log.e("FirebaseDB", "Failed to fetch users from IDs", it)
+                        onComplete(emptyList())
+                    }
+
+            } else {
+                onComplete(emptyList()) // Animal doc doesn't exist
+            }
+        }
+        .addOnFailureListener {
+            Log.e("FirebaseDB", "Failed to fetch adoption interest", it)
+            onComplete(emptyList())
+        }
+}
+
+
+fun saveUserAdoptionInterest(
+    animal_id: String,
+    onUploadSuccess: (() -> Unit)? = null,
+    onUploadFailure: (() -> Unit)? = null
+) {
+    val user_id = getCurrentUserId()
+    val db = Firebase.firestore
+    val adoption_ref = db.collection(FirebaseCollections.ADOPTIONS).document(animal_id)
+    val user_ref = db.collection(FirebaseCollections.USERS).document(user_id)
+    val interested_user = AnimalAdoptionInterestedUser(user_id = user_id)
+
+    // Find if user is already interested in adoption for this animal
+    adoption_ref.get().addOnSuccessListener { adoption_snapshot ->
+        val adoption_data = adoption_snapshot.toObject(AnimalAdoptionInterest::class.java)
+        val already_interested =
+            adoption_data?.interested_users?.any { it.user_id == user_id } == true
+
+        // Find if this animal is already recorded as an "adopting_animal" under the user
+        user_ref.get().addOnSuccessListener { user_snapshot ->
+            val user_data = user_snapshot.toObject(User::class.java)
+            val already_recorded = user_data?.adopting_animal_ids?.contains(animal_id) == true
+
+            when {
+                already_interested && already_recorded -> {
+                    Log.d("saveUserAdoptionInterest", "User and animal already in sync.")
+                    onUploadSuccess?.invoke()
+                }
+
+                already_interested && !already_recorded -> {
+                    // Fix inconsistency: update user's animal list
+                    user_ref.update(
+                        User::adopting_animal_ids.name,
+                        FieldValue.arrayUnion(animal_id)
+                    ).addOnSuccessListener {
+                        Log.d("saveUserAdoptionInterest", "Fixed user record inconsistency.")
+                        onUploadSuccess?.invoke()
+                    }.addOnFailureListener {
+                        Log.e(
+                            "saveUserAdoptionInterest",
+                            "Failed to update user adopting list: ${it.message}"
+                        )
+                        onUploadFailure?.invoke()
+                    }
+                }
+
+                else -> {
+                    // Add to both
+                    adoption_ref.update(
+                        AnimalAdoptionInterest::interested_users.name,
+                        FieldValue.arrayUnion(interested_user)
+                    ).addOnSuccessListener {
+                        if (!already_recorded) {
+                            user_ref.update(
+                                User::adopting_animal_ids.name,
+                                FieldValue.arrayUnion(animal_id)
+                            ).addOnSuccessListener {
+                                onUploadSuccess?.invoke()
+                            }.addOnFailureListener {
+                                // Rollback animal entry
+                                adoption_ref.update(
+                                    AnimalAdoptionInterest::interested_users.name,
+                                    FieldValue.arrayRemove(interested_user)
+                                ).addOnCompleteListener {
+                                    Log.e(
+                                        "Rollback",
+                                        "Rolled back animal entry after user update failure: ${it.exception?.message}"
+                                    )
+                                }
+                                onUploadFailure?.invoke()
+                            }
+                        }
+                    }.addOnFailureListener {
+                        Log.e(
+                            "saveUserAdoptionInterest",
+                            "Failed to update animal adoption interest: ${it.message}"
+                        )
+                        onUploadFailure?.invoke()
+                    }
+                }
+            }
+        }.addOnFailureListener {
+            Log.e("saveUserAdoptionInterest", "Failed to fetch user document: ${it.message}")
+            onUploadFailure?.invoke()
+        }
+    }.addOnFailureListener {
+        Log.e("saveUserAdoptionInterest", "Failed to fetch adoption document: ${it.message}")
+        onUploadFailure?.invoke()
+    }
+}
+
+
+fun removeUserAdoptionInterest(animal_id: String, onUploadSuccess: (() -> Unit)?) {
+    val doc_ref = Firebase.firestore.collection(FirebaseCollections.ADOPTIONS).document(animal_id)
+
+    doc_ref.get().addOnSuccessListener { snapshot ->
+        val adoption_data = snapshot.toObject(AnimalAdoptionInterest::class.java)
+        val exact_match =
+            adoption_data?.interested_users?.firstOrNull { it.user_id == getCurrentUserId() }
+
+        if (exact_match != null) {
+            removeFromDataFieldList(
+                FirebaseCollections.ADOPTIONS,
+                animal_id,
+                AnimalAdoptionInterest::interested_users,
+                exact_match
+            ) {
+                // Continue to remove from user
+                removeFromDataFieldList(
+                    FirebaseCollections.USERS,
+                    getCurrentUserId(),
+                    User::adopting_animal_ids,
+                    animal_id
+                ) {
+                    onUploadSuccess?.invoke()
+                }
+            }
+        } else {
+            Log.w("AdoptionInterest", "User was not found in animal's interested_users list.")
+            // Still remove from user list in case it's out of sync
+            removeFromDataFieldList(
+                FirebaseCollections.USERS,
+                getCurrentUserId(),
+                User::adopting_animal_ids,
+                animal_id
+            ) {
+                onUploadSuccess?.invoke()
+            }
+        }
+    }
 }
 
 fun addAnimalToDatabaseAndAssociateToShelter(
@@ -217,14 +403,14 @@ fun addAnimalToDatabaseAndAssociateToShelter(
     val firebase_database = Firebase.firestore
 
     firebase_database.collection(
-        Strings.get(R.string.firebase_collection_animals)
+        FirebaseCollections.ANIMALS
     ).document(new_animal.animal_id).set(new_animal).addOnSuccessListener {
         Log.d(
             "TRACE",
             "Successfully pushed animal to database. Adding animal_id to user's hosted_animal_ids"
         )
         appendToDataFieldArray(
-            Strings.get(R.string.firebase_collection_users),
+            FirebaseCollections.USERS,
             getCurrentUserId(),
             User::hosted_animal_ids,
             new_animal.animal_id
@@ -236,6 +422,13 @@ fun addAnimalToDatabaseAndAssociateToShelter(
                 "Failed to create document"
             )
         }
+}
+
+fun removeAnimalFromAdoptionInterestCollection(animal_id: String) {
+    val firebase_database = Firebase.firestore
+
+    firebase_database.collection(FirebaseCollections.ANIMALS)
+        .document(animal_id).delete()
 }
 
 fun removeAnimalFromDatabase(
@@ -250,18 +443,19 @@ fun removeAnimalFromDatabase(
     deleteImagesFromCloudStorage(images_to_be_removed.toTypedArray())
 
     firebase_database.collection(
-        Strings.get(R.string.firebase_collection_animals)
+        FirebaseCollections.ANIMALS
     ).document(animal.animal_id).delete().addOnSuccessListener {
         Log.d(
             "TRACE",
             "Successfully deleted animal from database. Removing animal_id from user's hosted_animal_ids"
         )
         removeFromDataFieldList(
-            Strings.get(R.string.firebase_collection_animals),
+            FirebaseCollections.ANIMALS,
             getCurrentUserId(),
             User::hosted_animal_ids,
             arrayOf(animal.animal_id)
         )
+        removeAnimalFromAdoptionInterestCollection(animal.animal_id)
     }.addOnFailureListener {
         Log.e(
             "removeAnimalFromDatabase Error",
@@ -277,8 +471,8 @@ fun setDocumentData(
     onUploadSuccess: (() -> Unit)? = null
 ) {
     val validCollections = setOf(
-        Strings.get(R.string.firebase_collection_users),
-        Strings.get(R.string.firebase_collection_animals)
+        FirebaseCollections.USERS,
+        FirebaseCollections.ANIMALS
     )
 
     if (collection !in validCollections) {
@@ -307,8 +501,8 @@ fun <T> updateDataField(
     onUploadSuccess: (() -> Unit)? = null
 ) {
     val validCollections = setOf(
-        Strings.get(R.string.firebase_collection_users),
-        Strings.get(R.string.firebase_collection_animals)
+        FirebaseCollections.USERS,
+        FirebaseCollections.ANIMALS
     )
 
     if (collection !in validCollections) {
@@ -336,7 +530,7 @@ fun <T> appendToDataFieldArray(
     field_value: Any,
     onUploadSuccess: (() -> Unit)? = null
 ) {
-    if (collection != Strings.get(R.string.firebase_collection_users) && collection != Strings.get(R.string.firebase_collection_animals)) {
+    if (collection !in FirebaseCollections.all) {
         Log.e("DEVELOPMENT BUG", "Not a valid collection input.")
         return
     }
@@ -345,12 +539,31 @@ fun <T> appendToDataFieldArray(
     val document_ref =
         firebase_database.collection(collection).document(document_id)
 
-    document_ref.update(field_name.name, FieldValue.arrayUnion(field_value)).addOnFailureListener {
+    document_ref.set(
+        mapOf(field_name.name to FieldValue.arrayUnion(field_value)),
+        SetOptions.merge()
+    ).addOnFailureListener {
         Log.w(
             "FirebaseDatabaseUtilities ERROR",
             "Failed to update ${field_name.name} to $field_value"
         )
     }.addOnSuccessListener { onUploadSuccess?.invoke() }
+}
+
+fun <T> removeFromDataFieldList(
+    collection: String,
+    document_id: String,
+    field_name: KProperty1<T, *>,
+    value_to_be_removed: Any,
+    onRemovalSuccess: (() -> Unit)? = null
+) {
+    removeFromDataFieldList(
+        collection,
+        document_id,
+        field_name,
+        arrayOf(value_to_be_removed),
+        onRemovalSuccess
+    )
 }
 
 /**
@@ -360,7 +573,8 @@ fun <T> removeFromDataFieldList(
     collection: String,
     document_id: String,
     field_name: KProperty1<T, *>,
-    values_to_be_removed: Array<String>,
+    values_to_be_removed: Array<Any>,
+
     onRemovalSuccess: (() -> Unit)? = null
 ) {
     val firebase_database = Firebase.firestore
@@ -370,18 +584,12 @@ fun <T> removeFromDataFieldList(
     document_ref.update(field_name.name, FieldValue.arrayRemove(*values_to_be_removed))
         .addOnSuccessListener {
             println("Successfully removed values from ${field_name.name}")
-            _syncDatabaseForRemovedImages(field_name, values_to_be_removed)
             onRemovalSuccess?.invoke()
-        }.addOnFailureListener { println("Error updating field: ${it.message}") }
+        }.addOnFailureListener { println("Error updating field ${field_name.name}: ${it.message}") }
 }
 
-fun <T> _syncDatabaseForRemovedImages(
-    field_name: KProperty1<T, *>,
-    values_to_be_removed: Array<String>
-) {
-    if (field_name.name.contains("image", ignoreCase = true)) {
-        deleteImagesFromCloudStorage(values_to_be_removed)
-    }
+fun syncDatabaseForRemovedImages(values_to_be_removed: Array<String>) {
+    deleteImagesFromCloudStorage(values_to_be_removed)
 }
 
 fun <T, V> appendToDataFieldMap(
@@ -392,7 +600,7 @@ fun <T, V> appendToDataFieldMap(
     field_value: V,
     onUploadSuccess: (() -> Unit)? = null
 ) {
-    if (collection != Strings.get(R.string.firebase_collection_users) && collection != Strings.get(R.string.firebase_collection_animals)) {
+    if (collection != FirebaseCollections.USERS && collection != FirebaseCollections.ANIMALS) {
         Log.e("DEVELOPMENT BUG", "Not a valid collection input.")
         return
     }
@@ -427,7 +635,7 @@ fun <T> updateExplorePreferencesField(
         value_mod = value.toList()
     }
 
-    firebase_database.collection(Strings.get(R.string.firebase_collection_users))
+    firebase_database.collection(FirebaseCollections.USERS)
         .document(getCurrentUserId())
         .update(field_path, value_mod)
         .addOnSuccessListener {
@@ -442,7 +650,7 @@ fun <T> updateExplorePreferencesField(
 
 fun recalculatePreferenceVector() {
     val TAG = "PreferenceVector"
-    val user_ref = Firebase.firestore.collection(Strings.get(R.string.firebase_collection_users))
+    val user_ref = Firebase.firestore.collection(FirebaseCollections.USERS)
         .document(getCurrentUserId())
 
     user_ref.get().addOnSuccessListener { snapshot ->
@@ -460,7 +668,7 @@ fun recalculatePreferenceVector() {
             return@addOnSuccessListener
         }
 
-        Firebase.firestore.collection(Strings.get(R.string.firebase_collection_animals))
+        Firebase.firestore.collection(FirebaseCollections.ANIMALS)
             .whereIn(FieldPath.documentId(), liked_animal_ids)
             .get()
             .addOnSuccessListener { animalDocs ->
@@ -510,7 +718,7 @@ fun recalculatePreferenceVector() {
 fun getRecommendations(location: GeoPoint? = null, onResult: (List<Animal>) -> Unit) {
     val TAG = "RecommendationEngine"
 
-    val user_ref = Firebase.firestore.collection(Strings.get(R.string.firebase_collection_users))
+    val user_ref = Firebase.firestore.collection(FirebaseCollections.USERS)
         .document(getCurrentUserId())
 
     user_ref.get().addOnSuccessListener { userSnap ->
@@ -556,7 +764,7 @@ fun getRecommendations(location: GeoPoint? = null, onResult: (List<Animal>) -> U
             Log.d(TAG, "Using effective location for filtering: $effective_location")
         }
 
-        Firebase.firestore.collection(Strings.get(R.string.firebase_collection_animals))
+        Firebase.firestore.collection(FirebaseCollections.ANIMALS)
             .get()
             .addOnSuccessListener { animal_docs ->
                 Log.d(TAG, "Fetched ${animal_docs.size()} animals from Firestore")

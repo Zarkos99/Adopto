@@ -10,6 +10,7 @@ import sweng894.project.adopto.Strings
 import sweng894.project.adopto.custom.MultiSelectDialogFragment
 import sweng894.project.adopto.custom.MultiSelectView
 import sweng894.project.adopto.data.ExplorationPreferences
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 import sweng894.project.adopto.database.getCurrentUserId
 import sweng894.project.adopto.database.updateDataField
@@ -46,7 +47,7 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
         disableButton(m_save_preferences_button)
         m_save_preferences_button.setOnClickListener {
             updateDataField(
-                Strings.get(R.string.firebase_collection_users),
+                FirebaseCollections.USERS,
                 getCurrentUserId(),
                 User::explore_preferences,
                 getExplorationPreferencesFromInputs()
