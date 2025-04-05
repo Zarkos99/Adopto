@@ -20,6 +20,7 @@ import org.junit.Before
 import org.junit.Test
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
+import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 
 class FirebaseDataServiceUsersTest {
@@ -48,11 +49,10 @@ class FirebaseDataServiceUsersTest {
         every { getCurrentUserId() } returns "testUserId"
 
         every { Firebase.firestore } returns mockFirestore
-        every { Strings.get(R.string.firebase_collection_users) } returns "users_collection"
         every { getCurrentUserId() } returns "testUserId"
 
         every {
-            mockFirestore.collection("users_collection").document("testUserId")
+            mockFirestore.collection("Users").document("testUserId")
         } returns mockDocumentRef
         val snapshotSlot = slot<EventListener<DocumentSnapshot>>()
         every { mockDocumentRef.addSnapshotListener(capture(snapshotSlot)) } answers {

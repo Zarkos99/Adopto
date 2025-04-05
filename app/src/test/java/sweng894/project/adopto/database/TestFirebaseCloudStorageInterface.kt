@@ -16,6 +16,8 @@ import org.junit.Before
 import org.junit.Test
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.User
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 
 class FirebaseStorageUtilsTest {
 
@@ -75,7 +77,6 @@ class FirebaseStorageUtilsTest {
         unmockkStatic(FirebaseStorage::class)
     }
 
-
     @Test
     fun uploadUserProfileImageAndUpdateUserImagePath() {
         val successSlot = slot<OnSuccessListener<UploadTask.TaskSnapshot>>()
@@ -102,9 +103,10 @@ class FirebaseStorageUtilsTest {
         uploadUserProfileImageAndUpdateUserImagePath(mockFirebaseDataServiceUsers, mockUri)
 
         // Verify deletion and upload processes
-        verify(exactly = 2) { mockStorageRef.child(oldImagePath) } // Ensure it tried to access the path
+        verify(exactly = 1) { mockStorageRef.child(oldImagePath) } // Ensure it tried to access the path
         verify(exactly = 1) { deleteImagesFromCloudStorage(arrayOf(oldImagePath)) }
         verify(exactly = 1) { mockStorageRef.putFile(mockUri) } // Ensure upload happened
+        verify(exactly = 1) { mockStorageRef.child("Users/mockUserId/profile_image") }
     }
 
     @Test
@@ -157,28 +159,32 @@ class FirebaseStorageUtilsTest {
     fun deleteImagesFromCloudStorageDeletesImages() {
         val imagePaths = arrayOf("path1", "path2")
 
-        // Reset mocks before defining behavior
+        // Mock Firebase.storage to ensure correct reference is used
+        mockkStatic(Firebase::class)
+        every { Firebase.storage } returns mockStorage
+        every { mockStorage.reference } returns mockStorageRef
+
+        // Reset any previous interactions
         clearMocks(mockStorageRef)
 
         // Create mock StorageReferences for each path
         val mockImageRef1 = mockk<StorageReference>(relaxed = true)
         val mockImageRef2 = mockk<StorageReference>(relaxed = true)
 
-        // Mock `child()` to return specific references
         every { mockStorageRef.child("path1") } returns mockImageRef1
         every { mockStorageRef.child("path2") } returns mockImageRef2
 
-        // Mock `delete()` calls
         every { mockImageRef1.delete() } returns Tasks.forResult(null)
         every { mockImageRef2.delete() } returns Tasks.forResult(null)
 
-        // Call function
+        // Call the function
         deleteImagesFromCloudStorage(imagePaths)
 
-        // Verify that each specific reference's `delete()` was called
+        // Verify that deletes were actually triggered
         verify(exactly = 1) { mockImageRef1.delete() }
         verify(exactly = 1) { mockImageRef2.delete() }
     }
+
 
     @Test
     fun loadCloudStoredImageIntoImageViewLoadsImage() {

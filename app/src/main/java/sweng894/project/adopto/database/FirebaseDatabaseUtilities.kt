@@ -1,7 +1,5 @@
 package sweng894.project.adopto.database
 
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
@@ -14,10 +12,6 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withTimeoutOrNull
-import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.AnimalAdoptionInterest
 import sweng894.project.adopto.data.AnimalAdoptionInterestedUser
@@ -269,6 +263,7 @@ fun saveUserAdoptionInterest(
     onUploadSuccess: (() -> Unit)? = null,
     onUploadFailure: (() -> Unit)? = null
 ) {
+    val log_tag = "saveUserAdoptionInterest"
     val user_id = getCurrentUserId()
     val db = Firebase.firestore
     val adoption_ref = db.collection(FirebaseCollections.ADOPTIONS).document(animal_id)
@@ -281,28 +276,38 @@ fun saveUserAdoptionInterest(
         val already_interested =
             adoption_data?.interested_users?.any { it.user_id == user_id } == true
 
+        println("####TEST_LOG: already_interested: $already_interested")
+
         // Find if this animal is already recorded as an "adopting_animal" under the user
         user_ref.get().addOnSuccessListener { user_snapshot ->
             val user_data = user_snapshot.toObject(User::class.java)
             val already_recorded = user_data?.adopting_animal_ids?.contains(animal_id) == true
 
+            println("####TEST_LOG: already_recorded: $already_recorded")
+
             when {
                 already_interested && already_recorded -> {
-                    Log.d("saveUserAdoptionInterest", "User and animal already in sync.")
+                    Log.d(log_tag, "User and animal already in sync.")
+                    println("####TEST_LOG: User and animal already in sync.")
                     onUploadSuccess?.invoke()
                 }
 
                 already_interested && !already_recorded -> {
                     // Fix inconsistency: update user's animal list
+                    Log.d(
+                        log_tag,
+                        "User already interested, recording on User profile."
+                    )
+                    println("####TEST_LOG: User already interested, recording on User profile.")
                     user_ref.update(
                         User::adopting_animal_ids.name,
                         FieldValue.arrayUnion(animal_id)
                     ).addOnSuccessListener {
-                        Log.d("saveUserAdoptionInterest", "Fixed user record inconsistency.")
+                        Log.d(log_tag, "Fixed user record inconsistency.")
                         onUploadSuccess?.invoke()
                     }.addOnFailureListener {
                         Log.e(
-                            "saveUserAdoptionInterest",
+                            log_tag,
                             "Failed to update user adopting list: ${it.message}"
                         )
                         onUploadFailure?.invoke()
@@ -310,34 +315,38 @@ fun saveUserAdoptionInterest(
                 }
 
                 else -> {
+                    println("####TEST_LOG: Recording user adoption interest on user and adoptions collections.")
                     // Add to both
                     adoption_ref.update(
                         AnimalAdoptionInterest::interested_users.name,
                         FieldValue.arrayUnion(interested_user)
                     ).addOnSuccessListener {
+                        println("####TEST_LOG: Adoptions interested_users update success.")
                         if (!already_recorded) {
                             user_ref.update(
                                 User::adopting_animal_ids.name,
                                 FieldValue.arrayUnion(animal_id)
                             ).addOnSuccessListener {
+                                println("####TEST_LOG: user adopting_animal_ids update success.")
                                 onUploadSuccess?.invoke()
                             }.addOnFailureListener {
+                                println("####TEST_LOG: user adopting_animal_ids update failed rolling back adoptions interested_user update.")
                                 // Rollback animal entry
                                 adoption_ref.update(
                                     AnimalAdoptionInterest::interested_users.name,
                                     FieldValue.arrayRemove(interested_user)
                                 ).addOnCompleteListener {
                                     Log.e(
-                                        "Rollback",
+                                        log_tag,
                                         "Rolled back animal entry after user update failure: ${it.exception?.message}"
                                     )
+                                    onUploadFailure?.invoke()
                                 }
-                                onUploadFailure?.invoke()
                             }
                         }
                     }.addOnFailureListener {
                         Log.e(
-                            "saveUserAdoptionInterest",
+                            log_tag,
                             "Failed to update animal adoption interest: ${it.message}"
                         )
                         onUploadFailure?.invoke()
@@ -345,11 +354,11 @@ fun saveUserAdoptionInterest(
                 }
             }
         }.addOnFailureListener {
-            Log.e("saveUserAdoptionInterest", "Failed to fetch user document: ${it.message}")
+            Log.e(log_tag, "Failed to fetch user document: ${it.message}")
             onUploadFailure?.invoke()
         }
     }.addOnFailureListener {
-        Log.e("saveUserAdoptionInterest", "Failed to fetch adoption document: ${it.message}")
+        Log.e(log_tag, "Failed to fetch adoption document: ${it.message}")
         onUploadFailure?.invoke()
     }
 }

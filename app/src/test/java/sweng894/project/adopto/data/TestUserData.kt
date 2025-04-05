@@ -1,5 +1,6 @@
 package sweng894.project.adopto.data
 
+import com.google.firebase.firestore.GeoPoint
 import org.junit.Assert.*
 import org.junit.Test
 import java.time.Instant
@@ -17,12 +18,14 @@ class UserDataTest {
         assertEquals("", user.profile_image_path)
         assertTrue(user.liked_animal_ids.isEmpty())
         assertTrue(user.hosted_animal_ids.isEmpty())
-        assertEquals("", user.zip_code)
+        assertNull(user.location)
         assertFalse(user.need_info)
     }
 
     @Test
     fun testSettingUserValues() {
+        val user_location = GeoPoint(10.0, 10.0)
+
         val user = User(
             user_id = "123",
             is_shelter = true,
@@ -30,7 +33,7 @@ class UserDataTest {
             profile_image_path = "path/to/image.jpg",
             liked_animal_ids = arrayListOf("a1", "a2"),
             hosted_animal_ids = arrayListOf("h1"),
-            zip_code = "12345",
+            location = user_location,
             need_info = true
         )
 
@@ -40,7 +43,7 @@ class UserDataTest {
         assertEquals("path/to/image.jpg", user.profile_image_path)
         assertEquals(listOf("a1", "a2"), user.liked_animal_ids)
         assertEquals(listOf("h1"), user.hosted_animal_ids)
-        assertEquals("12345", user.zip_code)
+        assertEquals(user_location, user.location)
         assertTrue(user.need_info)
     }
 
