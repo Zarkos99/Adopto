@@ -22,4 +22,10 @@
         android:name="sweng894.project.adopto.profile.UserProfileFragment"
         android:label="@string/title_profile"
         tools:layout="@layout/user_profile_fragment" />
+
+    <fragment
+        android:id="@+id/navigation_messages"
+        android:name="sweng894.project.adopto.messages.UserMessagesFragment"
+        android:label="@string/messages_profile"
+        tools:layout="@layout/user_messages_fragment" />
 </navigation>

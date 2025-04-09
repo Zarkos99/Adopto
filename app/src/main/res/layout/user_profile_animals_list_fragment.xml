@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     android:gravity="top"
     android:background="@color/primary_background"
-    android:fitsSystemWindows="true"
-    tools:context=".profile.UserProfileFragment">
+    android:fitsSystemWindows="true">
 
     <TextView
         android:id="@+id/empty_list_text_view"

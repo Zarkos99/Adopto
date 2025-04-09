@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="chat_list_expanded_width">180dp</dimen>
+    <dimen name="chat_list_collapsed_width">64dp</dimen> <!-- matches image size + padding -->
+</resources>

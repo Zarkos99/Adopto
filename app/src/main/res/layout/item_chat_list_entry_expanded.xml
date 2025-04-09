@@ -3,46 +3,49 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
-    android:gravity="center_vertical"
-    android:background="@color/primary_background">
+    android:padding="12dp"
+    android:minHeight="64dp"
+    android:background="?attr/selectableItemBackground">
 
+    <!-- Profile picture -->
     <ImageView
-        android:id="@+id/user_profile_image"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:id="@+id/other_user_image"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="12dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/default_profile_image"
         android:background="@color/card_background"
-        android:contentDescription="User profile image" />
+        android:src="@drawable/default_profile_image"
+        android:contentDescription="Profile Image"
+        android:clipToOutline="true"
+        android:layout_gravity="center_vertical" />
 
+    <!-- Text container -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_gravity="top"
+        android:orientation="vertical"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical">
 
         <TextView
-            android:id="@+id/user_display_name"
+            android:id="@+id/chat_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Username"
+            android:text="Chat Name"
             android:textColor="@color/primary_text"
             android:textSize="18sp"
-            android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
 
         <TextView
-            android:id="@+id/user_biography"
+            android:id="@+id/last_updated"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="User bio or short description goes here..."
+            android:text="Last updated"
             android:textColor="@color/secondary_text"
-            android:textSize="14sp"
-            android:maxLines="2"
+            android:textSize="12sp"
+            android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
 </LinearLayout>

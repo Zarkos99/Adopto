@@ -1,12 +1,15 @@
 package sweng894.project.adopto.profile
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.User
@@ -23,7 +26,7 @@ class UserProfileViewingActivity : AppCompatActivity() {
     // onDestroyView.
     private lateinit var binding: UserProfileViewingActivityBinding
 
-    private var m_user: User? = null
+    private var m_displayed_user: User? = null
     private var is_tab_layout_initialized = false
 
     override fun onCreate(
@@ -33,18 +36,41 @@ class UserProfileViewingActivity : AppCompatActivity() {
         binding = UserProfileViewingActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val shelter_id = intent.getStringExtra("shelter_id")
+        val user_id = intent.getStringExtra("user_id")
 
-        if (shelter_id.isNullOrEmpty()) {
-            Log.e("UserProfileViewingActivity", "Invalid provided shelter id: $shelter_id")
+        if (user_id.isNullOrEmpty()) {
+            Log.e("UserProfileViewingActivity", "Invalid provided user id: $user_id")
             return
         }
 
-        getUserData(shelter_id) { user ->
-            m_user = user
+        getUserData(user_id) { user ->
+            m_displayed_user = user
             initializeTabLayout()
             populateProfileImage()
             populateTextViewsWithUserInfo()
+
+            binding.chatButton.setOnClickListener {
+                val current_user_id = getCurrentUserId()
+                val other_user_id = m_displayed_user?.user_id!!
+
+                val participant_ids = listOf(current_user_id, other_user_id).sorted()
+
+                ChatRepository.createOrGetChat(
+                    participant_ids = participant_ids,
+                    onComplete = { chat_id ->
+                        val intent =
+                            Intent(this, NavigationBaseActivity::class.java).apply {
+                                putExtra("initial_tab", R.id.navigation_messages)
+                                putExtra("open_chat_id", chat_id)
+                            }
+                        startActivity(intent)
+                    },
+                    onError = {
+                        Toast.makeText(this, "Failed to start chat", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                )
+            }
         }
     }
 
@@ -55,7 +81,7 @@ class UserProfileViewingActivity : AppCompatActivity() {
         val tab_layout = binding.tabLayout
         val view_pager = binding.viewPager
 
-        val is_shelter = m_user?.is_shelter ?: false
+        val is_shelter = m_displayed_user?.is_shelter ?: false
 
         val visible_tabs = mutableListOf(
             ProfileTabType.LIKED,
@@ -64,7 +90,7 @@ class UserProfileViewingActivity : AppCompatActivity() {
             visible_tabs.add(ProfileTabType.HOSTED)
         }
 
-        val tab_adapter = ProfileTabAdapter(this, visible_tabs, m_user?.user_id)
+        val tab_adapter = ProfileTabAdapter(this, visible_tabs, m_displayed_user?.user_id)
         view_pager.adapter = tab_adapter
         view_pager.offscreenPageLimit = 1 // Ensures fragments are refreshed when switched
 
@@ -103,12 +129,12 @@ class UserProfileViewingActivity : AppCompatActivity() {
 
     fun populateProfileImage() {
         val profile_image_view = binding.profilePictureView
-        if (m_user?.profile_image_path.isNullOrEmpty()) {
+        if (m_displayed_user?.profile_image_path.isNullOrEmpty()) {
             profile_image_view.setImageDrawable(getImage("default_profile_pic"))
         } else {
             loadCloudStoredImageIntoImageView(
                 this,
-                m_user?.profile_image_path,
+                m_displayed_user?.profile_image_path,
                 profile_image_view
             )
         }
@@ -127,7 +153,7 @@ class UserProfileViewingActivity : AppCompatActivity() {
             ResourcesCompat.getDrawable(resources, imageId, this.theme)
         } else {
             Log.e("getImage", "Drawable not found: $image_name, using default image")
-            ResourcesCompat.getDrawable(resources, R.drawable.default_profile_pic, this.theme)
+            ResourcesCompat.getDrawable(resources, R.drawable.default_profile_image, this.theme)
         }
     }
 
@@ -136,8 +162,8 @@ class UserProfileViewingActivity : AppCompatActivity() {
         val biography_text_view = binding.biographyField
 
         public_username_text_view.text =
-            m_user?.display_name?.ifEmpty { "Unnamed User" }
+            m_displayed_user?.display_name?.ifEmpty { "Unnamed User" }
         public_username_text_view.isSelected = true // Required for marquee text to function
-        biography_text_view.text = m_user?.biography
+        biography_text_view.text = m_displayed_user?.biography
     }
 }

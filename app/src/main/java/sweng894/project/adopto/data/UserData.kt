@@ -13,8 +13,9 @@ object FirebaseCollections {
     const val USERS = "Users"
     const val ANIMALS = "Animals"
     const val ADOPTIONS = "Adoptions"
+    const val CHATS = "Chats"
 
-    val all = setOf(USERS, ANIMALS, ADOPTIONS)
+    val all = setOf(USERS, ANIMALS, ADOPTIONS, CHATS)
 }
 
 @Parcelize
@@ -35,6 +36,7 @@ data class User(
     @get:PropertyName("explore_preferences")
     @set:PropertyName("explore_preferences")
     var explore_preferences: ExplorationPreferences? = ExplorationPreferences(),
+    var chat_ids: List<String> = listOf(),
     val preference_vector: Map<String, Double> = mapOf() // Vectorized average preferences based on liked animals
 ) : Parcelable
 
@@ -73,4 +75,21 @@ data class AnimalAdoptionInterest(
 data class AnimalAdoptionInterestedUser(
     var user_id: String = "",
     var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+) : Parcelable
+
+@Parcelize
+data class Chat(
+    var chat_id: String = UUID.randomUUID().toString(),
+    var chat_name: String = "",
+    var participant_ids: List<String> = listOf(), // exactly 2 for 1:1, more for group chat
+    var last_updated: String = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+    var messages: List<Message> = listOf()
+) : Parcelable
+
+@Parcelize
+data class Message(
+    var message_id: String = UUID.randomUUID().toString(),
+    var sender_id: String = "",
+    var timestamp: String = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+    var content: String = "",
 ) : Parcelable

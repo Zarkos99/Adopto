@@ -32,7 +32,7 @@
                     android:layout_width="160dp"
                     android:layout_height="140dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/default_profile_pic" />
+                    android:src="@drawable/default_profile_image" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -46,7 +46,7 @@
                         android:layout_width="60dp"
                         android:layout_height="50dp"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/default_profile_pic" />
+                        android:src="@drawable/default_profile_image" />
 
                     <TextView
                         android:id="@+id/shelter_name_text_view"

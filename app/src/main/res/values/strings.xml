@@ -4,6 +4,7 @@
     <string name="title_geo">Geo</string>
     <string name="title_explore">Explore</string>
     <string name="title_profile">Profile</string>
+    <string name="messages_profile">Messages</string>
 
     <string name="shelter_animals_field_name">"hosted_animals"</string>
     <string name="liked_animals_tab_name">"Liked"</string>

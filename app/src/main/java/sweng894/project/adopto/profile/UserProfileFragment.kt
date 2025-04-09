@@ -229,7 +229,7 @@ class UserProfileFragment : Fragment() {
             ResourcesCompat.getDrawable(resources, imageId, activity.theme)
         } else {
             Log.e("getImage", "Drawable not found: $image_name, using default image")
-            ResourcesCompat.getDrawable(resources, R.drawable.default_profile_pic, activity.theme)
+            ResourcesCompat.getDrawable(resources, R.drawable.default_profile_image, activity.theme)
         }
     }
 

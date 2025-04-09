@@ -55,7 +55,7 @@ class UserMiniProfileFragmentOverlay : BottomSheetDialogFragment() {
         binding.root.setOnClickListener {
             shelter_id?.let { id ->
                 val intent = Intent(requireContext(), UserProfileViewingActivity::class.java)
-                intent.putExtra("shelter_id", id)
+                intent.putExtra("user_id", id)
                 startActivity(intent)
                 dismiss() // close the bottom sheet after click
             }

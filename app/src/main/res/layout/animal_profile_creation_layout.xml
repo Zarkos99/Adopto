@@ -17,7 +17,7 @@
         android:background="@drawable/button_style_primary"
         android:layout_marginTop="30sp"
         android:scaleType="fitXY"
-        android:src="@drawable/default_profile_pic" />
+        android:src="@drawable/default_profile_image" />
 
     <!--    Name input field-->
     <LinearLayout

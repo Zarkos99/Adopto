@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/messages_fragment_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/primary_background">
+
+    <!-- Container for chat list that can expand/collapse -->
+    <LinearLayout
+        android:id="@+id/chat_list_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/card_background">
+
+        <ImageButton
+            android:id="@+id/expand_collapse_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end"
+            android:src="@drawable/ic_collapse"
+            android:contentDescription="Expand or collapse"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/chat_list_recycler"
+            android:layout_width="180dp"
+            android:layout_height="match_parent"
+            android:overScrollMode="never" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/grey" />
+
+    <!-- Chat Detail Panel -->
+    <LinearLayout
+        android:id="@+id/chat_detail_panel"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="@color/primary_background">
+
+        <!-- Chat Header with Profile Info -->
+        <LinearLayout
+            android:id="@+id/chat_header"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical"
+            android:background="@color/card_background"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/other_user_profile_image"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="12dp"
+                android:scaleType="centerCrop"
+                android:background="@drawable/bg_message_input"
+                android:src="@drawable/default_profile_image" />
+
+            <TextView
+                android:id="@+id/other_user_display_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/primary_text"
+                android:textSize="18sp"
+                android:text="User Name"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+
+        <!-- Messages list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/message_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:overScrollMode="never"
+            android:scrollbars="vertical" />
+
+        <!-- Message input area -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:background="@color/card_background">
+
+            <EditText
+                android:id="@+id/message_input_field"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_message_input"
+                android:hint="Type a message..."
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:textColor="@color/primary_text"
+                android:textColorHint="@color/secondary_text"
+                android:inputType="textMultiLine"
+                android:maxLines="4" />
+
+            <ImageButton
+                android:id="@+id/send_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_send"
+                android:contentDescription="Send message" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

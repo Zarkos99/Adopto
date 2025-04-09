@@ -24,6 +24,11 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.reflect.KProperty1
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObject
+import sweng894.project.adopto.data.Chat
+import sweng894.project.adopto.data.Message
+import java.time.Instant
 
 fun getCurrentUserId(): String {
     var user_id: String? = ""
@@ -889,3 +894,94 @@ fun haversineDistance(a: GeoPoint, b: GeoPoint): Double {
     return R * c
 }
 
+object ChatRepository {
+    private const val TAG = "ChatRepository"
+
+    fun createOrGetChat(
+        participant_ids: List<String>,
+        onComplete: (String) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val db = FirebaseFirestore.getInstance()
+        val chats_ref = db.collection(FirebaseCollections.CHATS)
+
+        chats_ref
+            .whereEqualTo(Chat::participant_ids.name, participant_ids.sorted())
+            .get()
+            .addOnSuccessListener { result ->
+                if (!result.isEmpty) {
+                    val chat_id = result.documents.first().id
+                    onComplete(chat_id)
+                } else {
+                    val new_chat = Chat(participant_ids = participant_ids)
+                    val chat_doc = chats_ref.document()
+                    chat_doc.set(new_chat.copy(chat_id = chat_doc.id))
+                        .addOnSuccessListener {
+                            onComplete(chat_doc.id)
+                        }
+                        .addOnFailureListener { onError(it) }
+                }
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun sendMessage(
+        chat_id: String,
+        sender_id: String,
+        content: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val db = FirebaseFirestore.getInstance()
+        val message = Message(
+            sender_id = sender_id,
+            content = content,
+            timestamp = Instant.now().toString()
+        )
+
+        db.collection(FirebaseCollections.CHATS)
+            .document(chat_id)
+            .collection("Messages")
+            .add(message)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onError(it) }
+
+        db.collection(FirebaseCollections.CHATS)
+            .document(chat_id)
+            .update(Chat::last_updated.name, message.timestamp)
+    }
+
+    fun getMessages(
+        chat_id: String,
+        onResult: (List<Message>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection(FirebaseCollections.CHATS)
+            .document(chat_id)
+            .collection("Messages")
+            .orderBy("timestamp")
+            .get()
+            .addOnSuccessListener { query_snapshot ->
+                val messages = query_snapshot.documents.mapNotNull { it.toObject<Message>() }
+                onResult(messages)
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun getUserChats(
+        user_id: String,
+        onResult: (List<Chat>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection(FirebaseCollections.CHATS)
+            .whereArrayContains(Chat::participant_ids.name, user_id)
+            .get()
+            .addOnSuccessListener { result ->
+                val chats = result.documents.mapNotNull { it.toObject<Chat>() }
+                onResult(chats)
+            }
+            .addOnFailureListener { onError(it) }
+    }
+}

@@ -332,7 +332,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
 
     fun openShelterProfile() {
         val intent = Intent(this, UserProfileViewingActivity::class.java)
-        intent.putExtra("shelter_id", m_selected_animal?.associated_shelter_id)
+        intent.putExtra("user_id", m_selected_animal?.associated_shelter_id)
         startActivity(intent)
     }
 

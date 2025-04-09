@@ -13,5 +13,9 @@
         android:id="@+id/navigation_gallery"
         android:icon="@drawable/baseline_collections_24"
         android:title="Profile" />
+    <item
+        android:id="@+id/navigation_messages"
+        android:icon="@drawable/ic_chat"
+        android:title="Messages" />
 
 </menu>
