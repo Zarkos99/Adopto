@@ -3,32 +3,37 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp"
     android:minHeight="64dp"
     android:background="?attr/selectableItemBackground">
 
-    <ImageView
-        android:id="@+id/unread_badge"
-        android:layout_width="12dp"
-        android:layout_height="12dp"
-        android:layout_marginEnd="10dp"
-        android:layout_gravity="end|center_vertical"
-        android:src="@drawable/ic_unread_dot"
-        android:backgroundTint="@color/notification"
-        android:visibility="gone" />
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp">
 
-    <!-- Profile picture -->
-    <ImageView
-        android:id="@+id/other_user_image"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="12dp"
-        android:scaleType="centerCrop"
-        android:background="@color/card_background"
-        android:src="@drawable/default_profile_image"
-        android:contentDescription="Profile Image"
-        android:clipToOutline="true"
-        android:layout_gravity="center_vertical" />
+        <!-- Profile picture -->
+        <ImageView
+            android:id="@+id/other_user_image"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerCrop"
+            android:background="@color/card_background"
+            android:src="@drawable/default_profile_image"
+            android:contentDescription="Profile Image"
+            android:clipToOutline="true" />
+
+        <!-- Unread badge overlaid in corner -->
+        <ImageView
+            android:id="@+id/unread_badge"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_gravity="end|top"
+            android:layout_marginEnd="2dp"
+            android:layout_marginTop="2dp"
+            android:src="@drawable/ic_unread_dot"
+            android:backgroundTint="@color/notification"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <!-- Text container -->
     <LinearLayout
