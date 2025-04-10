@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -33,7 +34,14 @@ class NavigationBaseActivity : AppCompatActivity() {
             val initial_tab = intent.getIntExtra("initial_tab", R.id.navigation_explore)
             val open_chat_id = intent.getStringExtra("open_chat_id")
 
-            navView.selectedItemId = initial_tab
+            navController.navigate(
+                initial_tab,
+                null,
+                NavOptions.Builder()
+                    .setLaunchSingleTop(true)
+                    .setRestoreState(true)
+                    .build()
+            )
 
             navView.setupWithNavController(navController)
             supportActionBar?.hide()
@@ -42,17 +50,29 @@ class NavigationBaseActivity : AppCompatActivity() {
             if (initial_tab == R.id.navigation_messages && open_chat_id != null) {
                 navController.addOnDestinationChangedListener { _, destination, _ ->
                     if (destination.id == R.id.navigation_messages) {
-                        val fragment =
-                            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main)
-                                ?.childFragmentManager
-                                ?.fragments
-                                ?.firstOrNull()
-                        if (fragment is UserMessagesFragment) {
-                            fragment.setInitialChat(open_chat_id)
-                        }
+                        waitForFragmentAndSetChatId()
                     }
                 }
             }
+        }
+    }
+
+    private fun waitForFragmentAndSetChatId(retry_count: Int = 10) {
+        val fragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main)
+            ?.childFragmentManager
+            ?.fragments
+            ?.firstOrNull()
+
+        if (fragment is UserMessagesFragment) {
+            Log.d("NavigationBaseActivity", "UserMessagesFragment found, setting initial chat")
+            fragment.setInitialChat(intent.getStringExtra("open_chat_id") ?: return)
+        } else if (retry_count > 0) {
+            Log.d("NavigationBaseActivity", "Retrying... attempts left: $retry_count")
+            binding.root.postDelayed({
+                waitForFragmentAndSetChatId(retry_count - 1)
+            }, 100)
+        } else {
+            Log.w("NavigationBaseActivity", "Failed to find UserMessagesFragment after retries")
         }
     }
 }

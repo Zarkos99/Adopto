@@ -36,7 +36,7 @@ class UserProfileViewingActivity : AppCompatActivity() {
         binding = UserProfileViewingActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val user_id = intent.getStringExtra("user_id")
+        val user_id = intent.getStringExtra(User::user_id.name)
 
         if (user_id.isNullOrEmpty()) {
             Log.e("UserProfileViewingActivity", "Invalid provided user id: $user_id")
@@ -58,6 +58,7 @@ class UserProfileViewingActivity : AppCompatActivity() {
                 ChatRepository.createOrGetChat(
                     participant_ids = participant_ids,
                     onComplete = { chat_id ->
+                        Log.d("UserProfileViewingActivity", "Found or created chat: $chat_id")
                         val intent =
                             Intent(this, NavigationBaseActivity::class.java).apply {
                                 putExtra("initial_tab", R.id.navigation_messages)

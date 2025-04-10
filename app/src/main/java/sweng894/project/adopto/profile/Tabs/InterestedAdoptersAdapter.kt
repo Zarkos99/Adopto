@@ -50,7 +50,7 @@ class InterestedAdoptersAdapter(
 
             itemView.setOnClickListener {
                 val intent = Intent(context, UserProfileViewingActivity::class.java)
-                intent.putExtra("user_id", user.user_id)
+                intent.putExtra(User::user_id.name, user.user_id)
                 context.startActivity(intent)
             }
         }

@@ -129,10 +129,53 @@ fun loadCloudStoredImageIntoImageView(context: Context, image_path: String?, vie
         val storage_ref = Firebase.storage.reference.child(image_path)
         storage_ref.downloadUrl.addOnSuccessListener {
             try {
-                Glide.with(context).load(it).into(view)
+                Glide.with(context).load(it)
+                    .placeholder(R.drawable.default_profile_image) // Show this while loading
+                    .error(R.drawable.default_profile_image)       // If error happens
+                    .into(view)
             } catch (exception: Exception) {
                 Log.e("Glide Image Download Error", exception.toString())
             }
+        }.addOnFailureListener {
+            view.setImageResource(R.drawable.default_profile_image)
         }
+    } else {
+        // Clear previous image to avoid showing stale data
+        Glide.with(context).clear(view)
+        view.setImageResource(R.drawable.default_profile_image)
+    }
+}
+
+fun loadCloudStoredImageIntoImageView(
+    context: Context,
+    image_path: String?,
+    view: ImageView,
+    cache: MutableMap<String, String>
+) {
+    if (!image_path.isNullOrBlank()) {
+        val cached_url = cache[image_path]
+        if (cached_url != null) {
+            Glide.with(context)
+                .load(cached_url)
+                .placeholder(R.drawable.default_profile_image)
+                .error(R.drawable.default_profile_image)
+                .into(view)
+        } else {
+            Firebase.storage.reference.child(image_path).downloadUrl
+                .addOnSuccessListener { uri ->
+                    val download_url = uri.toString()
+                    cache[image_path] = download_url
+                    Glide.with(context)
+                        .load(download_url)
+                        .placeholder(R.drawable.default_profile_image)
+                        .error(R.drawable.default_profile_image)
+                        .into(view)
+                }
+                .addOnFailureListener {
+                    view.setImageResource(R.drawable.default_profile_image)
+                }
+        }
+    } else {
+        view.setImageResource(R.drawable.default_profile_image)
     }
 }

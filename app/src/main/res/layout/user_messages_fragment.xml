@@ -27,7 +27,10 @@
             android:id="@+id/chat_list_recycler"
             android:layout_width="180dp"
             android:layout_height="match_parent"
-            android:overScrollMode="never" />
+            android:overScrollMode="never"
+            android:scrollbars="vertical"
+            android:scrollbarThumbVertical="@drawable/scrollbar_thumb"
+            android:scrollbarTrackVertical="@drawable/scrollbar_track" />
     </LinearLayout>
 
     <!-- Divider -->
@@ -87,8 +90,9 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:padding="8dp"
-            android:overScrollMode="never"
-            android:scrollbars="vertical" />
+            android:scrollbars="vertical"
+            android:scrollbarThumbVertical="@drawable/scrollbar_thumb"
+            android:scrollbarTrackVertical="@drawable/scrollbar_track" />
 
         <!-- Message input area -->
         <LinearLayout

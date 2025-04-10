@@ -83,9 +83,10 @@ data class Chat(
     var chat_name: String = "",
     var participant_ids: List<String> = listOf(), // exactly 2 for 1:1, more for group chat
     var last_updated: String = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
-    var messages: List<Message> = listOf()
+    var last_read_timestamps: Map<String, String> = mapOf() // user_id -> timestamp
 ) : Parcelable
 
+//Messages are stored as individual subcollections of a Chat
 @Parcelize
 data class Message(
     var message_id: String = UUID.randomUUID().toString(),

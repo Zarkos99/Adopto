@@ -29,6 +29,7 @@ import com.google.firebase.firestore.ktx.toObject
 import sweng894.project.adopto.data.Chat
 import sweng894.project.adopto.data.Message
 import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 fun getCurrentUserId(): String {
     var user_id: String? = ""
@@ -896,6 +897,8 @@ fun haversineDistance(a: GeoPoint, b: GeoPoint): Double {
 
 object ChatRepository {
     private const val TAG = "ChatRepository"
+    private const val READ_DEBOUNCE_INTERVAL_MS = 3000L // 3 seconds
+    private val last_read_updates = mutableMapOf<String, Long>()
 
     fun createOrGetChat(
         participant_ids: List<String>,
@@ -983,5 +986,25 @@ object ChatRepository {
                 onResult(chats)
             }
             .addOnFailureListener { onError(it) }
+    }
+
+    fun markChatAsReadDebounced(chat_id: String, user_id: String) {
+        val now = System.currentTimeMillis()
+        val key = "$chat_id-$user_id"
+        val last = last_read_updates[key] ?: 0L
+
+        if (now - last >= READ_DEBOUNCE_INTERVAL_MS) {
+            last_read_updates[key] = now
+            markChatAsRead(chat_id, user_id)
+        }
+    }
+
+    fun markChatAsRead(chat_id: String, user_id: String, onSuccess: (() -> Unit)? = null) {
+        val now = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+        FirebaseFirestore.getInstance()
+            .collection(FirebaseCollections.CHATS)
+            .document(chat_id)
+            .update(Chat::last_read_timestamps.name + ".$user_id", now)
+            .addOnSuccessListener { onSuccess?.invoke() }
     }
 }

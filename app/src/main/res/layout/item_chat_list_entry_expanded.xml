@@ -7,6 +7,16 @@
     android:minHeight="64dp"
     android:background="?attr/selectableItemBackground">
 
+    <ImageView
+        android:id="@+id/unread_badge"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_marginEnd="10dp"
+        android:layout_gravity="end|center_vertical"
+        android:src="@drawable/ic_unread_dot"
+        android:backgroundTint="@color/notification"
+        android:visibility="gone" />
+
     <!-- Profile picture -->
     <ImageView
         android:id="@+id/other_user_image"
