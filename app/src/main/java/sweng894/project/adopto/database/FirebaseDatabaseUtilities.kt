@@ -25,6 +25,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.reflect.KProperty1
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.toObject
 import sweng894.project.adopto.data.Chat
 import sweng894.project.adopto.data.Message
@@ -933,25 +934,38 @@ object ChatRepository {
         sender_id: String,
         content: String,
         onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
+        onError: () -> Unit
     ) {
         val db = FirebaseFirestore.getInstance()
-        val message = Message(
-            sender_id = sender_id,
-            content = content,
-            timestamp = Instant.now().toString()
+        val messages_ref =
+            db.collection(FirebaseCollections.CHATS).document(chat_id).collection("Messages")
+
+        // Set max allowed messages
+        val MAX_MESSAGES = 200
+
+        // Create the message data
+        val new_message = mapOf(
+            Message::sender_id.name to sender_id,
+            Message::content.name to content,
+            Message::timestamp.name to Instant.now().toString()
         )
 
-        db.collection(FirebaseCollections.CHATS)
-            .document(chat_id)
-            .collection("Messages")
-            .add(message)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onError(it) }
-
-        db.collection(FirebaseCollections.CHATS)
-            .document(chat_id)
-            .update(Chat::last_updated.name, message.timestamp)
+        // Add new message first
+        messages_ref.add(new_message).addOnSuccessListener {
+            // After successful add, check if over limit
+            messages_ref
+                .orderBy(Message::timestamp.name, Query.Direction.ASCENDING)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    if (snapshot.size() > MAX_MESSAGES) {
+                        val to_delete = snapshot.documents.take(snapshot.size() - MAX_MESSAGES)
+                        for (doc in to_delete) {
+                            doc.reference.delete()
+                        }
+                    }
+                    onSuccess()
+                }.addOnFailureListener { onError() }
+        }.addOnFailureListener { onError() }
     }
 
     fun getMessages(
