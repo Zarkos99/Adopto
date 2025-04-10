@@ -114,6 +114,8 @@
                 android:textColor="@color/primary_text"
                 android:textColorHint="@color/secondary_text"
                 android:inputType="textMultiLine"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:maxLines="4" />
 
             <ImageButton

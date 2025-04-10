@@ -1,5 +1,6 @@
 package sweng894.project.adopto.messages
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +19,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 class ChatListAdapter(
+    private var selected_chat_id: String? = null,
     private val isCollapsed: () -> Boolean,
     private val onChatSelected: (Chat) -> Unit
 ) : ListAdapter<Chat, RecyclerView.ViewHolder>(ChatDiffCallback()) {
@@ -70,8 +72,10 @@ class ChatListAdapter(
             val current_user_id = getCurrentUserId()
             val other_user_id = chat.participant_ids.firstOrNull { it != current_user_id }
 
+            val is_selected = chat.chat_id == selected_chat_id
             unread_badge.visibility =
-                if (unread_map[chat.chat_id] == true) View.VISIBLE else View.GONE
+                if (!is_selected && unread_map[chat.chat_id] == true) View.VISIBLE else View.GONE
+
 
             if (other_user_id != null) {
                 val cached_user = user_cache[other_user_id]
@@ -139,8 +143,9 @@ class ChatListAdapter(
             val current_user_id = getCurrentUserId()
             val other_user_id = chat.participant_ids.firstOrNull { it != current_user_id }
 
+            val is_selected = chat.chat_id == selected_chat_id
             unread_badge.visibility =
-                if (unread_map[chat.chat_id] == true) View.VISIBLE else View.GONE
+                if (!is_selected && unread_map[chat.chat_id] == true) View.VISIBLE else View.GONE
 
             if (other_user_id != null) {
                 val cached_user = user_cache[other_user_id]
@@ -181,6 +186,12 @@ class ChatListAdapter(
             }
         }
     }
+
+    fun setSelectedChatId(chat_id: String?) {
+        selected_chat_id = chat_id
+        notifyDataSetChanged() // rebind all items to update the badge visibility
+    }
+
 
     class ChatDiffCallback : DiffUtil.ItemCallback<Chat>() {
         override fun areItemsTheSame(old_item: Chat, new_item: Chat): Boolean =

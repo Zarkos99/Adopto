@@ -29,7 +29,8 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@color/secondary_text"
-        android:hint="Username" />
+        android:hint="Email"
+        android:inputType="textEmailAddress" />
 
     <EditText
         android:id="@+id/password_field"

@@ -154,10 +154,9 @@ class UserMessagesFragment : Fragment() {
     }
 
     private fun tryOpeningPendingChat(chat_list: List<Chat>) {
-        Log.d("DEBUG", "pending_chat_id: $pending_chat_id")
         if (pending_chat_id != null) {
             val pending_chat = chat_list.find { it.chat_id == pending_chat_id }
-            Log.d("DEBUG", "Attempting to open pending chat: $pending_chat")
+            Log.d("UserMessagesFragment", "Attempting to open pending chat: $pending_chat")
             if (pending_chat != null) {
                 chats_listener_view_model.selectChat(pending_chat)
                 pending_chat_id = null
@@ -167,8 +166,12 @@ class UserMessagesFragment : Fragment() {
 
     fun observeSelectedChat() {
         chats_listener_view_model.selected_chat_id.observe(viewLifecycleOwner) { selected_chat ->
-
             if (selected_chat != null) {
+                Log.d(
+                    "### DEBUG",
+                    "setting selected chat id for adapter: ${selected_chat.chat_id}"
+                )
+                chat_list_adapter.setSelectedChatId(selected_chat.chat_id)
                 displayMessagesForChat(selected_chat)
             }
         }

@@ -120,8 +120,6 @@ class ChatsListenerViewModel : ViewModel() {
     }
 
     fun selectChat(chat: Chat?) {
-        Log.d("#### DEBUG", "_selected_chat_id.value: ${_selected_chat_id.value}")
-        Log.d("#### DEBUG", "chat: ${chat}")
         _selected_chat_id.value = chat
     }
 
