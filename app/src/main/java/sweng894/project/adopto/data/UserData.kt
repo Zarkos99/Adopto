@@ -18,6 +18,36 @@ object FirebaseCollections {
     val all = setOf(USERS, ANIMALS, ADOPTIONS, CHATS)
 }
 
+object AnimalSizes {
+    const val TINY = "Tiny (< 5 lbs)"
+    const val SMALL = "Small (5 - 20 lbs)"
+    const val MEDIUM = "Medium (21 - 50 lbs)"
+    const val LARGE = "Large (51 - 99 lbs)"
+    const val XL = "XL (100+ lbs)"
+
+    val all = listOf(TINY, SMALL, MEDIUM, LARGE, XL)
+}
+
+object AnimalTypes {
+    const val DOG = "Dog"
+    const val CAT = "Cat"
+    const val BIRD = "Bird"
+    const val RABBIT = "Rabbit"
+    const val REPTILE = "Reptile"
+    const val FISH = "Fish"
+    const val OTHER = "Other"
+
+    val all = listOf(DOG, CAT, BIRD, RABBIT, REPTILE, FISH, OTHER)
+}
+
+object AnimalGenders {
+    const val UNKNOWN = "Unknown"
+    const val FEMALE = "Female"
+    const val MALE = "Male"
+
+    val all = listOf(UNKNOWN, FEMALE, MALE)
+}
+
 @Parcelize
 data class User(
     var user_id: String = "",
@@ -58,6 +88,7 @@ data class Animal(
     var animal_size: String? = "",
     var animal_type: String? = "",
     var animal_breed: String? = "",
+    var animal_gender: String? = "",
     var health_summary: String? = "",
     var biography: String? = "",
     var profile_image_path: String? = "",

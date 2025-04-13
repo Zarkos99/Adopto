@@ -8,8 +8,7 @@
     android:padding="8dp"
     android:gravity="top|center"
     android:background="@color/primary_background"
-    android:fitsSystemWindows="true"
-    tools:context=".profile.animalprofile.AnimalProfileViewingActivity">
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -115,7 +114,8 @@
                     android:id="@+id/edit_profile_button"
                     android:layout_width="50sp"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/baseline_settings_24"
+                    android:background="@drawable/ic_edit"
+                    android:layout_below="@id/animal_name"
                     android:layout_alignParentEnd="true"
                     android:visibility="gone" />
             </RelativeLayout>

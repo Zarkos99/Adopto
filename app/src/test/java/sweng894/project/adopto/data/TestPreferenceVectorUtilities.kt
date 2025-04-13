@@ -19,13 +19,6 @@ class TestPreferenceVectorUtilities {
         mockResources = mockk()
 
         every { mockContext.resources } returns mockResources
-        every { mockResources.getStringArray(R.array.animal_types) } returns arrayOf(
-            "Dog",
-            "Cat",
-            "Bird"
-        )
-
-        VectorUtils.initializeTypeEncoding(mockContext)
     }
 
     @Test

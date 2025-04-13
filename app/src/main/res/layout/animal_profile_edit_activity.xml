@@ -1,194 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="top"
+    android:padding="15dp"
     android:background="@color/primary_background"
-    android:fitsSystemWindows="true"
-    android:theme="@style/Theme.Adopto"
-    tools:context=".profile.UserProfilePreferencesActivity">
+    android:fitsSystemWindows="true">
 
     <TextView
         android:id="@+id/preferences_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="50sp"
+        android:layout_marginStart="15sp"
+        android:layout_marginEnd="15sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:gravity="center"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true"
-        android:text="Animal Profile"
-        android:textSize="40sp"
+        android:textSize="36sp"
         android:textStyle="bold"
-        android:textColor="@color/primary_text" />
+        android:textColor="@color/primary_text"
+        android:text="Editting Animal Profile" />
 
-
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/preferences_title"
-        android:layout_marginStart="30sp"
-        android:layout_marginEnd="30sp"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Name: "
-            android:textSize="25sp"
-            android:textColor="@color/primary_text" />
-
-        <EditText
-            android:id="@+id/name_input_field"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="start"
-            android:textColorHint="@color/secondary_text"
-            android:textColor="@color/secondary_text"
-            android:textSize="20sp"
-            android:background="@color/card_background" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Age: "
-            android:textSize="25sp"
-            android:textColor="@color/primary_text" />
-
-        <EditText
-            android:id="@+id/age_input_field"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColorHint="@color/secondary_text"
-            android:textColor="@color/secondary_text"
-            android:inputType="numberDecimal"
-            android:textSize="20sp"
-            android:background="@color/card_background" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Health: "
-            android:textSize="25sp"
-            android:textColor="@color/primary_text" />
-
-        <EditText
-            android:id="@+id/health_input_field"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColorHint="@color/secondary_text"
-            android:textColor="@color/secondary_text"
-            android:inputType="numberDecimal"
-            android:textSize="20sp"
-            android:background="@color/card_background" />
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/preferences_title"
+        app:layout_constraintBottom_toTopOf="@id/action_buttons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="15sp"
+        android:layout_marginEnd="15sp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5sp"
-            android:layout_marginBottom="5sp"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Name input field -->
+            <sweng894.project.adopto.custom.StringInputView
+                android:id="@+id/animal_name_input"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Size: "
-                android:textSize="25sp"
-                android:textColor="@color/primary_text" />
+                android:layout_marginBottom="10dp"
+                app:titleText="Name:"
+                app:inputHeight="35dp" />
 
-            <Spinner
-                android:id="@+id/animal_size_spinner"
-                android:layout_width="wrap_content"
+            <!-- Age input field -->
+            <sweng894.project.adopto.custom.StringInputView
+                android:id="@+id/animal_age_input"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:entries="@array/animal_sizes"
-                android:theme="@style/SpinnerTextStyle" />
+                android:layout_marginBottom="10dp"
+                app:titleText="Age:"
+                app:inputHeight="35dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Health input field -->
+            <sweng894.project.adopto.custom.StringInputView
+                android:id="@+id/animal_health_input"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Type: "
-                android:textSize="25sp"
-                android:textColor="@color/primary_text" />
+                android:layout_marginBottom="10dp"
+                app:titleText="Health:"
+                app:inputHeight="35dp" />
 
-            <Spinner
-                android:id="@+id/animal_type_spinner"
-                android:layout_width="wrap_content"
+            <!-- Breed input field -->
+            <sweng894.project.adopto.custom.StringInputView
+                android:id="@+id/animal_breed_input"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:entries="@array/animal_types"
-                android:theme="@style/SpinnerTextStyle" />
+                android:layout_marginBottom="10dp"
+                app:titleText="Breed:"
+                app:inputHeight="35dp" />
+
+            <!-- Description input field -->
+            <sweng894.project.adopto.custom.StringInputView
+                android:id="@+id/animal_description_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                app:titleText="Description:"
+                app:inputHeight="120dp" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@color/primary_background">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Size: "
+                    android:textSize="25sp"
+                    android:textColor="@color/primary_text" />
+
+                <Spinner
+                    android:id="@+id/animal_size_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/primary_button"
+                    android:popupBackground="@color/card_background"
+                    android:theme="@style/SpinnerTextStyle" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/primary_background">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Type: "
+                    android:textSize="25sp"
+                    android:textColor="@color/primary_text" />
+
+                <Spinner
+                    android:id="@+id/animal_type_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/primary_button"
+                    android:popupBackground="@color/card_background"
+                    android:theme="@style/SpinnerTextStyle" />
+            </LinearLayout>
         </LinearLayout>
+    </ScrollView>
 
-        <TextView
+    <RelativeLayout
+        android:id="@+id/action_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="15dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="30dp">
+
+        <Button
+            android:id="@+id/save_preferences_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Breed: "
-            android:textSize="25sp"
-            android:textColor="@color/primary_text" />
+            android:layout_marginStart="10sp"
+            android:layout_alignParentEnd="true"
+            android:text="Save"
+            android:clickable="false"
+            android:height="60sp" />
 
-        <EditText
-            android:id="@+id/breed_input_field"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColorHint="@color/secondary_text"
-            android:textColor="@color/secondary_text"
-            android:textSize="20sp"
-            android:background="@color/card_background" />
-
-        <TextView
+        <Button
+            android:id="@+id/delete_profile_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@color/primary_text"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:text="Description:" />
-
-        <EditText
-            android:id="@+id/description_input_field"
-            android:layout_width="match_parent"
-            android:layout_height="120sp"
-            android:padding="5dp"
-            android:background="@color/card_background"
-            android:gravity="start|top"
-            android:textColorHint="@color/secondary_text"
-            android:textColor="@color/secondary_text"
-            android:textSize="24sp"
-            android:scrollbars="vertical"
-            android:overScrollMode="always"
-            android:maxLines="10" />
-
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/save_preferences_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="20sp"
-        android:layout_marginStart="10sp"
-        android:layout_alignParentEnd="true"
-        android:text="Save"
-        android:clickable="false"
-        android:height="60sp" />
-
-    <Button
-        android:id="@+id/delete_profile_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="20sp"
-        android:layout_marginStart="10sp"
-        android:text="Delete Profile"
-        android:height="60sp" />
-</RelativeLayout>
+            android:layout_marginStart="10sp"
+            android:text="Delete Profile"
+            android:height="60sp" />
+    </RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

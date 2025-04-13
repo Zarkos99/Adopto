@@ -14,23 +14,17 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
+import sweng894.project.adopto.custom.CustomSpinnerAdapter
+import sweng894.project.adopto.custom.StringInputView
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.AnimalSizes
+import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.database.removeAnimalFromDatabase
 import sweng894.project.adopto.database.setDocumentData
 import sweng894.project.adopto.databinding.AnimalProfileEditActivityBinding
 
 class AnimalProfileEditActivity : AppCompatActivity() {
-
-    private lateinit var m_name_input_field: EditText
-    private lateinit var m_age_input_field: EditText
-    private lateinit var m_health_input_field: EditText
-    private lateinit var m_description_input_field: EditText
-    private lateinit var m_type_input_field: Spinner
-    private lateinit var m_size_input_field: Spinner
-    private lateinit var m_breed_input_field: EditText
-    private lateinit var m_save_button: Button
-    private lateinit var m_delete_profile_button: Button
 
     lateinit var m_current_animal: Animal
 
@@ -43,16 +37,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         binding = AnimalProfileEditActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        m_name_input_field = binding.nameInputField
-        m_age_input_field = binding.ageInputField
-        m_health_input_field = binding.healthInputField
-        m_type_input_field = binding.animalTypeSpinner
-        m_size_input_field = binding.animalSizeSpinner
-        m_breed_input_field = binding.breedInputField
-        m_description_input_field = binding.descriptionInputField
-        m_delete_profile_button = binding.deleteProfileButton
-        m_save_button = binding.savePreferencesButton
-        disableButton(m_save_button)
+        disableButton(binding.savePreferencesButton)
 
         m_current_animal = intent.getParcelableExtra("current_animal")!!
         initializeInputFields()
@@ -68,20 +53,20 @@ class AnimalProfileEditActivity : AppCompatActivity() {
             }
         })
 
-        m_name_input_field.doAfterTextChanged { _ ->
+        binding.animalNameInput.doAfterTextChanged { _ ->
             calculateSaveButtonClickability()
         }
-        m_age_input_field.doAfterTextChanged { _ ->
+        binding.animalAgeInput.doAfterTextChanged { _ ->
             calculateSaveButtonClickability()
         }
-        m_health_input_field.doAfterTextChanged { _ ->
+        binding.animalHealthInput.doAfterTextChanged { _ ->
             calculateSaveButtonClickability()
         }
-        m_description_input_field.doAfterTextChanged { _ ->
+        binding.animalDescriptionInput.doAfterTextChanged { _ ->
             calculateSaveButtonClickability()
         }
 
-        m_save_button.setOnClickListener {
+        binding.savePreferencesButton.setOnClickListener {
             val updated_animal = createAnimalFromInputs()
 
             if (updated_animal != null && m_current_animal != updated_animal) {
@@ -91,54 +76,73 @@ class AnimalProfileEditActivity : AppCompatActivity() {
                     updated_animal
                 ) {
                     m_current_animal = updated_animal
-                    disableButton(m_save_button)
+                    disableButton(binding.savePreferencesButton)
                 }
             } else if (updated_animal == null) {
                 Log.d("TRACE", "Have empty fields when attempting to update animal.")
             }
         }
 
-        m_delete_profile_button.setOnClickListener {
-            removeAnimalFromDatabase(m_current_animal)
-            val intent = Intent().apply {
-                putExtra("updated_animal", m_current_animal)
+        binding.deleteProfileButton.setOnClickListener {
+            val dialogBuilder = androidx.appcompat.app.AlertDialog.Builder(this)
+            dialogBuilder.setTitle("Confirm Deletion")
+            dialogBuilder.setMessage("Are you sure you want to delete this animal profile? This action cannot be undone.")
+            dialogBuilder.setPositiveButton("Delete") { _, _ ->
+                removeAnimalFromDatabase(m_current_animal)
+                val intent = Intent().apply {
+                    putExtra("updated_animal", m_current_animal)
+                }
+                setResult(RESULT_CANCELED, intent)
+                finish()
             }
-            setResult(RESULT_CANCELED, intent)
-            finish()
+            dialogBuilder.setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            dialogBuilder.create().show()
         }
     }
 
 
     fun initializeInputFields() {
-        m_name_input_field.setText(m_current_animal.animal_name)
-        m_age_input_field.setText(m_current_animal.animal_age.toString())
-        m_health_input_field.setText(m_current_animal.health_summary)
-        m_description_input_field.setText(m_current_animal.biography)
-        m_breed_input_field.setText(m_current_animal.animal_breed)
+        binding.animalNameInput.setInputText(m_current_animal.animal_name ?: "")
+        binding.animalAgeInput.setInputText(m_current_animal.animal_age.toString())
+        binding.animalHealthInput.setInputText(m_current_animal.health_summary ?: "")
+        binding.animalDescriptionInput.setInputText(m_current_animal.biography ?: "")
+        binding.animalBreedInput.setInputText(m_current_animal.animal_breed ?: "")
 
-        var value_to_select = m_current_animal.animal_size
-        if (value_to_select != null) {
-            val adapter = m_size_input_field.adapter as ArrayAdapter<String>
-            val position = adapter.getPosition(value_to_select)
-            m_size_input_field.setSelection(position)
+        val type_adapter = populateSpinnerWithOptions(binding.animalTypeSpinner, AnimalTypes.all)
+        val size_adapter = populateSpinnerWithOptions(binding.animalSizeSpinner, AnimalSizes.all)
+
+        // Set selections using the saved values
+        m_current_animal.animal_size?.let {
+            val position = size_adapter.getPosition(it)
+            binding.animalSizeSpinner.setSelection(position)
         }
 
-        value_to_select = m_current_animal.animal_type
-        if (value_to_select != null) {
-            val adapter = m_type_input_field.adapter as ArrayAdapter<String>
-            val position = adapter.getPosition(value_to_select)
-            m_type_input_field.setSelection(position)
+        m_current_animal.animal_type?.let {
+            val position = type_adapter.getPosition(it)
+            binding.animalTypeSpinner.setSelection(position)
         }
     }
 
+    fun populateSpinnerWithOptions(spinner: Spinner, options: List<String>): CustomSpinnerAdapter {
+        val adapter = CustomSpinnerAdapter(
+            this,
+            options
+        ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        spinner.adapter = adapter
+        return adapter
+    }
+
     fun createAnimalFromInputs(): Animal? {
-        val new_name = m_name_input_field.text.toString()
-        val new_age_str = m_age_input_field.text.toString() // Optional Field
-        val new_health = m_health_input_field.text.toString() //Optional Field
-        val new_description = m_description_input_field.text.toString() //Optional Field
-        val new_size = m_size_input_field.selectedItem.toString()
-        val new_type = m_type_input_field.selectedItem.toString()
-        val new_breed = m_breed_input_field.text.toString() //Optional Field
+        val new_name = binding.animalNameInput.getInputText()
+        val new_age_str = binding.animalAgeInput.getInputText() // Optional Field
+        val new_health = binding.animalHealthInput.getInputText() //Optional Field
+        val new_breed = binding.animalBreedInput.getInputText() //Optional Field
+        val new_description = binding.animalDescriptionInput.getInputText() //Optional Field
+        val new_size = binding.animalSizeSpinner.selectedItem.toString()
+        val new_type = binding.animalTypeSpinner.selectedItem.toString()
 
         var error = false
 
@@ -189,17 +193,17 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         val updated_animal = createAnimalFromInputs()
 
         if (updated_animal != null && m_current_animal != updated_animal) {
-            enableButton(m_save_button)
+            enableButton(binding.savePreferencesButton)
         } else {
-            disableButton(m_save_button)
+            disableButton(binding.savePreferencesButton)
         }
     }
 
     fun enableButton(button: Button) {
         button.isEnabled = true
         button.isClickable = true
-        button.setTextColor(m_delete_profile_button.currentTextColor)
-        button.background = m_delete_profile_button.background
+        button.setTextColor(binding.deleteProfileButton.currentTextColor)
+        button.background = binding.deleteProfileButton.background
     }
 
     fun disableButton(button: Button) {

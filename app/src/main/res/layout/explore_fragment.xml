@@ -15,7 +15,8 @@
         android:layout_gravity="top|end"
         android:layout_marginTop="10sp"
         android:layout_marginEnd="10sp"
-        android:background="@drawable/baseline_settings_24" />
+        android:background="@drawable/ic_manage_search"
+        android:backgroundTint="@color/primary_button" />
 
     <com.yuyakaido.android.cardstackview.CardStackView
         android:id="@+id/card_stack_view"

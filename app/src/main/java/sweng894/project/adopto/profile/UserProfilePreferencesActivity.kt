@@ -10,7 +10,6 @@ import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.widget.doAfterTextChanged
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.R
@@ -83,16 +82,16 @@ class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAu
 
         initializeInputFields()
 
-        binding.emailInputField.doAfterTextChanged { _ ->
+        binding.userEmailInput.doAfterTextChanged { _ ->
             calculateSaveButtonClickability()
         }
-        binding.displayNameInputField.doAfterTextChanged { _ ->
+        binding.userDisplayNameInput.doAfterTextChanged { _ ->
             calculateSaveButtonClickability()
         }
 
         binding.savePreferencesButton.setOnClickListener {
-            val new_display_name = binding.displayNameInputField.text.toString()
-            val new_email = binding.emailInputField.text.toString()
+            val new_display_name = binding.userDisplayNameInput.getInputText()
+            val new_email = binding.userEmailInput.getInputText()
 
             val current_auth_user = auth.currentUser
             if (current_auth_user?.displayName != new_display_name) {
@@ -137,8 +136,8 @@ class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAu
 
     fun initializeInputFields() {
         val current_auth_user = auth.currentUser
-        binding.displayNameInputField.setText(current_auth_user?.displayName)
-        binding.emailInputField.setText(current_auth_user?.email)
+        binding.userDisplayNameInput.setInputText(current_auth_user?.displayName ?: "")
+        binding.userEmailInput.setInputText(current_auth_user?.email ?: "")
     }
 
 
@@ -146,10 +145,12 @@ class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAu
         m_location =
             m_firebase_data_service.current_user_data?.location
         if (m_location != null) {
-            binding.locationField.text = geoPointToFormattedAddress(this, m_location!!)
+            binding.userLocationInput.setInputText(
+                geoPointToFormattedAddress(this, m_location!!) ?: ""
+            )
         }
 
-        val location_text_field = binding.locationField
+        val location_text_field = binding.userLocationInput
         location_text_field.setOnClickListener {
             PlacesAutocompleteHelper.launchFromActivity(this) { place ->
                 val lat_lng = place.latLng
@@ -157,7 +158,7 @@ class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAu
                     val formatted_location = latLngToFormattedAddress(this, lat_lng)
 
                     if (!formatted_location.isNullOrEmpty()) {
-                        location_text_field.text = formatted_location
+                        location_text_field.setInputText(formatted_location)
                         m_location = GeoPoint(lat_lng.latitude, lat_lng.longitude)
                         calculateSaveButtonClickability()
                     }
@@ -169,8 +170,8 @@ class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAu
     fun calculateSaveButtonClickability() {
         val current_user_location = m_firebase_data_service.current_user_data?.location
         val current_auth_user = auth.currentUser
-        val new_display_name = binding.displayNameInputField.text.toString()
-        val new_email = binding.emailInputField.text.toString()
+        val new_display_name = binding.userDisplayNameInput.getInputText()
+        val new_email = binding.userEmailInput.getInputText()
 
         val display_name_changed = current_auth_user?.displayName != new_display_name
                 || m_firebase_data_service.current_user_data?.display_name != new_display_name

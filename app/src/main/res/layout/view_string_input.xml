@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TextView
+        android:id="@+id/title_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/primary_text"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/input_text_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:background="@color/card_background"
+        android:gravity="top"
+        android:textColorHint="@color/secondary_text"
+        android:textColor="@color/secondary_text"
+        android:textSize="18sp"
+        android:minLines="1"
+        android:maxLines="10"
+        android:scrollbars="vertical"
+        android:inputType="textMultiLine"
+        android:overScrollMode="always" />
+</merge>

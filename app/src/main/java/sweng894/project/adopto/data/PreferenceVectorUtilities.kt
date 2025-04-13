@@ -1,18 +1,17 @@
 package sweng894.project.adopto.data
 
-import android.content.Context
 import android.util.Log
-import sweng894.project.adopto.R
 
 object VectorUtils {
 
     private const val TAG = "VectorUtils"
 
     private lateinit var TYPE_ENCODING: Map<String, Double>
-    private val SIZE_ENCODING = mapOf("Small" to 1.0, "Medium" to 2.0, "Large" to 3.0)
+    private val SIZE_ENCODING =
+        mapOf("Small" to 1.0, "Medium" to 2.0, "Large" to 3.0) //TODO: Update for new enum
 
-    fun initializeTypeEncoding(context: Context) {
-        val animal_types = context.resources.getStringArray(R.array.animal_types)
+    fun initializeTypeEncoding() {
+        val animal_types = AnimalTypes.all
         TYPE_ENCODING = animal_types.mapIndexed { index, type ->
             type to (index + 1).toDouble()
         }.toMap()

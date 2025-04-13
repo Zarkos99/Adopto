@@ -9,6 +9,8 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.custom.MultiSelectDialogFragment
 import sweng894.project.adopto.custom.MultiSelectView
+import sweng894.project.adopto.data.AnimalSizes
+import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.ExplorationPreferences
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
@@ -70,14 +72,18 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
         m_types_multi_select_view = binding.typesMultiSelect
 
         // Set dropdown options
-        val sizes_array = resources.getStringArray(R.array.animal_sizes).toList()
-        val types_array = resources.getStringArray(R.array.animal_types).toList()
-        m_sizes_multi_select_view.setOptions(sizes_array)
-        m_types_multi_select_view.setOptions(types_array)
+        val sizes_array = AnimalSizes.all
+        val types_array = AnimalTypes.all
+        m_sizes_multi_select_view.setOptions(sizes_array.toList())
+        m_types_multi_select_view.setOptions(types_array.toList())
 
         // Set pre-selected preferences
-        val selected_sizes = m_user_explore_preferences?.animal_sizes ?: emptyList()
-        val selected_types = m_user_explore_preferences?.animal_types ?: emptyList()
+        val selected_sizes = m_user_explore_preferences?.animal_sizes
+            ?.filter { AnimalSizes.all.contains(it) }
+            ?: emptyList()
+        val selected_types = m_user_explore_preferences?.animal_types
+            ?.filter { AnimalTypes.all.contains(it) }
+            ?: emptyList()
         m_sizes_multi_select_view.setSelectedItems(selected_sizes)
         m_types_multi_select_view.setSelectedItems(selected_types)
         m_selected_sizes = ArrayList(selected_sizes)

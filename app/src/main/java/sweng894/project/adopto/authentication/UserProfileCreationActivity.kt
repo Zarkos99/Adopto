@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.get
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
@@ -13,6 +14,8 @@ import sweng894.project.adopto.custom.PlacesAutocompleteHelper
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityResult
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.latLngToFormattedAddress
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.AnimalSizes
+import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.ExplorationPreferences
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
@@ -25,8 +28,6 @@ import sweng894.project.adopto.databinding.AuthUserProfileCreationActivityBindin
 
 class UserProfileCreationActivity : AppCompatActivity() {
 
-    private lateinit var m_biography_edit_text: EditText
-    private lateinit var m_location_text_view: TextView
     private var m_is_shelter = false
     private var m_location: GeoPoint? = null
 
@@ -42,9 +43,8 @@ class UserProfileCreationActivity : AppCompatActivity() {
 
         m_is_shelter = intent.getBooleanExtra("is_shelter", false)
 
-        m_biography_edit_text = binding.biographyField
-        m_location_text_view = binding.locationField
         val done_button_view = binding.doneButton
+        val description_input_field = binding.userDescriptionInput
 
         initializeLocationTextView()
 
@@ -61,7 +61,7 @@ class UserProfileCreationActivity : AppCompatActivity() {
                 FirebaseCollections.USERS,
                 getCurrentUserId(),
                 User::biography,
-                m_biography_edit_text.text.toString()
+                description_input_field.getInputText()
             )
             // Save zip code to database
             updateDataField(
@@ -80,10 +80,8 @@ class UserProfileCreationActivity : AppCompatActivity() {
             )
 
             //Set as lists because Parcelable doesn't support arrays
-            val animal_types = resources.getStringArray(R.array.animal_types).toList()
-            val animal_sizes = resources.getStringArray(R.array.animal_sizes).toList()
-            updateExplorePreferencesField(ExplorationPreferences::animal_types, animal_types)
-            updateExplorePreferencesField(ExplorationPreferences::animal_sizes, animal_sizes)
+            updateExplorePreferencesField(ExplorationPreferences::animal_types, AnimalTypes.all)
+            updateExplorePreferencesField(ExplorationPreferences::animal_sizes, AnimalSizes.all)
 
             // Reassociate animals with the current shelter's id if the shelter's data ever accidentally gets cleared
             reassociateUnlinkedAnimalsToShelter()
@@ -98,14 +96,16 @@ class UserProfileCreationActivity : AppCompatActivity() {
     }
 
     fun initializeLocationTextView() {
-        m_location_text_view.setOnClickListener {
+
+        val location_input_field = binding.userLocationInput
+        location_input_field.setOnClickListener {
             PlacesAutocompleteHelper.launchFromActivity(this) { place ->
                 val lat_lng = place.latLng
                 if (lat_lng != null) {
                     val formatted_location = latLngToFormattedAddress(this, lat_lng)
 
                     if (!formatted_location.isNullOrEmpty()) {
-                        m_location_text_view.text = formatted_location
+                        location_input_field.setInputText(formatted_location)
                         m_location = GeoPoint(lat_lng.latitude, lat_lng.longitude)
                     }
                 }

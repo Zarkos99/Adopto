@@ -2,12 +2,11 @@ package sweng894.project.adopto.custom
 
 import android.app.Dialog
 import android.os.Bundle
-import android.util.Log
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ArrayAdapter
+import android.widget.CheckedTextView
 import android.widget.TextView
+import android.view.ContextThemeWrapper
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import sweng894.project.adopto.R
 
@@ -20,55 +19,98 @@ class MultiSelectDialogFragment : DialogFragment() {
     private lateinit var listener: MultiSelectListener
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val items = arguments?.getStringArray(ARG_ITEMS) ?: arrayOf()
-        val pre_selected_items = arguments?.getStringArray(ARG_SELECTED_ITEMS) ?: arrayOf()
+        val items = arguments?.getStringArray(arg_items) ?: arrayOf()
+        val pre_selected_items = arguments?.getStringArray(arg_selected_items) ?: arrayOf()
+        val selected_items = pre_selected_items.toMutableList()
 
-        // Boolean array to track selected state
-        val selected_items = BooleanArray(items.size) { index ->
-            pre_selected_items.contains(items[index]) // Pre-select items if they exist in the saved list
+        val custom_title = TextView(requireContext()).apply {
+            text = "Select Options"
+            setPadding(40, 30, 40, 20)
+            setTextColor(ContextCompat.getColor(context, R.color.primary_text))
+            textSize = 20f
         }
 
-        val selected_list = pre_selected_items.toMutableList()  // Keep track of selections
+        val selected_flags = BooleanArray(items.size) { index ->
+            selected_items.contains(items[index])
+        }
 
-        return AlertDialog.Builder(requireContext())
-            .setTitle("Select Options")
-            .setMultiChoiceItems(items, selected_items) { _, index, isChecked ->
-                if (isChecked) selected_list.add(items[index]) else selected_list.remove(items[index])
+        val dialog_context = ContextThemeWrapper(
+            requireContext(),
+            androidx.appcompat.R.style.Theme_AppCompat_Dialog_Alert
+        )
+
+        return AlertDialog.Builder(dialog_context)
+            .setCustomTitle(custom_title)
+            .setMultiChoiceItems(items, selected_flags) { _, index, isChecked ->
+                val selected_item = items[index]
+                if (isChecked) {
+                    selected_items.add(selected_item)
+                } else {
+                    selected_items.remove(selected_item)
+                }
             }
             .setPositiveButton("OK") { _, _ ->
-                listener.onItemsSelected(selected_list)
+                listener.onItemsSelected(selected_items)
             }
             .setNegativeButton("Cancel", null)
             .setNeutralButton("Clear All") { _, _ ->
                 listener.onItemsSelected(emptyList())
-            }.create()
-
+            }
+            .create()
     }
 
     override fun onStart() {
         super.onStart()
-        dialog?.window?.setBackgroundDrawableResource(R.color.card_background)
+        val alertDialog = dialog as? AlertDialog ?: return
+        val context = requireContext()
+
+        val primaryColor = ContextCompat.getColor(context, R.color.primary_text)
+        val backgroundColor = ContextCompat.getColor(context, R.color.card_background)
+        val buttonColor = ContextCompat.getColor(context, R.color.primary_button)
+
+        alertDialog.window?.setBackgroundDrawableResource(R.color.card_background)
+
+        alertDialog.listView?.apply {
+            divider = null
+            selector = ContextCompat.getDrawable(context, android.R.color.transparent)
+            setBackgroundColor(backgroundColor)
+
+            // Set initial item text color
+            for (i in 0 until childCount) {
+                (getChildAt(i) as? CheckedTextView)?.setTextColor(primaryColor)
+            }
+
+            // Update color after layout
+            post {
+                for (i in 0 until childCount) {
+                    (getChildAt(i) as? CheckedTextView)?.setTextColor(primaryColor)
+                }
+            }
+        }
+
+        // 🔹 Set button text colors manually
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(buttonColor)
+        alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(buttonColor)
+        alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(buttonColor)
     }
 
-    /**
-     * Allows an external class (e.g., MultiSelectView) to set the listener dynamically.
-     */
     fun setListener(listener: MultiSelectListener) {
         this.listener = listener
     }
 
     companion object {
-        private const val ARG_ITEMS = "items"
-        private const val ARG_SELECTED_ITEMS = "selected_items"
+        private const val arg_items = "items"
+        private const val arg_selected_items = "selected_items"
 
         fun newInstance(
             items: MutableList<String>,
             selected_items: List<String>
         ): MultiSelectDialogFragment {
             val fragment = MultiSelectDialogFragment()
-            val args = Bundle()
-            args.putStringArray(ARG_ITEMS, items.toTypedArray())
-            args.putStringArray(ARG_SELECTED_ITEMS, selected_items.toTypedArray())
+            val args = Bundle().apply {
+                putStringArray(arg_items, items.toTypedArray())
+                putStringArray(arg_selected_items, selected_items.toTypedArray())
+            }
             fragment.arguments = args
             return fragment
         }

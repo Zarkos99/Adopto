@@ -1,5 +1,6 @@
 package sweng894.project.adopto.profile.animalprofile
 
+import android.R
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -8,14 +9,18 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
-import android.widget.EditText
+import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import sweng894.project.adopto.custom.CustomSpinnerAdapter
+import sweng894.project.adopto.custom.StringInputView
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.AnimalSizes
+import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
 import sweng894.project.adopto.database.addAnimalToDatabaseAndAssociateToShelter
 import sweng894.project.adopto.database.getCurrentUserId
@@ -25,13 +30,13 @@ import sweng894.project.adopto.databinding.AnimalProfileCreationLayoutBinding
 
 class AnimalProfileCreationActivity : AppCompatActivity() {
 
-    private lateinit var m_name_input_edit_text: EditText
-    private lateinit var m_age_input_edit_text: EditText
-    private lateinit var m_health_input_edit_text: EditText
+    private lateinit var m_name_input_field: StringInputView
+    private lateinit var m_age_input_field: StringInputView
+    private lateinit var m_health_input_field: StringInputView
+    private lateinit var m_breed_input_field: StringInputView
+    private lateinit var m_description_input_field: StringInputView
     private lateinit var m_type_input_field: Spinner
     private lateinit var m_size_input_field: Spinner
-    private lateinit var m_breed_input_field: EditText
-    private lateinit var m_description_input_edit_text: EditText
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_select_additional_images_intent: ActivityResultLauncher<String>
     private lateinit var m_additional_images_adaptor: AnimalProfileCreationImagesAdapter
@@ -82,19 +87,22 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         binding = AnimalProfileCreationLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        m_name_input_edit_text = binding.animalNameInputField
-        m_age_input_edit_text = binding.animalAgeInputField
-        m_health_input_edit_text = binding.animalHealthInputField
+        m_name_input_field = binding.animalNameInput
+        m_age_input_field = binding.animalAgeInput
+        m_health_input_field = binding.animalHealthInput
+        m_breed_input_field = binding.animalBreedInput
+        m_description_input_field = binding.animalDescriptionInput
         m_type_input_field = binding.animalTypeSpinner
         m_size_input_field = binding.animalSizeSpinner
-        m_breed_input_field = binding.breedInputField
-        m_description_input_edit_text = binding.descriptionInputField
         val animal_profile_image_view = binding.profileImageView
         val additional_images_image_view = binding.additionalImagesButton
         val cancel_button_view = binding.cancelButton
         val create_button_view = binding.createButton
 
         val additional_images_recycler_view = binding.additionalImages
+
+        populateSpinnerWithOptions(m_type_input_field, AnimalTypes.all)
+        populateSpinnerWithOptions(m_size_input_field, AnimalSizes.all)
 
         // Initialize recyclerview adaptor
         m_additional_images_adaptor =
@@ -135,15 +143,24 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         }
     }
 
+    fun populateSpinnerWithOptions(spinner: Spinner, options: List<String>) {
+        val adapter = CustomSpinnerAdapter(
+            this,
+            options
+        ).also { it.setDropDownViewResource(R.layout.simple_spinner_dropdown_item) }
+
+        spinner.adapter = adapter
+    }
+
 
     fun createAnimalFromInputs(): Animal? {
-        val new_name = m_name_input_edit_text.text.toString()
-        val new_age_str = m_age_input_edit_text.text.toString() // Optional Field
-        val new_health = m_health_input_edit_text.text.toString() //Optional Field
-        val new_description = m_description_input_edit_text.text.toString() //Optional Field
+        val new_name = m_name_input_field.getInputText()
+        val new_age_str = m_age_input_field.getInputText() // Optional Field
+        val new_health = m_health_input_field.getInputText() //Optional Field
+        val new_description = m_description_input_field.getInputText() //Optional Field
+        val new_breed = m_breed_input_field.getInputText() //Optional Field
         val new_size = m_size_input_field.selectedItem.toString()
         val new_type = m_type_input_field.selectedItem.toString()
-        val new_breed = m_breed_input_field.text.toString() //Optional Field
 
         var error = false
 

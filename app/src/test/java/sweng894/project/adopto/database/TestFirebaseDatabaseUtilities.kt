@@ -512,7 +512,7 @@ class FirebaseDatabaseUtilitiesTest {
             FirebaseCollections.USERS,
             "user1",
             User::explore_preferences,
-            "animal_sizes",
+            ExplorationPreferences::animal_sizes,
             listOf("small", "medium")
         )
 
