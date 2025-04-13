@@ -17,7 +17,6 @@ open class AdoptoApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        VectorUtils.initializeTypeEncoding()
         _instance = this
 
         // Initialize Google Places

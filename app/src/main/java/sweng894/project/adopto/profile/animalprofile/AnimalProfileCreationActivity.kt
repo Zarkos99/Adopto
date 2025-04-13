@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import sweng894.project.adopto.custom.CustomSpinnerAdapter
 import sweng894.project.adopto.custom.StringInputView
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.AnimalGenders
 import sweng894.project.adopto.data.AnimalSizes
 import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.database.FirebaseDataServiceUsers
@@ -30,13 +31,6 @@ import sweng894.project.adopto.databinding.AnimalProfileCreationLayoutBinding
 
 class AnimalProfileCreationActivity : AppCompatActivity() {
 
-    private lateinit var m_name_input_field: StringInputView
-    private lateinit var m_age_input_field: StringInputView
-    private lateinit var m_health_input_field: StringInputView
-    private lateinit var m_breed_input_field: StringInputView
-    private lateinit var m_description_input_field: StringInputView
-    private lateinit var m_type_input_field: Spinner
-    private lateinit var m_size_input_field: Spinner
     private lateinit var m_select_profile_image_intent: ActivityResultLauncher<String>
     private lateinit var m_select_additional_images_intent: ActivityResultLauncher<String>
     private lateinit var m_additional_images_adaptor: AnimalProfileCreationImagesAdapter
@@ -87,13 +81,6 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
         binding = AnimalProfileCreationLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        m_name_input_field = binding.animalNameInput
-        m_age_input_field = binding.animalAgeInput
-        m_health_input_field = binding.animalHealthInput
-        m_breed_input_field = binding.animalBreedInput
-        m_description_input_field = binding.animalDescriptionInput
-        m_type_input_field = binding.animalTypeSpinner
-        m_size_input_field = binding.animalSizeSpinner
         val animal_profile_image_view = binding.profileImageView
         val additional_images_image_view = binding.additionalImagesButton
         val cancel_button_view = binding.cancelButton
@@ -101,8 +88,9 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
 
         val additional_images_recycler_view = binding.additionalImages
 
-        populateSpinnerWithOptions(m_type_input_field, AnimalTypes.all)
-        populateSpinnerWithOptions(m_size_input_field, AnimalSizes.all)
+        populateSpinnerWithOptions(binding.animalGenderSpinner, AnimalGenders.all)
+        populateSpinnerWithOptions(binding.animalTypeSpinner, AnimalTypes.all)
+        populateSpinnerWithOptions(binding.animalSizeSpinner, AnimalSizes.all)
 
         // Initialize recyclerview adaptor
         m_additional_images_adaptor =
@@ -154,18 +142,22 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
 
 
     fun createAnimalFromInputs(): Animal? {
-        val new_name = m_name_input_field.getInputText()
-        val new_age_str = m_age_input_field.getInputText() // Optional Field
-        val new_health = m_health_input_field.getInputText() //Optional Field
-        val new_description = m_description_input_field.getInputText() //Optional Field
-        val new_breed = m_breed_input_field.getInputText() //Optional Field
-        val new_size = m_size_input_field.selectedItem.toString()
-        val new_type = m_type_input_field.selectedItem.toString()
+        val new_name = binding.animalNameInput.getInputText()
+        val new_age_str = binding.animalAgeInput.getInputText() // Optional Field
+        val new_health = binding.animalHealthInput.getInputText() //Optional Field
+        val new_description = binding.animalDescriptionInput.getInputText() //Optional Field
+        val new_breed = binding.animalBreedInput.getInputText() //Optional Field
+        val new_gender = binding.animalGenderSpinner.selectedItem.toString()
+        val new_size = binding.animalSizeSpinner.selectedItem.toString()
+        val new_type = binding.animalTypeSpinner.selectedItem.toString()
 
         var error = false
 
         // Default to fake values if fields are empty
         if (new_name.isEmpty()) {
+            error = true
+        }
+        if (new_gender.isEmpty()) {
             error = true
         }
         if (new_size.isEmpty()) {
@@ -198,6 +190,7 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             animal_age = new_age,
             health_summary = new_health,
             biography = new_description,
+            animal_gender = new_gender,
             animal_size = new_size,
             animal_type = new_type,
             animal_breed = new_breed,

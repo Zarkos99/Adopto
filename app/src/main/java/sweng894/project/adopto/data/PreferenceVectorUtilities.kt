@@ -6,17 +6,16 @@ object VectorUtils {
 
     private const val TAG = "VectorUtils"
 
-    private lateinit var TYPE_ENCODING: Map<String, Double>
-    private val SIZE_ENCODING =
-        mapOf("Small" to 1.0, "Medium" to 2.0, "Large" to 3.0) //TODO: Update for new enum
-
-    fun initializeTypeEncoding() {
-        val animal_types = AnimalTypes.all
-        TYPE_ENCODING = animal_types.mapIndexed { index, type ->
+    // Dynamically allocate unique values for encoding
+    private val SIZE_ENCODING: Map<String, Double> by lazy {
+        AnimalSizes.all.mapIndexed { index, size ->
+            size to (index + 1).toDouble()
+        }.toMap()
+    }
+    private val TYPE_ENCODING: Map<String, Double> by lazy {
+        AnimalTypes.all.mapIndexed { index, type ->
             type to (index + 1).toDouble()
         }.toMap()
-
-        Log.d(TAG, "Initialized TYPE_ENCODING: $TYPE_ENCODING")
     }
 
     fun animalToVector(animal: Animal): List<Double> {

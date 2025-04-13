@@ -3,6 +3,8 @@ package sweng894.project.adopto.profile.animalprofile
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -17,6 +19,7 @@ import sweng894.project.adopto.Strings
 import sweng894.project.adopto.custom.CustomSpinnerAdapter
 import sweng894.project.adopto.custom.StringInputView
 import sweng894.project.adopto.data.Animal
+import sweng894.project.adopto.data.AnimalGenders
 import sweng894.project.adopto.data.AnimalSizes
 import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.FirebaseCollections
@@ -65,6 +68,53 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         binding.animalDescriptionInput.doAfterTextChanged { _ ->
             calculateSaveButtonClickability()
         }
+        binding.animalGenderSpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    calculateSaveButtonClickability()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    // Optionally handle no selection
+                }
+            }
+
+        binding.animalSizeSpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    calculateSaveButtonClickability()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    // Optionally handle no selection
+                }
+            }
+
+        binding.animalTypeSpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    calculateSaveButtonClickability()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    // Optionally handle no selection
+                }
+            }
 
         binding.savePreferencesButton.setOnClickListener {
             val updated_animal = createAnimalFromInputs()
@@ -110,10 +160,17 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         binding.animalDescriptionInput.setInputText(m_current_animal.biography ?: "")
         binding.animalBreedInput.setInputText(m_current_animal.animal_breed ?: "")
 
+        val gender_adapter =
+            populateSpinnerWithOptions(binding.animalGenderSpinner, AnimalGenders.all)
         val type_adapter = populateSpinnerWithOptions(binding.animalTypeSpinner, AnimalTypes.all)
         val size_adapter = populateSpinnerWithOptions(binding.animalSizeSpinner, AnimalSizes.all)
 
         // Set selections using the saved values
+        m_current_animal.animal_gender?.let {
+            val position = gender_adapter.getPosition(it)
+            binding.animalGenderSpinner.setSelection(position)
+        }
+
         m_current_animal.animal_size?.let {
             val position = size_adapter.getPosition(it)
             binding.animalSizeSpinner.setSelection(position)
@@ -141,6 +198,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         val new_health = binding.animalHealthInput.getInputText() //Optional Field
         val new_breed = binding.animalBreedInput.getInputText() //Optional Field
         val new_description = binding.animalDescriptionInput.getInputText() //Optional Field
+        val new_gender = binding.animalGenderSpinner.selectedItem.toString()
         val new_size = binding.animalSizeSpinner.selectedItem.toString()
         val new_type = binding.animalTypeSpinner.selectedItem.toString()
 
@@ -149,6 +207,10 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         // Default to fake values if fields are empty
         if (new_name.isEmpty()) {
             Log.d("TRACE", "Animal Name cannot be empty.")
+            error = true
+        }
+        if (new_gender.isEmpty()) {
+            Log.d("TRACE", "Animal Gender cannot be empty.")
             error = true
         }
         if (new_size.isEmpty()) {
@@ -183,6 +245,7 @@ class AnimalProfileEditActivity : AppCompatActivity() {
         new_animal.animal_age = new_age
         new_animal.health_summary = new_health
         new_animal.biography = new_description
+        new_animal.animal_gender = new_gender
         new_animal.animal_size = new_size
         new_animal.animal_type = new_type
         new_animal.animal_breed = new_breed
@@ -192,6 +255,8 @@ class AnimalProfileEditActivity : AppCompatActivity() {
     fun calculateSaveButtonClickability() {
         val updated_animal = createAnimalFromInputs()
 
+        Log.d("calculateSaveButtonClickability", "updated_animal: $updated_animal")
+        Log.d("calculateSaveButtonClickability", "m_current_animal: $m_current_animal")
         if (updated_animal != null && m_current_animal != updated_animal) {
             enableButton(binding.savePreferencesButton)
         } else {

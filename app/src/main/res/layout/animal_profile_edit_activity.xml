@@ -95,6 +95,30 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
+                    android:text="Gender: "
+                    android:textSize="25sp"
+                    android:textColor="@color/primary_text" />
+
+                <Spinner
+                    android:id="@+id/animal_gender_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/primary_button"
+                    android:popupBackground="@color/card_background"
+                    android:theme="@style/SpinnerTextStyle" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@color/primary_background">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:text="Size: "
                     android:textSize="25sp"
                     android:textColor="@color/primary_text" />
