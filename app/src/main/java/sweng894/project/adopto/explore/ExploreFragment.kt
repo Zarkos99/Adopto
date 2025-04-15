@@ -25,8 +25,6 @@ import com.yuyakaido.android.cardstackview.RewindAnimationSetting
 import com.yuyakaido.android.cardstackview.StackFrom
 import com.yuyakaido.android.cardstackview.SwipeAnimationSetting
 import com.yuyakaido.android.cardstackview.SwipeableMethod
-import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
@@ -37,7 +35,6 @@ import sweng894.project.adopto.database.getRecommendations
 import sweng894.project.adopto.database.recalculatePreferenceVector
 import sweng894.project.adopto.databinding.ExploreFragmentBinding
 import sweng894.project.adopto.profile.ExplorePreferencesActivity
-import java.time.Instant
 
 /**
  * A fragment allowing users to explore databased animals using a CardStackView architecture.
@@ -49,9 +46,10 @@ class ExploreFragment : Fragment(), CardStackListener {
     private lateinit var m_rewind_button: FloatingActionButton
     private lateinit var m_like_animal_button: FloatingActionButton
 
-    private lateinit var manager: CardStackLayoutManager
-    private lateinit var adapter: AnimalCardAdapter
     private val m_animal_list = mutableListOf<Animal>()
+
+    private lateinit var manager: CardStackLayoutManager
+    private lateinit var adapter: AnimalCardStackAdapter
 
 
     // This property is only valid between onCreateView and
@@ -76,7 +74,6 @@ class ExploreFragment : Fragment(), CardStackListener {
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
                 Log.d("ExploreFragment", "Firebase callback update received")
-                loadAnimals()
             }
         }
 
@@ -156,13 +153,14 @@ class ExploreFragment : Fragment(), CardStackListener {
             binding.cardStackView.swipe()
         }
         m_rewind_button.setOnClickListener {
-            val setting = SwipeAnimationSetting.Builder()
-                .setDirection(Direction.Top)
+            val setting = RewindAnimationSetting.Builder()
+                .setDirection(Direction.Bottom)
                 .setDuration(Duration.Normal.duration)
+                .setInterpolator(DecelerateInterpolator())
                 .build()
 
-            manager.setSwipeAnimationSetting(setting)
-            binding.cardStackView.swipe()
+            manager.setRewindAnimationSetting(setting)
+            binding.cardStackView.rewind()
         }
         m_like_animal_button.setOnClickListener {
             val setting = SwipeAnimationSetting.Builder()
@@ -193,7 +191,7 @@ class ExploreFragment : Fragment(), CardStackListener {
             setStackFrom(StackFrom.Top)
             setTranslationInterval(8.0f)
             setSwipeThreshold(0.3f)
-            setDirections(listOf(Direction.Left, Direction.Right, Direction.Top, Direction.Bottom))
+            setDirections(listOf(Direction.Left, Direction.Right))
             setCanScrollHorizontal(true)
             setCanScrollVertical(true)
             setSwipeableMethod(SwipeableMethod.AutomaticAndManual)
@@ -204,27 +202,10 @@ class ExploreFragment : Fragment(), CardStackListener {
     private fun setupCardStackView() {
         manager = initializeManager()
 
-        adapter = AnimalCardAdapter(m_animal_list)
+        adapter = AnimalCardStackAdapter(m_animal_list)
         binding.cardStackView.layoutManager = manager
         binding.cardStackView.adapter = adapter
         binding.cardStackView.itemAnimator = DefaultItemAnimator()
-    }
-
-    private fun loadAnimals() {
-        if (!m_is_firebase_service_bound) {
-            Log.d(
-                "TRACE",
-                "Firebase service not bound. Need user data to determine animal exploration filters."
-            )
-            return
-        }
-
-        getRecommendations { recommended_animals ->
-            m_animal_list.clear()
-            m_animal_list.addAll(recommended_animals)
-            adapter.notifyDataSetChanged()
-
-        }
     }
 
     override fun onCardSwiped(direction: Direction) {
@@ -233,10 +214,6 @@ class ExploreFragment : Fragment(), CardStackListener {
         var is_animal_viewed = false
 
         when (direction) {
-
-            Direction.Top -> {
-                rewind()
-            }
 
             Direction.Left, Direction.Bottom -> {
                 skip(animal)
@@ -261,26 +238,16 @@ class ExploreFragment : Fragment(), CardStackListener {
 //                DateTimeFormatter.ISO_INSTANT.format(Instant.now())
 //            )
         }
+
+        // Load more if near end of stack
+        if (adapter.itemCount - manager.topPosition <= 5) {
+            Log.d("ExploreFragment", "Nearing end of stack, loading more animals.")
+            loadAnimals()
+        }
     }
 
     private fun skip(animal: Animal) {
         Log.d("TRACE", "Skipped ${animal.animal_name}")
-    }
-
-    private fun rewind() {
-        Log.d("TRACE", "Attempting to rewind card")
-        val setting = RewindAnimationSetting.Builder()
-            .setDirection(Direction.Bottom)
-            .setDuration(Duration.Normal.duration)
-            .setInterpolator(DecelerateInterpolator())
-            .build()
-
-        val new_manager = initializeManager()
-        new_manager.setRewindAnimationSetting(setting)
-        manager = new_manager
-        binding.cardStackView.setLayoutManager(manager)
-        binding.cardStackView.smoothScrollToPosition(manager.topPosition - 1)
-        binding.cardStackView.rewind()
     }
 
     private fun likeAnimal(animal: Animal) {
@@ -290,17 +257,41 @@ class ExploreFragment : Fragment(), CardStackListener {
             getCurrentUserId(),
             User::liked_animal_ids,
             animal.animal_id
-        )
+        ) {
+            Toast.makeText(
+                requireContext(),
+                "Liked ${animal.animal_name}",
+                Toast.LENGTH_SHORT
+            ).show()
 
-        // Recalculate and store preference vector
-        recalculatePreferenceVector()
-        loadAnimals()
+            // Recalculate and store preference vector
+            recalculatePreferenceVector()
+        }
+    }
 
-        Toast.makeText(
-            requireContext(),
-            "Liked ${animal.animal_name}",
-            Toast.LENGTH_SHORT
-        ).show()
+    private fun loadAnimals(num_results: Int = 5) {
+        if (!m_is_firebase_service_bound) {
+            Log.d(
+                "TRACE",
+                "Firebase service not bound. Need user data to determine animal exploration filters."
+            )
+            return
+        }
+
+        getRecommendations(num_results) { recommended_animals ->
+            if (recommended_animals.isNotEmpty()) {
+                val insert_index = m_animal_list.size
+                m_animal_list.addAll(recommended_animals)
+                adapter.notifyItemRangeInserted(insert_index, recommended_animals.size)
+
+                Log.d(
+                    "TRACE",
+                    "Inserted ${recommended_animals.size} animals at index $insert_index"
+                )
+            } else {
+                Log.d("TRACE", "No new animals to insert.")
+            }
+        }
     }
 
     override fun onDestroyView() {

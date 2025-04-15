@@ -731,7 +731,11 @@ fun recalculatePreferenceVector() {
     }
 }
 
-fun getRecommendations(location: GeoPoint? = null, onResult: (List<Animal>) -> Unit) {
+fun getRecommendations(
+    num_results: Int,
+    location: GeoPoint? = null,
+    onResult: (List<Animal>) -> Unit
+) {
     val TAG = "RecommendationEngine"
 
     val user_ref = Firebase.firestore.collection(FirebaseCollections.USERS)
@@ -807,14 +811,14 @@ fun getRecommendations(location: GeoPoint? = null, onResult: (List<Animal>) -> U
                     animal to score
                 }.sortedByDescending { it.second }
 
-                val topAnimals = scored_animals.take(20).map { it.first }
+                val top_animals = scored_animals.take(num_results).map { it.first }
 
                 Log.d(
                     TAG,
-                    "Top ${topAnimals.size} recommended animals: ${topAnimals.map { it.animal_id }}"
+                    "Top ${top_animals.size} recommended animals: ${top_animals.map { it.animal_id }}"
                 )
 
-                onResult(topAnimals)
+                onResult(top_animals)
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "Failed to fetch animals: ${e.message}", e)

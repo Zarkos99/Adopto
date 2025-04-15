@@ -12,6 +12,7 @@ object VectorUtils {
             size to (index + 1).toDouble()
         }.toMap()
     }
+    
     private val TYPE_ENCODING: Map<String, Double> by lazy {
         AnimalTypes.all.mapIndexed { index, type ->
             type to (index + 1).toDouble()
