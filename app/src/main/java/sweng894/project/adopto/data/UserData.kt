@@ -95,7 +95,14 @@ data class Animal(
     var supplementary_image_paths: MutableList<String> = mutableListOf(),
     var post_time: String? = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
     var location: @RawValue GeoPoint? = null
-) : Parcelable
+) : Parcelable {
+
+    val normalized_size: String
+        get() = normalizeAnimalSize(animal_size)
+
+    val normalized_type: String
+        get() = normalizeAnimalType(animal_type)
+}
 
 @Parcelize
 data class AnimalAdoptionInterest(
@@ -125,3 +132,27 @@ data class Message(
     var timestamp: String = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
     var content: String = "",
 ) : Parcelable
+
+fun normalizeAnimalSize(size: String?): String {
+    return when (size?.trim()?.lowercase()) {
+        "tiny", "tiny (< 5 lbs)" -> AnimalSizes.TINY
+        "small", "small (5 - 20 lbs)" -> AnimalSizes.SMALL
+        "medium", "medium (21 - 50 lbs)" -> AnimalSizes.MEDIUM
+        "large", "large (51 - 99 lbs)" -> AnimalSizes.LARGE
+        "xl", "xl (100+ lbs)" -> AnimalSizes.XL
+        else -> AnimalSizes.MEDIUM // default fallback
+    }
+}
+
+fun normalizeAnimalType(type: String?): String {
+    return when (type?.trim()?.lowercase()) {
+        "dog" -> AnimalTypes.DOG
+        "cat" -> AnimalTypes.CAT
+        "bird" -> AnimalTypes.BIRD
+        "rabbit" -> AnimalTypes.RABBIT
+        "reptile" -> AnimalTypes.REPTILE
+        "fish" -> AnimalTypes.FISH
+        else -> AnimalTypes.OTHER
+    }
+}
+

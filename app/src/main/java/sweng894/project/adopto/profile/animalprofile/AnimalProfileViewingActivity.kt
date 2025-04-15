@@ -281,7 +281,7 @@ class AnimalProfileViewingActivity : AppCompatActivity() {
         animal_name_view.text = current_animal.animal_name
 
         animal_age_view.text = convertDoubleToYearsMonths(current_animal.animal_age!!)
-        animal_size_view.text = current_animal.animal_size
+        animal_size_view.text = current_animal.normalized_size
         animal_health_view.text = current_animal.health_summary
         animal_description_view.text = current_animal.biography
     }

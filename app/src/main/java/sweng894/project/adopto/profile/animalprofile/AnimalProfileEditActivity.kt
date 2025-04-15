@@ -171,12 +171,12 @@ class AnimalProfileEditActivity : AppCompatActivity() {
             binding.animalGenderSpinner.setSelection(position)
         }
 
-        m_current_animal.animal_size?.let {
+        m_current_animal.normalized_size.let {
             val position = size_adapter.getPosition(it)
             binding.animalSizeSpinner.setSelection(position)
         }
 
-        m_current_animal.animal_type?.let {
+        m_current_animal.normalized_type.let {
             val position = type_adapter.getPosition(it)
             binding.animalTypeSpinner.setSelection(position)
         }

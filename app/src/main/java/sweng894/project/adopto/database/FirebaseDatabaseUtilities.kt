@@ -692,7 +692,7 @@ fun recalculatePreferenceVector() {
 
                 val vectors = animalDocs.mapNotNull { doc ->
                     val animal = doc.toObject(Animal::class.java)
-                    if (animal.animal_type == null || animal.animal_size == null || animal.animal_age == null) {
+                    if (animal.animal_age == null) {
                         Log.w(
                             "PreferenceVector",
                             "Missing data in animal ${animal.animal_id}, skipping"
@@ -845,8 +845,11 @@ fun animalWithinSearchParameters(user: User, animal: Animal, user_location: GeoP
 
     // Size filter
     if (allowed_sizes != null) {
-        Log.d("search_prefs", "Allowed sizes: $allowed_sizes, Animal size: ${animal.animal_size}")
-        if (animal.animal_size != null && animal.animal_size !in allowed_sizes) {
+        Log.d(
+            "search_prefs",
+            "Allowed sizes: $allowed_sizes, Animal size: ${animal.normalized_size}"
+        )
+        if (animal.normalized_size !in allowed_sizes) {
             Log.d("search_prefs", "Filtered out by size")
             return false
         }
@@ -854,8 +857,11 @@ fun animalWithinSearchParameters(user: User, animal: Animal, user_location: GeoP
 
     // Type filter
     if (allowed_types != null) {
-        Log.d("search_prefs", "Allowed types: $allowed_types, Animal type: ${animal.animal_type}")
-        if (animal.animal_type != null && animal.animal_type !in allowed_types) {
+        Log.d(
+            "search_prefs",
+            "Allowed types: $allowed_types, Animal type: ${animal.normalized_type}"
+        )
+        if (animal.normalized_type !in allowed_types) {
             Log.d("search_prefs", "Filtered out by type")
             return false
         }

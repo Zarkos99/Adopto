@@ -19,9 +19,9 @@ object VectorUtils {
     }
 
     fun animalToVector(animal: Animal): List<Double> {
-        val type_value = TYPE_ENCODING[animal.animal_type] ?: 0.0
+        val type_value = TYPE_ENCODING[animal.normalized_type] ?: 0.0
         val age_value = animal.animal_age ?: 0.0
-        val size_value = SIZE_ENCODING[animal.animal_size] ?: 0.0
+        val size_value = SIZE_ENCODING[animal.normalized_size] ?: 0.0
 
         val vector = listOf(type_value, age_value, size_value)
 
