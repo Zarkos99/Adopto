@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.getUserData
-import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.firebase.getUserData
+import sweng894.project.adopto.firebase.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.databinding.UserProfileViewingMiniActivityBinding
 
 class UserMiniProfileFragmentOverlay : BottomSheetDialogFragment() {

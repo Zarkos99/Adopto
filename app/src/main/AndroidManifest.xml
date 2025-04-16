@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".AdoptoApp"
@@ -25,7 +26,15 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAeOVmkx58Imyud3xX5wmR_GUM_fNqDbV0" />
 
-        <service android:name=".database.FirebaseDataServiceUsers" />
+        <service android:name=".firebase.FirebaseDataServiceUsers" />
+
+        <service
+            android:name=".firebase.AdoptoFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".authentication.AuthenticationActivity"

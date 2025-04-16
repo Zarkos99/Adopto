@@ -2,14 +2,9 @@ package sweng894.project.adopto.authentication
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.EditText
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.get
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.NavigationBaseActivity
-import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityResult
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.latLngToFormattedAddress
@@ -19,10 +14,10 @@ import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.ExplorationPreferences
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.fetchAnimalsByShelter
-import sweng894.project.adopto.database.getCurrentUserId
-import sweng894.project.adopto.database.updateDataField
-import sweng894.project.adopto.database.updateExplorePreferencesField
+import sweng894.project.adopto.firebase.fetchAnimalsByShelter
+import sweng894.project.adopto.firebase.getCurrentUserId
+import sweng894.project.adopto.firebase.updateDataField
+import sweng894.project.adopto.firebase.updateExplorePreferencesField
 import sweng894.project.adopto.databinding.AuthUserProfileCreationActivityBinding
 
 

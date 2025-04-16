@@ -1,6 +1,5 @@
 package sweng894.project.adopto.messages
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,9 +11,9 @@ import androidx.recyclerview.widget.RecyclerView
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Chat
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.getCurrentUserId
-import sweng894.project.adopto.database.getUserData
-import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.firebase.getCurrentUserId
+import sweng894.project.adopto.firebase.getUserData
+import sweng894.project.adopto.firebase.loadCloudStoredImageIntoImageView
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 

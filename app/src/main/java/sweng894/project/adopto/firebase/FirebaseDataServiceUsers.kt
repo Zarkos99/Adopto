@@ -1,4 +1,4 @@
-package sweng894.project.adopto.database
+package sweng894.project.adopto.firebase
 
 import android.app.Service
 import android.content.Intent
@@ -8,8 +8,6 @@ import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
-import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 

@@ -6,16 +6,14 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
-import sweng894.project.adopto.custom.MultiSelectDialogFragment
 import sweng894.project.adopto.custom.MultiSelectView
 import sweng894.project.adopto.data.AnimalSizes
 import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.ExplorationPreferences
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.getCurrentUserId
-import sweng894.project.adopto.database.updateDataField
+import sweng894.project.adopto.firebase.getCurrentUserId
+import sweng894.project.adopto.firebase.updateDataField
 import sweng894.project.adopto.databinding.ExplorePreferencesActivityBinding
 
 

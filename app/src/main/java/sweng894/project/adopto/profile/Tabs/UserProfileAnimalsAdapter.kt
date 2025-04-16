@@ -9,7 +9,7 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Animal
-import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.firebase.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.profile.animalprofile.AnimalProfileViewingActivity
 
 

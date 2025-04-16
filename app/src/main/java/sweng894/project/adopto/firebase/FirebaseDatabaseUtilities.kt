@@ -1,4 +1,4 @@
-package sweng894.project.adopto.database
+package sweng894.project.adopto.firebase
 
 import android.util.Log
 import com.google.android.gms.tasks.Task
@@ -514,14 +514,15 @@ fun <T> updateDataField(
     document_id: String,
     field_name: KProperty1<T, *>,
     field_value: Any?,
-    onUploadSuccess: (() -> Unit)? = null
+    onUploadSuccess: (() -> Unit)? = null,
+    onUploadFailure: (() -> Unit)? = null
 ) {
-    val validCollections = setOf(
+    val valid_collections = setOf(
         FirebaseCollections.USERS,
         FirebaseCollections.ANIMALS
     )
 
-    if (collection !in validCollections) {
+    if (collection !in valid_collections) {
         throw IllegalArgumentException("Invalid collection: $collection")
     }
 
@@ -535,6 +536,7 @@ fun <T> updateDataField(
                 "FirebaseDatabaseUtilities ERROR",
                 "Failed to update ${field_name.name} to $field_value"
             )
+            onUploadFailure?.invoke()
         }
         .addOnSuccessListener { onUploadSuccess?.invoke() }
 }

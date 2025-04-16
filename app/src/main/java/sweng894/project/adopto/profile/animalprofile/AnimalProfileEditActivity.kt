@@ -5,26 +5,21 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.widget.doAfterTextChanged
 import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.custom.CustomSpinnerAdapter
-import sweng894.project.adopto.custom.StringInputView
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.AnimalGenders
 import sweng894.project.adopto.data.AnimalSizes
 import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.FirebaseCollections
-import sweng894.project.adopto.database.removeAnimalFromDatabase
-import sweng894.project.adopto.database.setDocumentData
+import sweng894.project.adopto.firebase.removeAnimalFromDatabase
+import sweng894.project.adopto.firebase.setDocumentData
 import sweng894.project.adopto.databinding.AnimalProfileEditActivityBinding
 
 class AnimalProfileEditActivity : AppCompatActivity() {

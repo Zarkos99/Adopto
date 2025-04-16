@@ -1,4 +1,4 @@
-package sweng894.project.adopto.database
+package sweng894.project.adopto.firebase
 
 import com.google.android.gms.tasks.OnSuccessListener
 import android.content.Context

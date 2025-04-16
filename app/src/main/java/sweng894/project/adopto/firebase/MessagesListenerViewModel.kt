@@ -1,6 +1,5 @@
-package sweng894.project.adopto.database
+package sweng894.project.adopto.firebase
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel

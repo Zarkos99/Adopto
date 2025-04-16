@@ -11,12 +11,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Chat
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.ChatRepository
-import sweng894.project.adopto.database.ChatsListenerViewModel
-import sweng894.project.adopto.database.MessagesListenerViewModel
-import sweng894.project.adopto.database.getCurrentUserId
-import sweng894.project.adopto.database.getUserData
-import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.firebase.ChatRepository
+import sweng894.project.adopto.firebase.ChatsListenerViewModel
+import sweng894.project.adopto.firebase.MessagesListenerViewModel
+import sweng894.project.adopto.firebase.getCurrentUserId
+import sweng894.project.adopto.firebase.getUserData
+import sweng894.project.adopto.firebase.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.databinding.UserMessagesFragmentBinding
 import sweng894.project.adopto.profile.UserProfileViewingActivity
 

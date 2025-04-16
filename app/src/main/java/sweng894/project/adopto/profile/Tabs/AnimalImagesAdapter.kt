@@ -12,10 +12,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.FirebaseCollections
-import sweng894.project.adopto.database.deleteImagesFromCloudStorage
-import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
-import sweng894.project.adopto.database.removeFromDataFieldList
-import sweng894.project.adopto.database.syncDatabaseForRemovedImages
+import sweng894.project.adopto.firebase.deleteImagesFromCloudStorage
+import sweng894.project.adopto.firebase.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.firebase.removeFromDataFieldList
+import sweng894.project.adopto.firebase.syncDatabaseForRemovedImages
 
 enum class AdapterClickability {
     NOT_CLICKABLE,

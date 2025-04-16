@@ -1,4 +1,4 @@
-package sweng894.project.adopto.database
+package sweng894.project.adopto.firebase
 
 import android.content.Context
 import android.net.Uri
@@ -8,7 +8,6 @@ import com.bumptech.glide.Glide
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
 import sweng894.project.adopto.R
-import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User

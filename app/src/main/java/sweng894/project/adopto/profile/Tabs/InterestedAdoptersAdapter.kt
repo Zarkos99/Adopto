@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.loadCloudStoredImageIntoImageView
+import sweng894.project.adopto.firebase.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.profile.UserProfileViewingActivity
 
 class InterestedAdoptersAdapter(

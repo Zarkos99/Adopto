@@ -9,8 +9,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import sweng894.project.adopto.data.Animal
-import sweng894.project.adopto.database.getAnimalData
-import sweng894.project.adopto.database.getCurrentUserId
+import sweng894.project.adopto.firebase.getAnimalData
+import sweng894.project.adopto.firebase.getCurrentUserId
 import sweng894.project.adopto.databinding.AnimalProfileImagesFragmentBinding
 import sweng894.project.adopto.profile.Tabs.AdapterClickability
 import sweng894.project.adopto.profile.Tabs.AnimalProfileViewingImagesAdapter

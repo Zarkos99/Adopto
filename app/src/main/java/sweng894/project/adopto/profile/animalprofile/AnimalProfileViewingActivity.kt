@@ -15,7 +15,7 @@ import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.*
+import sweng894.project.adopto.firebase.*
 import sweng894.project.adopto.databinding.AnimalProfileViewingLayoutBinding
 import sweng894.project.adopto.profile.Tabs.AnimalProfileViewingImagesAdapter
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter

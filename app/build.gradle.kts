@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.androidx.junit.ktx)
     implementation(libs.card.stack.view)
     implementation(libs.places)
+    implementation(libs.firebase.messaging.ktx)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk) // Mockk for unit tests

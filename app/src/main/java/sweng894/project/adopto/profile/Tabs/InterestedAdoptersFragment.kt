@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import sweng894.project.adopto.database.fetchInterestedAdoptersForAnimal
+import sweng894.project.adopto.firebase.fetchInterestedAdoptersForAnimal
 import sweng894.project.adopto.databinding.AnimalProfileInterestedAdoptersFragmentBinding
 import sweng894.project.adopto.profile.Tabs.InterestedAdoptersAdapter
 import sweng894.project.adopto.profile.Tabs.RefreshableTab

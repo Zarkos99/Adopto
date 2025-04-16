@@ -22,9 +22,9 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityResult
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.fetchAllShelters
-import sweng894.project.adopto.database.haversineDistance
+import sweng894.project.adopto.firebase.FirebaseDataServiceUsers
+import sweng894.project.adopto.firebase.fetchAllShelters
+import sweng894.project.adopto.firebase.haversineDistance
 import sweng894.project.adopto.databinding.GeoMapFragmentBinding
 import sweng894.project.adopto.profile.UserMiniProfileFragmentOverlay
 import kotlin.math.log2

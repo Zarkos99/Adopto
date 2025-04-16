@@ -1,4 +1,4 @@
-package sweng894.project.adopto.database
+package sweng894.project.adopto.firebase
 
 import android.util.Log
 import com.google.android.gms.tasks.OnFailureListener
@@ -12,7 +12,6 @@ import com.google.firebase.firestore.*
 import com.google.firebase.storage.FirebaseStorage
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before

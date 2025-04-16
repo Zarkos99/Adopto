@@ -22,7 +22,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
-import sweng894.project.adopto.database.*
+import sweng894.project.adopto.firebase.*
 import sweng894.project.adopto.databinding.UserProfileFragmentBinding
 import sweng894.project.adopto.profile.Tabs.ProfileTabType
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter

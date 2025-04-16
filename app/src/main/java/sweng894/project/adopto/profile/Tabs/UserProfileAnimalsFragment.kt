@@ -16,9 +16,9 @@ import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.fetchAnimals
-import sweng894.project.adopto.database.getUserData
+import sweng894.project.adopto.firebase.FirebaseDataServiceUsers
+import sweng894.project.adopto.firebase.fetchAnimals
+import sweng894.project.adopto.firebase.getUserData
 import sweng894.project.adopto.databinding.UserProfileAnimalsListFragmentBinding
 
 class UserProfileAnimalsFragment : Fragment(), RefreshableTab {

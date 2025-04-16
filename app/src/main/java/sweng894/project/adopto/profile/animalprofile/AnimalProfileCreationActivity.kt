@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
-import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -17,15 +16,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import sweng894.project.adopto.custom.CustomSpinnerAdapter
-import sweng894.project.adopto.custom.StringInputView
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.AnimalGenders
 import sweng894.project.adopto.data.AnimalSizes
 import sweng894.project.adopto.data.AnimalTypes
-import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.addAnimalToDatabaseAndAssociateToShelter
-import sweng894.project.adopto.database.getCurrentUserId
-import sweng894.project.adopto.database.uploadAnimalImageAndUpdateAnimal
+import sweng894.project.adopto.firebase.FirebaseDataServiceUsers
+import sweng894.project.adopto.firebase.addAnimalToDatabaseAndAssociateToShelter
+import sweng894.project.adopto.firebase.getCurrentUserId
+import sweng894.project.adopto.firebase.uploadAnimalImageAndUpdateAnimal
 import sweng894.project.adopto.databinding.AnimalProfileCreationLayoutBinding
 
 

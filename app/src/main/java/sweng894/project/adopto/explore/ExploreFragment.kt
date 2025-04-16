@@ -28,11 +28,11 @@ import com.yuyakaido.android.cardstackview.SwipeableMethod
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.appendToDataFieldArray
-import sweng894.project.adopto.database.getCurrentUserId
-import sweng894.project.adopto.database.getRecommendations
-import sweng894.project.adopto.database.recalculatePreferenceVector
+import sweng894.project.adopto.firebase.FirebaseDataServiceUsers
+import sweng894.project.adopto.firebase.appendToDataFieldArray
+import sweng894.project.adopto.firebase.getCurrentUserId
+import sweng894.project.adopto.firebase.getRecommendations
+import sweng894.project.adopto.firebase.recalculatePreferenceVector
 import sweng894.project.adopto.databinding.ExploreFragmentBinding
 import sweng894.project.adopto.profile.ExplorePreferencesActivity
 

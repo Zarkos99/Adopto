@@ -51,6 +51,7 @@ object AnimalGenders {
 @Parcelize
 data class User(
     var user_id: String = "",
+    var fcm_token: String = "",
     var display_name: String = "",
     @get:PropertyName("is_shelter")
     @set:PropertyName("is_shelter")

@@ -1,4 +1,4 @@
-package sweng894.project.adopto.database
+package sweng894.project.adopto.firebase
 
 import android.content.Intent
 import android.os.IBinder
@@ -18,9 +18,7 @@ import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
-import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 
 class FirebaseDataServiceUsersTest {

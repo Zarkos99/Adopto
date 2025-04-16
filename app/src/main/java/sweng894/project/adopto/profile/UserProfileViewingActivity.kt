@@ -13,7 +13,7 @@ import sweng894.project.adopto.NavigationBaseActivity
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.*
+import sweng894.project.adopto.firebase.*
 import sweng894.project.adopto.databinding.UserProfileViewingActivityBinding
 import sweng894.project.adopto.profile.Tabs.ProfileTabAdapter
 import sweng894.project.adopto.profile.Tabs.ProfileTabType

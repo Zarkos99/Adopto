@@ -20,10 +20,10 @@ import sweng894.project.adopto.custom.PlacesAutocompleteHelper.handleActivityRes
 import sweng894.project.adopto.custom.PlacesAutocompleteHelper.latLngToFormattedAddress
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
-import sweng894.project.adopto.database.FirebaseDataServiceUsers
-import sweng894.project.adopto.database.getCurrentUserId
-import sweng894.project.adopto.database.updateDataField
-import sweng894.project.adopto.database.updateUserDisplayName
+import sweng894.project.adopto.firebase.FirebaseDataServiceUsers
+import sweng894.project.adopto.firebase.getCurrentUserId
+import sweng894.project.adopto.firebase.updateDataField
+import sweng894.project.adopto.firebase.updateUserDisplayName
 import sweng894.project.adopto.databinding.UserProfilePreferencesActivityBinding
 
 class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) :

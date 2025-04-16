@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Message
-import sweng894.project.adopto.database.getCurrentUserId
+import sweng894.project.adopto.firebase.getCurrentUserId
 
 class MessageListAdapter : ListAdapter<Message, RecyclerView.ViewHolder>(MessageDiffCallback()) {
 
