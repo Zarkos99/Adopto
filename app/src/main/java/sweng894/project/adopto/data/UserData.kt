@@ -130,6 +130,7 @@ data class Chat(
 data class Message(
     var message_id: String = UUID.randomUUID().toString(),
     var sender_id: String = "",
+    var receiver_id: String = "",
     var timestamp: String = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
     var content: String = "",
 ) : Parcelable

@@ -11,7 +11,9 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Message
 import sweng894.project.adopto.firebase.getCurrentUserId
 
-class MessageListAdapter : ListAdapter<Message, RecyclerView.ViewHolder>(MessageDiffCallback()) {
+class MessageListAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    private val messages = mutableListOf<Message>()
 
     companion object {
         private const val VIEW_TYPE_SENT = 1
@@ -19,43 +21,56 @@ class MessageListAdapter : ListAdapter<Message, RecyclerView.ViewHolder>(Message
     }
 
     override fun getItemViewType(position: Int): Int {
-        val message = getItem(position)
+        val message = messages[position]
         return if (message.sender_id == getCurrentUserId()) VIEW_TYPE_SENT else VIEW_TYPE_RECEIVED
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, view_type: Int): RecyclerView.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val layout_id = if (view_type == VIEW_TYPE_SENT) {
+        val layoutId = if (viewType == VIEW_TYPE_SENT) {
             R.layout.item_message_sent
         } else {
             R.layout.item_message_received
         }
-        val view = inflater.inflate(layout_id, parent, false)
+        val view = inflater.inflate(layoutId, parent, false)
         return MessageViewHolder(view)
     }
 
+    override fun getItemCount(): Int = messages.size
+
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        (holder as MessageViewHolder).bind(getItem(position))
+        (holder as MessageViewHolder).bind(messages[position])
     }
 
-    fun addMessage(message: Message) {
-        val new_list = currentList.toMutableList().apply { add(message) }
-        submitList(new_list)
-    }
+    fun mergeMessages(new_messages: List<Message>) {
+        // Track current IDs for deduplication
+        val existing_ids = messages.map { it.message_id }.toSet()
 
-    class MessageViewHolder(item_view: View) : RecyclerView.ViewHolder(item_view) {
-        private val message_text: TextView = item_view.findViewById(R.id.message_text)
+        // Filter and sort new messages
+        val new_unique_messages = new_messages
+            .filter { it.message_id !in existing_ids }
+            .sortedBy { it.timestamp }
 
-        fun bind(message: Message) {
-            message_text.text = message.content
+        if (new_unique_messages.isNotEmpty()) {
+            val insertStart = messages.size
+            messages.addAll(new_unique_messages)
+            notifyItemRangeInserted(insertStart, new_unique_messages.size)
         }
     }
 
-    class MessageDiffCallback : DiffUtil.ItemCallback<Message>() {
-        override fun areItemsTheSame(old_item: Message, new_item: Message): Boolean =
-            old_item.message_id == new_item.message_id
 
-        override fun areContentsTheSame(old_item: Message, new_item: Message): Boolean =
-            old_item == new_item
+    fun setMessages(newMessages: List<Message>) {
+        messages.clear()
+        messages.addAll(newMessages)
+        notifyDataSetChanged() // Only used when switching chats
+    }
+
+    class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val messageText: TextView = itemView.findViewById(R.id.message_text)
+
+        fun bind(message: Message) {
+            messageText.text = message.content
+        }
     }
 }
+

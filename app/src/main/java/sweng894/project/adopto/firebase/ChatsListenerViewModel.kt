@@ -1,5 +1,6 @@
 package sweng894.project.adopto.firebase
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,6 +10,10 @@ import sweng894.project.adopto.data.Chat
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.Message
 import java.time.Instant
+
+object ChatState {
+    var active_chat_id: String? = null
+}
 
 class ChatsListenerViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
@@ -23,7 +28,9 @@ class ChatsListenerViewModel : ViewModel() {
 
 
     private val _selected_chat_id = MutableLiveData<Chat?>()
+    private var prev_selected_chat_id: Chat? = null
     val selected_chat_id: LiveData<Chat?> = _selected_chat_id
+    private var current_active_chat_id: String? = null
 
     private var listener_registration: ListenerRegistration? = null
 
@@ -97,8 +104,24 @@ class ChatsListenerViewModel : ViewModel() {
                             val last_read_ts = chat.last_read_timestamps[user_id]
 
                             val sender_id = last_message?.getString(Message::sender_id.name)
+                            Log.d(
+                                "ChatsListenerViewModel",
+                                "sender_id != user_id: ${sender_id != user_id}"
+                            )
+                            Log.d(
+                                "ChatsListenerViewModel",
+                                "chat.chat_id != current_active_chat_id: ${chat.chat_id != current_active_chat_id}"
+                            )
+                            Log.d(
+                                "ChatsListenerViewModel",
+                                "(last_read_ts == null || Instant.parse(last_message_ts.isAfter(Instant.parse(last_read_ts))): ${
+                                    (last_read_ts == null || Instant.parse(last_message_ts)
+                                        .isAfter(Instant.parse(last_read_ts)))
+                                }"
+                            )
                             val is_unread = last_message_ts != null &&
                                     sender_id != user_id && // Only unread if current user didn't send it
+                                    chat.chat_id != current_active_chat_id && // Don't count as unread if it's the active chat
                                     (last_read_ts == null || Instant.parse(last_message_ts)
                                         .isAfter(Instant.parse(last_read_ts)))
 
@@ -119,7 +142,11 @@ class ChatsListenerViewModel : ViewModel() {
     }
 
     fun selectChat(chat: Chat?) {
-        _selected_chat_id.value = chat
+        if (chat != prev_selected_chat_id) {
+            prev_selected_chat_id = chat
+            current_active_chat_id = chat?.chat_id
+            _selected_chat_id.value = chat
+        }
     }
 
     override fun onCleared() {

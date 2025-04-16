@@ -1,5 +1,6 @@
 package sweng894.project.adopto.messages
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,7 @@ class ChatListAdapter(
     private val image_url_cache = mutableMapOf<String, String>()
 
     fun updateUnreadMap(new_map: Map<String, Boolean>) {
+        Log.d("ChatListAdapter", "Unread map updated: $new_map")
         unread_map = new_map
         notifyDataSetChanged()
     }

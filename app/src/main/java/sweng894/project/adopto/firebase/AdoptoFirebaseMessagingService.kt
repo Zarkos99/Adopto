@@ -10,6 +10,7 @@ import sweng894.project.adopto.R
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
 
+//Service for app notifications
 class AdoptoFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
@@ -28,6 +29,14 @@ class AdoptoFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        val incoming_chat_id = remoteMessage.data["chat_id"]
+        val is_in_active_chat = incoming_chat_id == ChatState.active_chat_id
+
+        if (is_in_active_chat) {
+            Log.d("FCM", "Skipping notification: user is already in chat $incoming_chat_id")
+            return
+        }
+
         remoteMessage.notification?.let {
             sendLocalNotification(it.title, it.body)
         }

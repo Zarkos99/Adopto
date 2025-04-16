@@ -18,6 +18,7 @@ import sweng894.project.adopto.firebase.getCurrentUserId
 import sweng894.project.adopto.firebase.getUserData
 import sweng894.project.adopto.firebase.loadCloudStoredImageIntoImageView
 import sweng894.project.adopto.databinding.UserMessagesFragmentBinding
+import sweng894.project.adopto.firebase.ChatState
 import sweng894.project.adopto.profile.UserProfileViewingActivity
 
 class UserMessagesFragment : Fragment() {
@@ -65,6 +66,10 @@ class UserMessagesFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+
+        // Clear the selected chat
+        chats_listener_view_model.selectChat(null)
+        ChatState.active_chat_id = null
     }
 
     private fun setupChatList() {
@@ -115,6 +120,7 @@ class UserMessagesFragment : Fragment() {
                 ChatRepository.sendMessage(
                     chat_id = chat_id,
                     sender_id = sender_id,
+                    receiver_id = other_user_id!!,
                     content = message_text,
                     onSuccess = {
                         binding.messageInputField.setText("")
@@ -171,6 +177,7 @@ class UserMessagesFragment : Fragment() {
                     "### DEBUG",
                     "setting selected chat id for adapter: ${selected_chat.chat_id}"
                 )
+                ChatState.active_chat_id = selected_chat.chat_id
                 chat_list_adapter.setSelectedChatId(selected_chat.chat_id)
                 displayMessagesForChat(selected_chat)
             }
@@ -179,12 +186,11 @@ class UserMessagesFragment : Fragment() {
 
     private fun observeMessages() {
         messages_listener_view_model.messages.observe(viewLifecycleOwner) { messages ->
-            message_adapter.submitList(messages) {
-                if (active_chat_id != null) {
-                    // Scroll after list is updated
-                    binding.messageRecycler.post {
-                        scrollToBottom() //Scroll after send
-                    }
+            message_adapter.mergeMessages(messages)
+            if (active_chat_id != null) {
+                // Scroll after list is updated
+                binding.messageRecycler.post {
+                    scrollToBottom() //Scroll after send
                 }
             }
         }

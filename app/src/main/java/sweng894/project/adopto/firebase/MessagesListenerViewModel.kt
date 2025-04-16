@@ -12,12 +12,17 @@ class MessagesListenerViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private var listener_registration: ListenerRegistration? = null
 
+    private var current_chat_id: String? = null
+
     private val _messages = MutableLiveData<List<Message>>()
     private var prev_messages: List<Message> = emptyList()
     val messages: LiveData<List<Message>> = _messages
 
     fun listenToMessages(chat_id: String) {
+        if (chat_id == current_chat_id) return // Already listening, no need to change
+
         listener_registration?.remove()
+        current_chat_id = chat_id
 
         listener_registration = firestore.collection(FirebaseCollections.CHATS)
             .document(chat_id)
@@ -44,5 +49,6 @@ class MessagesListenerViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         listener_registration?.remove()
+        current_chat_id = null
     }
 }
