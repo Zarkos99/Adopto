@@ -4,8 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import sweng894.project.adopto.R
 import sweng894.project.adopto.data.Message
@@ -42,19 +40,29 @@ class MessageListAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         (holder as MessageViewHolder).bind(messages[position])
     }
 
-    fun mergeMessages(new_messages: List<Message>) {
-        // Track current IDs for deduplication
-        val existing_ids = messages.map { it.message_id }.toSet()
+    fun mergeMessages(newMessages: List<Message>) {
+        if (newMessages.isEmpty()) return
 
-        // Filter and sort new messages
-        val new_unique_messages = new_messages
-            .filter { it.message_id !in existing_ids }
-            .sortedBy { it.timestamp }
+        val sorted_new = newMessages.sortedBy { it.timestamp }
 
-        if (new_unique_messages.isNotEmpty()) {
-            val insertStart = messages.size
-            messages.addAll(new_unique_messages)
-            notifyItemRangeInserted(insertStart, new_unique_messages.size)
+        // Quick equality check by message ID order
+        val old_ids = messages.map { it.message_id }
+        val new_ids = sorted_new.map { it.message_id }
+
+        // If the messages are identical, skip updating
+        if (old_ids == new_ids) return
+
+        // If old messages are a prefix of the new list, do a minimal append
+        if (old_ids.size < new_ids.size && new_ids.subList(0, old_ids.size) == old_ids) {
+            val new_ones = sorted_new.subList(old_ids.size, new_ids.size)
+            val insert_start = messages.size
+            messages.addAll(new_ones)
+            notifyItemRangeInserted(insert_start, new_ones.size)
+        } else {
+            // Fallback: update whole list (but avoid full rebind unless truly different)
+            messages.clear()
+            messages.addAll(sorted_new)
+            notifyDataSetChanged()
         }
     }
 

@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="top"
-    android:padding="15sp"
     android:background="@color/primary_background"
     android:fitsSystemWindows="true"
     android:theme="@style/Theme.Adopto"
@@ -31,6 +30,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/preferences_title"
         android:layout_above="@id/logout_button"
+        android:layout_marginStart="15sp"
+        android:layout_marginEnd="15sp"
         android:orientation="vertical">
 
         <!-- User email input field -->

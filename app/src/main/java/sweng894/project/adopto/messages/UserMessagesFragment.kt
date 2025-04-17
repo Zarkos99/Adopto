@@ -35,7 +35,11 @@ class UserMessagesFragment : Fragment() {
     private var active_chat_id: String? = null
     private var other_user_id: String? = null
     private var is_chat_list_expanded = true
+
     private var pending_chat_id: String? = null
+    private var pending_scroll_to_bottom = false
+    private var pending_new_chat_messages = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,8 +80,17 @@ class UserMessagesFragment : Fragment() {
         chat_list_adapter = ChatListAdapter(
             isCollapsed = { !is_chat_list_expanded },
             onChatSelected = { selected_chat ->
-                active_chat_id = selected_chat.chat_id
-                chats_listener_view_model.selectChat(selected_chat)
+                if (active_chat_id != selected_chat.chat_id) {
+                    active_chat_id = selected_chat.chat_id
+                    chats_listener_view_model.selectChat(selected_chat)
+                    Log.d(
+                        "UserMessagesFragment",
+                        "Clearing messages list in preparation of new chat"
+                    )
+                    pending_scroll_to_bottom = true
+                    pending_new_chat_messages = true
+                }
+                scrollToBottom()
             }
         )
         binding.chatListRecycler.layoutManager = LinearLayoutManager(requireContext())
@@ -141,10 +154,11 @@ class UserMessagesFragment : Fragment() {
 
     private fun observeChats() {
         chats_listener_view_model.user_chats.observe(viewLifecycleOwner) { chat_list ->
-            chat_list_adapter.submitList(chat_list)
-
-            // If a pending chat ID was set, wait for it to appear
-            tryOpeningPendingChat(chat_list)
+            chat_list_adapter.submitList(chat_list) {
+                Log.d("UserMessagesFragment", "Received and updated chat list")
+                // If a pending chat ID was set, wait for it to appear
+                tryOpeningPendingChat(chat_list)
+            }
 
             // If already viewing a chat, keep it open
             val selected_chat = chat_list.find { it.chat_id == active_chat_id }
@@ -164,7 +178,10 @@ class UserMessagesFragment : Fragment() {
             val pending_chat = chat_list.find { it.chat_id == pending_chat_id }
             Log.d("UserMessagesFragment", "Attempting to open pending chat: $pending_chat")
             if (pending_chat != null) {
+                ChatState.active_chat_id = pending_chat.chat_id
+                chat_list_adapter.setSelectedChatId(pending_chat.chat_id)
                 chats_listener_view_model.selectChat(pending_chat)
+                displayMessagesForChat(pending_chat)
                 pending_chat_id = null
             }
         }
@@ -174,8 +191,8 @@ class UserMessagesFragment : Fragment() {
         chats_listener_view_model.selected_chat_id.observe(viewLifecycleOwner) { selected_chat ->
             if (selected_chat != null) {
                 Log.d(
-                    "### DEBUG",
-                    "setting selected chat id for adapter: ${selected_chat.chat_id}"
+                    "UserMessagesFragment",
+                    "Updating displayed messages for newly selected chat: $selected_chat"
                 )
                 ChatState.active_chat_id = selected_chat.chat_id
                 chat_list_adapter.setSelectedChatId(selected_chat.chat_id)
@@ -186,12 +203,25 @@ class UserMessagesFragment : Fragment() {
 
     private fun observeMessages() {
         messages_listener_view_model.messages.observe(viewLifecycleOwner) { messages ->
-            message_adapter.mergeMessages(messages)
-            if (active_chat_id != null) {
-                // Scroll after list is updated
-                binding.messageRecycler.post {
-                    scrollToBottom() //Scroll after send
-                }
+            Log.d("UserMessagesFragment", "Received and merged messages")
+
+            val recycler_view = binding.messageRecycler
+            val layout_manager = recycler_view.layoutManager as? LinearLayoutManager
+            val is_at_bottom_scrollbar = layout_manager?.let {
+                val last_visible = it.findLastCompletelyVisibleItemPosition()
+                last_visible >= message_adapter.itemCount - 2 // a bit lenient buffer
+            } ?: false
+
+            if (pending_new_chat_messages) {
+                message_adapter.setMessages(messages)
+                pending_new_chat_messages = false
+            } else {
+                message_adapter.mergeMessages(messages)
+            }
+
+            if (pending_scroll_to_bottom || is_at_bottom_scrollbar) {
+                scrollToBottom()
+                pending_scroll_to_bottom = false
             }
         }
     }
@@ -253,7 +283,14 @@ class UserMessagesFragment : Fragment() {
     }
 
     fun setInitialChat(chat_id: String) {
+        Log.d("UserMessagesFragment", "Received a pending_chat_id: $chat_id")
         pending_chat_id = chat_id
+
+        // Force attempt if chats are already loaded
+        val current_chats = chats_listener_view_model.user_chats.value
+        if (!current_chats.isNullOrEmpty()) {
+            tryOpeningPendingChat(current_chats)
+        }
     }
 
     private fun scrollToBottom() {

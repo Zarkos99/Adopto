@@ -63,6 +63,8 @@ class UserProfileViewingActivity : AppCompatActivity() {
                             Intent(this, NavigationBaseActivity::class.java).apply {
                                 putExtra("initial_tab", R.id.navigation_messages)
                                 putExtra("open_chat_id", chat_id)
+                                flags =
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                             }
                         startActivity(intent)
                     },
