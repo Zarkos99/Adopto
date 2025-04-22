@@ -67,7 +67,6 @@ data class User(
     @get:PropertyName("explore_preferences")
     @set:PropertyName("explore_preferences")
     var explore_preferences: ExplorationPreferences? = ExplorationPreferences(),
-    var chat_ids: List<String> = listOf(),
     val preference_vector: Map<String, Double> = mapOf() // Vectorized average preferences based on liked animals
 ) : Parcelable
 
