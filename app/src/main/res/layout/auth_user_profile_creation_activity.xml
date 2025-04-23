@@ -22,12 +22,13 @@
 
     <!-- User location input field -->
     <sweng894.project.adopto.custom.StringInputView
-        android:id="@+id/user_location__input"
+        android:id="@+id/user_location_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
         app:titleText="Location:"
-        app:inputHeight="60dp" />
+        app:inputHeight="60dp"
+        app:clickableMode="true" />
 
     <Button
         android:id="@+id/done_button"

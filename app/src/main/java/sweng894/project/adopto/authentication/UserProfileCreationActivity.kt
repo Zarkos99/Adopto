@@ -40,6 +40,7 @@ class UserProfileCreationActivity : AppCompatActivity() {
 
         val done_button_view = binding.doneButton
         val description_input_field = binding.userDescriptionInput
+        // TODO: Add a displayName input field
 
         initializeLocationTextView()
 
@@ -91,7 +92,6 @@ class UserProfileCreationActivity : AppCompatActivity() {
     }
 
     fun initializeLocationTextView() {
-
         val location_input_field = binding.userLocationInput
         location_input_field.setOnClickListener {
             PlacesAutocompleteHelper.launchFromActivity(this) { place ->

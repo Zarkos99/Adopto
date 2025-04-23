@@ -31,6 +31,8 @@ class StringInputView @JvmOverloads constructor(
                 R.styleable.StringInputView_inputHeight,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
+            val isClickableMode =
+                typed_array.getBoolean(R.styleable.StringInputView_clickableMode, false)
             typed_array.recycle()
 
             binding.titleField.text = title
@@ -42,6 +44,22 @@ class StringInputView @JvmOverloads constructor(
             params.height = input_height
             binding.inputTextField.layoutParams = params
             binding.inputTextField.movementMethod = ScrollingMovementMethod.getInstance()
+
+            if (isClickableMode) {
+                // Disable user editing, only display custom set text
+                binding.inputTextField.isFocusable = false
+                binding.inputTextField.isClickable = false
+                binding.inputTextField.isLongClickable = false
+                binding.inputTextField.isCursorVisible = false
+                // Forward internal EditText click to the parent view's onClickListener
+                binding.inputTextField.setOnClickListener {
+                    performClick() // This lets the outer view's click listener run
+                }
+
+                binding.titleField.setOnClickListener {
+                    performClick() // also forward title click
+                }
+            }
         }
     }
 

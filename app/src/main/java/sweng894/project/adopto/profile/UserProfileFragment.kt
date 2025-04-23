@@ -22,6 +22,8 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
 import sweng894.project.adopto.R
 import sweng894.project.adopto.Strings
+import sweng894.project.adopto.data.FirebaseCollections
+import sweng894.project.adopto.data.User
 import sweng894.project.adopto.firebase.*
 import sweng894.project.adopto.databinding.UserProfileFragmentBinding
 import sweng894.project.adopto.profile.Tabs.ProfileTabType
@@ -41,6 +43,7 @@ class UserProfileFragment : Fragment() {
     private lateinit var m_profile_image_view: ImageView
     private lateinit var m_add_animal_button_view: Button
     private var is_tab_layout_initialized = false
+    private var user_biography: String = ""
 
     /** Start FirebaseDataService Setup **/
     private lateinit var m_firebase_data_service: FirebaseDataServiceUsers
@@ -53,13 +56,15 @@ class UserProfileFragment : Fragment() {
             // We've bound to LocalService, cast the IBinder and get LocalService instance.
             m_firebase_data_service = (service as FirebaseDataServiceUsers.LocalBinder).getService()
 
+            populateProfileImage()
+            setupBiographyAndAssociatedButtons()
+
             // Populate user info on future updates
             m_firebase_data_service.registerCallback {
                 initializeAddAnimalButton()
                 initializeTabLayout()
                 // Initial population of user info with existent data
                 populateTextViewsWithUserInfo()
-                populateProfileImage()
             }
         }
 
@@ -98,7 +103,6 @@ class UserProfileFragment : Fragment() {
             initializeTabLayout()
             // Initial population of user info with existent data
             populateTextViewsWithUserInfo()
-            populateProfileImage()
         }
     }
 
@@ -251,13 +255,57 @@ class UserProfileFragment : Fragment() {
 
     fun populateTextViewsWithUserInfo() {
         val current_user = FirebaseAuth.getInstance().currentUser
-        val current_database_user_info = m_firebase_data_service.current_user_data
         val public_username_text_view = binding.publicUsername
-        val biography_text_view = binding.biographyField
 
         public_username_text_view.text =
             if (!current_user?.displayName.isNullOrEmpty()) current_user?.displayName else current_user?.email
         public_username_text_view.isSelected = true // Required for marquee text to function
-        biography_text_view.text = current_database_user_info?.biography
+    }
+
+    fun setupBiographyAndAssociatedButtons() {
+        val bio_edit_text = binding.biographyField
+        val edit_bio_button = binding.editBioButton
+        val save_bio_button = binding.saveBioButton
+        val cancel_bio_button = binding.cancelEditBioButton
+        val button_group = binding.bioEditButtonGroup
+        val current_database_user_info = m_firebase_data_service.current_user_data
+
+        user_biography = current_database_user_info?.biography ?: ""
+
+        bio_edit_text.setText(user_biography)
+        bio_edit_text.isEnabled = false
+        edit_bio_button.visibility = View.VISIBLE
+        button_group.visibility = View.GONE
+
+        edit_bio_button.setOnClickListener {
+            bio_edit_text.isEnabled = true
+            bio_edit_text.requestFocus()
+            bio_edit_text.setSelection(bio_edit_text.length()) // Move cursor to end
+            edit_bio_button.visibility = View.GONE
+            button_group.visibility = View.VISIBLE
+        }
+
+        cancel_bio_button.setOnClickListener {
+            bio_edit_text.setText(user_biography)
+            bio_edit_text.isEnabled = false
+            edit_bio_button.visibility = View.VISIBLE
+            button_group.visibility = View.GONE
+        }
+
+        save_bio_button.setOnClickListener {
+            val updated_bio = bio_edit_text.text.toString()
+
+            updateDataField(
+                FirebaseCollections.USERS,
+                getCurrentUserId(),
+                User::biography,
+                updated_bio
+            )
+            user_biography = updated_bio
+
+            bio_edit_text.isEnabled = false
+            edit_bio_button.visibility = View.VISIBLE
+            button_group.visibility = View.GONE
+        }
     }
 }
