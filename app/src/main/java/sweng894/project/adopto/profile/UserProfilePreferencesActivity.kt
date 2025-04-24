@@ -108,12 +108,15 @@ class UserProfilePreferencesActivity(private val auth: FirebaseAuth = FirebaseAu
                     }
             }
 
-            updateDataField(
-                FirebaseCollections.USERS,
-                getCurrentUserId(),
-                User::location,
-                m_location
-            )
+            val current_user_id = getCurrentUserId()
+            if (!current_user_id.isNullOrEmpty()) {
+                updateDataField(
+                    FirebaseCollections.USERS,
+                    current_user_id,
+                    User::location,
+                    m_location
+                )
+            }
 
 
             disableButton(binding.savePreferencesButton)

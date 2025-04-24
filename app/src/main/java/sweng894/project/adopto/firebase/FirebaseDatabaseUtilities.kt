@@ -4,8 +4,6 @@ import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
@@ -24,30 +22,6 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.reflect.KProperty1
-
-fun getCurrentUserId(): String {
-    var user_id: String? = ""
-    val firebase_user = Firebase.auth.currentUser
-    firebase_user?.let {
-        user_id = it.uid
-    }
-
-    return user_id.toString()
-}
-
-fun updateUserDisplayName(new_display_name: String) {
-    val firebase_user = Firebase.auth.currentUser
-    firebase_user?.updateProfile(userProfileChangeRequest {
-        displayName = new_display_name
-    })
-
-    updateDataField(
-        FirebaseCollections.USERS,
-        getCurrentUserId(),
-        User::display_name,
-        new_display_name
-    )
-}
 
 fun getUserData(
     user_id: String,
@@ -190,10 +164,13 @@ fun fetchAnimalsByShelter(
         }
 }
 
-
 fun addUserToDatabase(new_user: User) {
     val firebase_database = Firebase.firestore
     val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
 
     if (new_user.user_id.isEmpty()) {
         new_user.user_id = user_id
@@ -267,6 +244,11 @@ fun saveUserAdoptionInterest(
     val user_id = getCurrentUserId()
     val db = Firebase.firestore
     val adoption_ref = db.collection(FirebaseCollections.ADOPTIONS).document(animal_id)
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
+
     val user_ref = db.collection(FirebaseCollections.USERS).document(user_id)
     val interested_user = AnimalAdoptionInterestedUser(user_id = user_id)
 
@@ -366,6 +348,11 @@ fun saveUserAdoptionInterest(
 
 fun removeUserAdoptionInterest(animal_id: String, onUploadSuccess: (() -> Unit)?) {
     val doc_ref = Firebase.firestore.collection(FirebaseCollections.ADOPTIONS).document(animal_id)
+    val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
 
     doc_ref.get().addOnSuccessListener { snapshot ->
         val adoption_data = snapshot.toObject(AnimalAdoptionInterest::class.java)
@@ -382,7 +369,7 @@ fun removeUserAdoptionInterest(animal_id: String, onUploadSuccess: (() -> Unit)?
                 // Continue to remove from user
                 removeFromDataFieldList(
                     FirebaseCollections.USERS,
-                    getCurrentUserId(),
+                    user_id,
                     User::adopting_animal_ids,
                     animal_id
                 ) {
@@ -394,7 +381,7 @@ fun removeUserAdoptionInterest(animal_id: String, onUploadSuccess: (() -> Unit)?
             // Still remove from user list in case it's out of sync
             removeFromDataFieldList(
                 FirebaseCollections.USERS,
-                getCurrentUserId(),
+                user_id,
                 User::adopting_animal_ids,
                 animal_id
             ) {
@@ -410,6 +397,11 @@ fun addAnimalToDatabaseAndAssociateToShelter(
 
 ) {
     val firebase_database = Firebase.firestore
+    val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
 
     firebase_database.collection(
         FirebaseCollections.ANIMALS
@@ -420,7 +412,7 @@ fun addAnimalToDatabaseAndAssociateToShelter(
         )
         appendToDataFieldArray(
             FirebaseCollections.USERS,
-            getCurrentUserId(),
+            user_id,
             User::hosted_animal_ids,
             new_animal.animal_id
         ) { onUploadSuccess?.invoke() }
@@ -444,6 +436,11 @@ fun removeAnimalFromDatabase(
     animal: Animal
 ) {
     val firebase_database = Firebase.firestore
+    val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
 
     val images_to_be_removed =
         mutableListOf(animal.profile_image_path).filterNotNull().toMutableList()
@@ -460,7 +457,7 @@ fun removeAnimalFromDatabase(
         )
         removeFromDataFieldList(
             FirebaseCollections.ANIMALS,
-            getCurrentUserId(),
+            user_id,
             User::hosted_animal_ids,
             arrayOf(animal.animal_id)
         )
@@ -639,6 +636,11 @@ fun <T> updateExplorePreferencesField(
     val firebase_database = Firebase.firestore
     val field_path =
         "explore_preferences.${field_name.name}" // Constructs the dot notation field path
+    val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
 
     var value_mod = value
     if (value is Array<*>) {
@@ -647,7 +649,7 @@ fun <T> updateExplorePreferencesField(
     }
 
     firebase_database.collection(FirebaseCollections.USERS)
-        .document(getCurrentUserId())
+        .document(user_id)
         .update(field_path, value_mod)
         .addOnSuccessListener {
             onSuccess?.invoke()
@@ -661,8 +663,14 @@ fun <T> updateExplorePreferencesField(
 
 fun recalculatePreferenceVector() {
     val TAG = "PreferenceVector"
+    val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
+
     val user_ref = Firebase.firestore.collection(FirebaseCollections.USERS)
-        .document(getCurrentUserId())
+        .document(user_id)
 
     user_ref.get().addOnSuccessListener { snapshot ->
         val user = snapshot.toObject(User::class.java)
@@ -727,14 +735,19 @@ fun recalculatePreferenceVector() {
 }
 
 fun getRecommendations(
-    num_results: Int,
+    num_results: Int = 5,
     location: GeoPoint? = null,
     onResult: (List<Animal>) -> Unit
 ) {
     val TAG = "RecommendationEngine"
+    val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
 
     val user_ref = Firebase.firestore.collection(FirebaseCollections.USERS)
-        .document(getCurrentUserId())
+        .document(user_id)
 
     user_ref.get().addOnSuccessListener { userSnap ->
         val user = userSnap.toObject(User::class.java) ?: return@addOnSuccessListener

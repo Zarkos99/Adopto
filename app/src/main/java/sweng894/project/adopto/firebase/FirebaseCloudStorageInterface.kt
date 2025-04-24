@@ -23,6 +23,11 @@ fun uploadUserProfileImageAndUpdateUserImagePath(
 
     val m_firebase_storage = Firebase.storage
     val current_user = firebaseDataService.current_user_data
+    val user_id = getCurrentUserId()
+
+    if (user_id.isNullOrEmpty()) {
+        return
+    }
 
     if (!current_user?.profile_image_path.isNullOrEmpty()) {
         println("Profile picture already exists, removing it.")
@@ -46,7 +51,7 @@ fun uploadUserProfileImageAndUpdateUserImagePath(
         // Set the image path to where it exists on the cloud storage
         updateDataField(
             FirebaseCollections.USERS,
-            getCurrentUserId(),
+            user_id,
             User::profile_image_path,
             storage_path_to_image
         )

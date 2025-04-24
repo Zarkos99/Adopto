@@ -19,10 +19,19 @@ class AdoptoFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM Service", "New token: $token, uploading to Firestore")
+        val user_id = getCurrentUserId()
+
+        if (user_id.isNullOrEmpty()) {
+            Log.e(
+                Throwable().stackTrace[1].methodName,
+                "No authenticated user found"
+            )
+            return
+        }
 
         updateDataField(
             FirebaseCollections.USERS,
-            getCurrentUserId(),
+            user_id,
             User::fcm_token,
             token, onUploadSuccess = {
                 Log.d("FCM Service", "New Token successfully saved to Firestore")

@@ -50,6 +50,12 @@ android {
                 true // Avoids getMainLooper test initialization error: https://stackoverflow.com/questions/58057769/method-getmainlooper-in-android-os-looper-not-mocked-still-occuring-even-after-a
         }
     }
+    packaging {
+        resources {
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
+        }
+    }
 }
 
 dependencies {
@@ -83,6 +89,8 @@ dependencies {
     implementation(libs.card.stack.view)
     implementation(libs.places)
     implementation(libs.firebase.messaging.ktx)
+    implementation(libs.androidx.uiautomator)
+    implementation(libs.androidx.espresso.intents)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk) // Mockk for unit tests
@@ -100,6 +108,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.fragment.testing)
 
 
     debugImplementation(libs.androidx.ui.tooling)

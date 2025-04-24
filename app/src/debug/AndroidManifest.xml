@@ -1,0 +1,11 @@
+<!-- app/src/debug/AndroidManifest.xml -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="sweng894.project.adopto">
+
+    <application>
+        <activity
+            android:name="androidx.fragment.app.testing.EmptyFragmentActivity"
+            android:theme="@style/Theme.Adopto" />
+    </application>
+
+</manifest>

@@ -2,6 +2,7 @@ package sweng894.project.adopto.authentication
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.GeoPoint
 import sweng894.project.adopto.NavigationBaseActivity
@@ -45,44 +46,47 @@ class UserProfileCreationActivity : AppCompatActivity() {
         initializeLocationTextView()
 
         done_button_view.setOnClickListener {
-            updateDataField(
-                FirebaseCollections.USERS,
-                getCurrentUserId(),
-                User::is_shelter,
-                m_is_shelter
-            )
+            val user_id = getCurrentUserId()
+            if (!user_id.isNullOrEmpty()) {
+                updateDataField(
+                    FirebaseCollections.USERS,
+                    user_id,
+                    User::is_shelter,
+                    m_is_shelter
+                )
 
-            // Save biography to database
-            updateDataField(
-                FirebaseCollections.USERS,
-                getCurrentUserId(),
-                User::biography,
-                description_input_field.getInputText()
-            )
-            // Save zip code to database
-            updateDataField(
-                FirebaseCollections.USERS,
-                getCurrentUserId(),
-                User::location,
-                m_location
-            )
+                // Save biography to database
+                updateDataField(
+                    FirebaseCollections.USERS,
+                    user_id,
+                    User::biography,
+                    description_input_field.getInputText()
+                )
+                // Save zip code to database
+                updateDataField(
+                    FirebaseCollections.USERS,
+                    user_id,
+                    User::location,
+                    m_location
+                )
 
-            // No longer require additional info
-            updateDataField(
-                FirebaseCollections.USERS,
-                getCurrentUserId(),
-                User::need_info,
-                false
-            )
+                // No longer require additional info
+                updateDataField(
+                    FirebaseCollections.USERS,
+                    user_id,
+                    User::need_info,
+                    false
+                )
 
-            //Set as lists because Parcelable doesn't support arrays
-            updateExplorePreferencesField(ExplorationPreferences::animal_types, AnimalTypes.all)
-            updateExplorePreferencesField(ExplorationPreferences::animal_sizes, AnimalSizes.all)
+                //Set as lists because Parcelable doesn't support arrays
+                updateExplorePreferencesField(ExplorationPreferences::animal_types, AnimalTypes.all)
+                updateExplorePreferencesField(ExplorationPreferences::animal_sizes, AnimalSizes.all)
 
-            // Reassociate animals with the current shelter's id if the shelter's data ever accidentally gets cleared
-            reassociateUnlinkedAnimalsToShelter()
+                // Reassociate animals with the current shelter's id if the shelter's data ever accidentally gets cleared
+                reassociateUnlinkedAnimalsToShelter()
 
-            openActivity(NavigationBaseActivity::class.java)
+                openActivity(NavigationBaseActivity::class.java)
+            }
         }
     }
 
@@ -109,14 +113,19 @@ class UserProfileCreationActivity : AppCompatActivity() {
     }
 
     private fun reassociateUnlinkedAnimalsToShelter() {
+        val user_id = getCurrentUserId()
+        if (user_id.isNullOrEmpty()) {
+            return
+        }
+
         fetchAnimalsByShelter(
-            getCurrentUserId(),
+            user_id,
             onSuccess = { animal_list: List<Animal> ->
                 val hosted_animal_ids = animal_list.map { it.animal_id }
 
                 updateDataField(
                     FirebaseCollections.USERS,
-                    getCurrentUserId(),
+                    user_id,
                     User::hosted_animal_ids,
                     hosted_animal_ids
                 )

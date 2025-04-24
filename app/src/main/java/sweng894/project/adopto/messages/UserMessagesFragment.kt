@@ -43,7 +43,11 @@ class UserMessagesFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        chats_listener_view_model.startListening(getCurrentUserId())
+
+        val user_id = getCurrentUserId()
+        if (!user_id.isNullOrEmpty()) {
+            chats_listener_view_model.startListening(user_id)
+        }
     }
 
     override fun onCreateView(
@@ -129,25 +133,27 @@ class UserMessagesFragment : Fragment() {
             val chat_id = active_chat_id ?: return@setOnClickListener
             val sender_id = getCurrentUserId()
 
-            if (message_text.isNotEmpty()) {
-                ChatRepository.sendMessage(
-                    chat_id = chat_id,
-                    sender_id = sender_id,
-                    receiver_id = other_user_id!!,
-                    content = message_text,
-                    onSuccess = {
-                        binding.messageInputField.setText("")
-                        scrollToBottom() //Scroll after send
-                        // No need to update messages — observer will handle it
-                    },
-                    onError = {
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to send message",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
+            if (!sender_id.isNullOrEmpty()) {
+                if (message_text.isNotEmpty()) {
+                    ChatRepository.sendMessage(
+                        chat_id = chat_id,
+                        sender_id = sender_id,
+                        receiver_id = other_user_id!!,
+                        content = message_text,
+                        onSuccess = {
+                            binding.messageInputField.setText("")
+                            scrollToBottom() //Scroll after send
+                            // No need to update messages — observer will handle it
+                        },
+                        onError = {
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to send message",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
+                }
             }
         }
     }
@@ -234,13 +240,14 @@ class UserMessagesFragment : Fragment() {
         messages_listener_view_model.listenToMessages(chat.chat_id)
 
         // Mark as read in the database
-        ChatRepository.markChatAsReadDebounced(chat.chat_id, getCurrentUserId())
-
         val current_user_id = getCurrentUserId()
-        val new_other_user_id = chat.participant_ids.firstOrNull { it != current_user_id }
-        other_user_id = new_other_user_id
+        if (!current_user_id.isNullOrEmpty()) {
+            ChatRepository.markChatAsReadDebounced(chat.chat_id, current_user_id)
 
-        updateChatHeaderUser(other_user_id)
+            val new_other_user_id = chat.participant_ids.firstOrNull { it != current_user_id }
+            other_user_id = new_other_user_id
+            updateChatHeaderUser(other_user_id)
+        }
     }
 
 
@@ -272,7 +279,7 @@ class UserMessagesFragment : Fragment() {
         }
     }
 
-    private fun updateInputState(is_enabled: Boolean) {
+    fun updateInputState(is_enabled: Boolean) {
 
         binding.messageInputField.isEnabled = is_enabled
         binding.sendButton.isEnabled = is_enabled

@@ -49,23 +49,27 @@ class FirebaseDataServiceUsers : Service() {
     }
 
     override fun onBind(intent: Intent): IBinder {
-        val user_ref =
-            m_firebase_database.collection(
-                FirebaseCollections.USERS
-            ).document(getCurrentUserId())
+        val user_id = getCurrentUserId()
 
-        user_ref.addSnapshotListener { snapshot, e ->
-            if (e != null) {
-                Log.w("Firebase Database", "Listen failed.", e)
-                return@addSnapshotListener
-            }
+        if (!user_id.isNullOrEmpty()) {
+            val user_ref =
+                m_firebase_database.collection(
+                    FirebaseCollections.USERS
+                ).document(user_id)
 
-            if (snapshot != null && snapshot.exists()) {
-                Log.d("DEBUG", "User data snapshot exists")
-                current_user_data = snapshot.toObject<User>()
-                callCallbacks()
-            } else {
-                Log.d("Firebase Database", "Snapshot listener data: null")
+            user_ref.addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w("Firebase Database", "Listen failed.", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    Log.d("DEBUG", "User data snapshot exists")
+                    current_user_data = snapshot.toObject<User>()
+                    callCallbacks()
+                } else {
+                    Log.d("Firebase Database", "Snapshot listener data: null")
+                }
             }
         }
 

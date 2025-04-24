@@ -503,7 +503,7 @@ class FirebaseDatabaseUtilitiesTest {
         every {
             mockDocumentReference.update(
                 "explore_preferences.animal_sizes",
-                any()
+                listOf("small", "medium")
             )
         } returns Tasks.forResult(null)
 
@@ -511,11 +511,11 @@ class FirebaseDatabaseUtilitiesTest {
             FirebaseCollections.USERS,
             "user1",
             User::explore_preferences,
-            ExplorationPreferences::animal_sizes,
+            ExplorationPreferences::animal_sizes.name,
             listOf("small", "medium")
         )
 
-        verify {
+        verify(exactly = 1) {
             mockDocumentReference.update(
                 "explore_preferences.animal_sizes",
                 listOf("small", "medium")

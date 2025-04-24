@@ -51,28 +51,30 @@ class UserProfileViewingActivity : AppCompatActivity() {
 
             binding.chatButton.setOnClickListener {
                 val current_user_id = getCurrentUserId()
-                val other_user_id = m_displayed_user?.user_id!!
+                if (!current_user_id.isNullOrEmpty()) {
+                    val other_user_id = m_displayed_user?.user_id!!
 
-                val participant_ids = listOf(current_user_id, other_user_id).sorted()
+                    val participant_ids = listOf(current_user_id, other_user_id)
 
-                ChatRepository.createOrGetChat(
-                    participant_ids = participant_ids,
-                    onComplete = { chat_id ->
-                        Log.d("UserProfileViewingActivity", "Found or created chat: $chat_id")
-                        val intent =
-                            Intent(this, NavigationBaseActivity::class.java).apply {
-                                putExtra("initial_tab", R.id.navigation_messages)
-                                putExtra("open_chat_id", chat_id)
-                                flags =
-                                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                            }
-                        startActivity(intent)
-                    },
-                    onError = {
-                        Toast.makeText(this, "Failed to start chat", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                )
+                    ChatRepository.createOrGetChat(
+                        participant_ids = participant_ids,
+                        onComplete = { chat_id ->
+                            Log.d("UserProfileViewingActivity", "Found or created chat: $chat_id")
+                            val intent =
+                                Intent(this, NavigationBaseActivity::class.java).apply {
+                                    putExtra("initial_tab", R.id.navigation_messages)
+                                    putExtra("open_chat_id", chat_id)
+                                    flags =
+                                        Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                }
+                            startActivity(intent)
+                        },
+                        onError = {
+                            Toast.makeText(this, "Failed to start chat", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    )
+                }
             }
         }
     }

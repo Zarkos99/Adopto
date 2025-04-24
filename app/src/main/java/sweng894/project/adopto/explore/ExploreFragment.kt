@@ -251,10 +251,15 @@ class ExploreFragment : Fragment(), CardStackListener {
     }
 
     private fun likeAnimal(animal: Animal) {
+        val user_id = getCurrentUserId()
+        if (user_id.isNullOrEmpty()) {
+            return
+        }
+
         // Like animal
         appendToDataFieldArray(
             FirebaseCollections.USERS,
-            getCurrentUserId(),
+            user_id,
             User::liked_animal_ids,
             animal.animal_id
         ) {

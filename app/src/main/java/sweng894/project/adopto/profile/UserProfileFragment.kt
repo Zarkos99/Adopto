@@ -295,12 +295,16 @@ class UserProfileFragment : Fragment() {
         save_bio_button.setOnClickListener {
             val updated_bio = bio_edit_text.text.toString()
 
-            updateDataField(
-                FirebaseCollections.USERS,
-                getCurrentUserId(),
-                User::biography,
-                updated_bio
-            )
+            val current_user_id = getCurrentUserId()
+            if (!current_user_id.isNullOrEmpty()) {
+                updateDataField(
+                    FirebaseCollections.USERS,
+                    current_user_id,
+                    User::biography,
+                    updated_bio
+                )
+            }
+
             user_biography = updated_bio
 
             bio_edit_text.isEnabled = false

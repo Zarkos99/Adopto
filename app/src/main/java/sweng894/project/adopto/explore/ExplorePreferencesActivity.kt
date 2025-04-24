@@ -46,9 +46,14 @@ class ExplorePreferencesActivity : AppCompatActivity(), MultiSelectView.OnSelect
         m_cancel_button = binding.cancelButton
         disableButton(m_save_preferences_button)
         m_save_preferences_button.setOnClickListener {
+            val user_id = getCurrentUserId()
+            if (user_id.isNullOrEmpty()) {
+                return@setOnClickListener
+            }
+
             updateDataField(
                 FirebaseCollections.USERS,
-                getCurrentUserId(),
+                user_id,
                 User::explore_preferences,
                 getExplorationPreferencesFromInputs()
             )

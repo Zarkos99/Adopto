@@ -72,7 +72,16 @@ class AuthenticationActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(username, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        getUserData(getCurrentUserId()) { user_data ->
+                        val user_id = getCurrentUserId()
+
+                        if (user_id.isNullOrEmpty()) {
+                            Log.e(
+                                "FirebaseDatabaseUtilities.recalculatePreferenceVector",
+                                "No authenticated user found"
+                            )
+                            return@addOnCompleteListener
+                        }
+                        getUserData(user_id) { user_data ->
                             if (user_data != null) {
                                 Log.d(
                                     "AuthenticationActivity",

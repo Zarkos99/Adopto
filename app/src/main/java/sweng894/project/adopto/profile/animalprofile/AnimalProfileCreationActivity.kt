@@ -178,12 +178,17 @@ class AnimalProfileCreationActivity : AppCompatActivity() {
             error = true
         }
 
+        val current_user_id = getCurrentUserId()
+        if (current_user_id.isNullOrEmpty()) {
+            error = true
+        }
+
         if (error) {
             return null
         }
 
         val new_animal = Animal(
-            associated_shelter_id = getCurrentUserId(),
+            associated_shelter_id = current_user_id!!,
             animal_name = new_name,
             animal_age = new_age,
             health_summary = new_health,

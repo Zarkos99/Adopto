@@ -28,7 +28,7 @@ class NavigationBaseActivity : AppCompatActivity() {
         binding = NavigationBaseActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
         supportActionBar?.hide()
-        
+
         // Save FCM token once user is authenticated
         saveFcmTokenIfNeeded()
 
@@ -94,32 +94,33 @@ class NavigationBaseActivity : AppCompatActivity() {
 
     private fun saveFcmTokenIfNeeded() {
         val user_id = getCurrentUserId()
+        if (!user_id.isNullOrEmpty()) {
+            FirebaseMessaging.getInstance().token
+                .addOnSuccessListener { token ->
+                    val prefs = getSharedPreferences("adopto_prefs", MODE_PRIVATE)
+                    val last_saved = prefs.getString("last_fcm_token", null)
 
-        FirebaseMessaging.getInstance().token
-            .addOnSuccessListener { token ->
-                val prefs = getSharedPreferences("adopto_prefs", MODE_PRIVATE)
-                val last_saved = prefs.getString("last_fcm_token", null)
+                    if (token != last_saved) {
+                        Log.d("FCM", "Saving FCM token for user ${user_id}: $token")
 
-                if (token != last_saved) {
-                    Log.d("FCM", "Saving FCM token for user ${user_id}: $token")
-
-                    updateDataField(
-                        FirebaseCollections.USERS,
-                        user_id,
-                        User::fcm_token,
-                        token, onUploadSuccess = {
-                            Log.d("FCM", "Token successfully saved to Firestore")
-                            prefs.edit().putString("last_fcm_token", token).apply()
-                        }, onUploadFailure = {
-                            Log.w("FCM", "Failed to save token")
-                        })
-                } else {
-                    Log.d("FCM", "FCM token unchanged, skipping upload")
+                        updateDataField(
+                            FirebaseCollections.USERS,
+                            user_id,
+                            User::fcm_token,
+                            token, onUploadSuccess = {
+                                Log.d("FCM", "Token successfully saved to Firestore")
+                                prefs.edit().putString("last_fcm_token", token).apply()
+                            }, onUploadFailure = {
+                                Log.w("FCM", "Failed to save token")
+                            })
+                    } else {
+                        Log.d("FCM", "FCM token unchanged, skipping upload")
+                    }
                 }
-            }
-            .addOnFailureListener { e ->
-                Log.w("FCM", "Failed to get token", e)
-            }
+                .addOnFailureListener { e ->
+                    Log.w("FCM", "Failed to get token", e)
+                }
+        }
     }
 
 
