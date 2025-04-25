@@ -7,6 +7,8 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.*
 import com.google.firebase.storage.FirebaseStorage
@@ -21,6 +23,8 @@ import sweng894.project.adopto.Strings
 import sweng894.project.adopto.data.Animal
 import sweng894.project.adopto.data.AnimalAdoptionInterest
 import sweng894.project.adopto.data.AnimalAdoptionInterestedUser
+import sweng894.project.adopto.data.AnimalSizes
+import sweng894.project.adopto.data.AnimalTypes
 import sweng894.project.adopto.data.ExplorationPreferences
 import sweng894.project.adopto.data.FirebaseCollections
 import sweng894.project.adopto.data.User
@@ -544,33 +548,46 @@ class FirebaseDatabaseUtilitiesTest {
     @Test
     fun testUpdateUserDisplayNameUpdatesBothAuthAndFirestore() {
         val new_display_name = "New Name"
-        val mock_user = mockk<com.google.firebase.auth.FirebaseUser>(relaxed = true)
-        val mock_profile_change_request =
-            mockk<com.google.firebase.auth.UserProfileChangeRequest.Builder>(relaxed = true)
 
-        mockkConstructor(com.google.firebase.auth.UserProfileChangeRequest.Builder::class)
-        every {
-            anyConstructed<com.google.firebase.auth.UserProfileChangeRequest.Builder>().setDisplayName(
-                any()
-            )
-        } returns mock_profile_change_request
-        every { mock_profile_change_request.build() } returns mockk(relaxed = true)
+        mockkStatic(FirebaseAuth::class)
+        mockkStatic(FirebaseFirestore::class)
 
-        every { mockFirebaseAuth.currentUser } returns mock_user
+        val mock_user = mockk<FirebaseUser>(relaxed = true)
+        val mock_firestore = mockk<FirebaseFirestore>(relaxed = true)
+        val mock_users_collection = mockk<CollectionReference>(relaxed = true)
+        val mock_user_doc = mockk<DocumentReference>(relaxed = true)
+        val mock_user_update_task = mockk<Task<Void>>(relaxed = true)
+
+        // Mock Auth
+        every { Firebase.auth.currentUser } returns mock_user
         every { mock_user.updateProfile(any()) } returns Tasks.forResult(null)
+        every { mock_user.uid } returns "test_user"
 
+        // Mock Firestore
+        every { Firebase.firestore } returns mock_firestore
+        every { mock_firestore.collection("Users") } returns mock_users_collection
+        every { mock_users_collection.document(any()) } returns mock_user_doc
+        every { mock_user_doc.set(any<Map<String, Any>>(), any()) } returns mock_user_update_task
+        every { mock_user_update_task.addOnSuccessListener(any()) } answers {
+            firstArg<OnSuccessListener<Void>>().onSuccess(null)
+            mock_user_update_task
+        }
+        every { mock_user_update_task.addOnFailureListener(any()) } answers {
+            mock_user_update_task
+        }
+
+        // Act
         updateUserDisplayName(new_display_name)
 
+        // Assert
         verify { mock_user.updateProfile(any()) }
-        verify {
-            mockDocumentReference.set(
-                match {
-                    (it as? Map<*, *>)?.values?.contains(new_display_name) == true
-                },
-                any()
-            )
-        }
+
+        val capturedMap = slot<Map<String, Any>>()
+        verify { mock_user_doc.set(capture(capturedMap), any()) }
+
+        assertEquals(new_display_name, capturedMap.captured["display_name"])
     }
+
 
     @Test
     fun testSetDocumentDataSuccess() {
@@ -844,7 +861,7 @@ class FirebaseDatabaseUtilitiesTest {
 
         mockkStatic(FirebaseFirestore::class)
         mockkStatic(FirebaseAuth::class)
-        mockkStatic("sweng894.project.adopto.database.FirebaseDatabaseUtilitiesKt")
+        mockkStatic("sweng894.project.adopto.firebase.FirebaseDatabaseUtilitiesKt")
 
         every { Firebase.auth.currentUser?.uid } returns user_id
         every { Firebase.firestore } returns mockFirestore
@@ -934,41 +951,40 @@ class FirebaseDatabaseUtilitiesTest {
         val animal_id = "animal456"
         val user_id = "test_user"
 
+        val firestore = mockk<FirebaseFirestore>(relaxed = true)
+        val adoption_ref = mockk<DocumentReference>(relaxed = true)
+        val user_doc_ref = mockk<DocumentReference>(relaxed = true)
         val mock_adoption_doc = mockk<DocumentSnapshot>(relaxed = true)
         val adoption_data = AnimalAdoptionInterest(interested_users = mutableListOf())
 
-        val adoption_ref = mockk<DocumentReference>(relaxed = true)
-        val firestore = mockk<FirebaseFirestore>(relaxed = true)
-
-        mockkStatic(FirebaseFirestore::class)
         mockkStatic(FirebaseAuth::class)
-        mockkStatic("sweng894.project.adopto.database.FirebaseDatabaseUtilitiesKt")
+        mockkStatic(FirebaseFirestore::class)
 
         every { Firebase.auth.currentUser?.uid } returns user_id
         every { Firebase.firestore } returns firestore
+
         every {
             firestore.collection(FirebaseCollections.ADOPTIONS).document(animal_id)
         } returns adoption_ref
+        every {
+            firestore.collection(FirebaseCollections.USERS).document(user_id)
+        } returns user_doc_ref
 
+        // Mock the adoption doc get
         val task = mockk<Task<DocumentSnapshot>>(relaxed = true)
         every { adoption_ref.get() } returns task
         every { task.addOnSuccessListener(any()) } answers {
-            val listener = firstArg<OnSuccessListener<DocumentSnapshot>>()
-            every { mock_adoption_doc.toObject(AnimalAdoptionInterest::class.java) } returns adoption_data
-            listener.onSuccess(mock_adoption_doc)
+            firstArg<OnSuccessListener<DocumentSnapshot>>().onSuccess(mock_adoption_doc)
             task
         }
+        every { mock_adoption_doc.toObject(AnimalAdoptionInterest::class.java) } returns adoption_data
 
-        every {
-            removeFromDataFieldList<User>(
-                FirebaseCollections.USERS,
-                user_id,
-                User::adopting_animal_ids,
-                animal_id,
-                any()
-            )
-        } answers {
-            lastArg<() -> Unit>().invoke()
+        // Mock user document update inside removeFromDataFieldList
+        val mock_update_task = mockk<Task<Void>>(relaxed = true)
+        every { user_doc_ref.update(any<String>(), any()) } returns mock_update_task
+        every { mock_update_task.addOnSuccessListener(any()) } answers {
+            firstArg<OnSuccessListener<Void>>().onSuccess(null)
+            mock_update_task
         }
 
         val latch = CountDownLatch(1)
@@ -985,12 +1001,11 @@ class FirebaseDatabaseUtilitiesTest {
         val animal_id = "animal789"
         val user_id = "test_user"
 
-        val adoption_ref = mockk<DocumentReference>(relaxed = true)
         val firestore = mockk<FirebaseFirestore>(relaxed = true)
+        val adoption_ref = mockk<DocumentReference>(relaxed = true)
 
         mockkStatic(FirebaseFirestore::class)
         mockkStatic(FirebaseAuth::class)
-        mockkStatic("sweng894.project.adopto.database.FirebaseDatabaseUtilitiesKt")
 
         every { Firebase.auth.currentUser?.uid } returns user_id
         every { Firebase.firestore } returns firestore
@@ -998,26 +1013,30 @@ class FirebaseDatabaseUtilitiesTest {
             firestore.collection(FirebaseCollections.ADOPTIONS).document(animal_id)
         } returns adoption_ref
 
-        val task = mockk<Task<DocumentSnapshot>>(relaxed = true)
-        every { adoption_ref.get() } returns task
-        every { task.addOnSuccessListener(any()) } answers {
+        val mock_task = mockk<Task<DocumentSnapshot>>(relaxed = true)
+        every { adoption_ref.get() } returns mock_task
+        every { mock_task.addOnSuccessListener(any()) } answers {
             val listener = firstArg<OnSuccessListener<DocumentSnapshot>>()
             val mock_snapshot = mockk<DocumentSnapshot>(relaxed = true)
             every { mock_snapshot.toObject(AnimalAdoptionInterest::class.java) } returns null
             listener.onSuccess(mock_snapshot)
-            task
+            mock_task
         }
 
-        every {
-            removeFromDataFieldList<User>(
-                FirebaseCollections.USERS,
-                user_id,
-                User::adopting_animal_ids,
-                animal_id,
-                any()
-            )
-        } answers {
-            lastArg<() -> Unit>().invoke()
+        // NEW - setup User firestore mocks
+        val users_collection = mockk<CollectionReference>(relaxed = true)
+        val user_document = mockk<DocumentReference>(relaxed = true)
+        val user_update_task = mockk<Task<Void>>(relaxed = true)
+
+        every { firestore.collection(FirebaseCollections.USERS) } returns users_collection
+        every { users_collection.document(user_id) } returns user_document
+        every { user_document.update(any<String>(), any()) } returns user_update_task
+        every { user_update_task.addOnSuccessListener(any()) } answers {
+            firstArg<OnSuccessListener<Void>>().onSuccess(null)
+            user_update_task
+        }
+        every { user_update_task.addOnFailureListener(any()) } answers {
+            user_update_task
         }
 
         val latch = CountDownLatch(1)
@@ -1121,7 +1140,7 @@ class FirebaseDatabaseUtilitiesTest {
 
         mockkStatic(FirebaseFirestore::class)
         mockkStatic(FirebaseAuth::class)
-        mockkStatic("sweng894.project.adopto.database.FirebaseDatabaseUtilitiesKt")
+        mockkStatic("sweng894.project.adopto.firebase.FirebaseDatabaseUtilitiesKt")
 
         every { Firebase.auth.currentUser?.uid } returns user_id
         every { Firebase.firestore } returns mockFirestore
@@ -1342,8 +1361,8 @@ class FirebaseDatabaseUtilitiesTest {
         val user = User(
             explore_preferences = ExplorationPreferences(
                 search_radius_miles = 500.0,
-                animal_sizes = mutableListOf("medium"),
-                animal_types = mutableListOf("dog"),
+                animal_sizes = mutableListOf(AnimalSizes.MEDIUM), // use constant
+                animal_types = mutableListOf(AnimalTypes.DOG),    // use constant
                 min_animal_age = 1.0,
                 max_animal_age = 10.0
             ),
@@ -1353,13 +1372,17 @@ class FirebaseDatabaseUtilitiesTest {
         val animal = Animal(
             animal_id = "a1",
             location = GeoPoint(39.0, -77.0),
-            animal_size = "medium",
-            animal_type = "dog",
+            animal_size = "medium", // this will normalize correctly
+            animal_type = "dog",    // this too
             animal_age = 5.0
         )
 
-        assertTrue(animalWithinSearchParameters(user, animal, user.location))
+        assertTrue(
+            "Animal should pass all filters",
+            animalWithinSearchParameters(user, animal, user.location)
+        )
     }
+
 
     @Test
     fun testAnimalWithinSearchParametersRejectsByDistance() {
@@ -1412,17 +1435,17 @@ class FirebaseDatabaseUtilitiesTest {
     fun testAnimalWithinSearchParameters_NoLocation_ReturnsTrue() {
         val user = User(
             explore_preferences = ExplorationPreferences(
-                animal_sizes = mutableListOf("small"),
-                animal_types = mutableListOf("dog"),
+                animal_sizes = mutableListOf(AnimalSizes.SMALL),
+                animal_types = mutableListOf(AnimalTypes.DOG),
                 min_animal_age = 1.0,
                 max_animal_age = 10.0
             )
         )
         val animal = Animal(
             animal_id = "doggo1",
-            animal_size = "small",
-            animal_type = "dog",
-            animal_age = 3.0
+            animal_size = "small", // input
+            animal_type = "dog",   // input
+            animal_age = 3.0       // in between 1 and 10
         )
 
         val result = animalWithinSearchParameters(user, animal, null)

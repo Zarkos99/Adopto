@@ -159,32 +159,33 @@ class FirebaseStorageUtilsTest {
     fun deleteImagesFromCloudStorageDeletesImages() {
         val imagePaths = arrayOf("path1", "path2")
 
-        // Mock Firebase.storage to ensure correct reference is used
+        val mockStorage = mockk<FirebaseStorage>(relaxed = true)
+        val mockStorageRef = mockk<StorageReference>(relaxed = true)
+
+        // Mock static Firebase.storage
         mockkStatic(Firebase::class)
         every { Firebase.storage } returns mockStorage
         every { mockStorage.reference } returns mockStorageRef
 
-        // Reset any previous interactions
-        clearMocks(mockStorageRef)
-
-        // Create mock StorageReferences for each path
+        // Create mock image refs
         val mockImageRef1 = mockk<StorageReference>(relaxed = true)
         val mockImageRef2 = mockk<StorageReference>(relaxed = true)
 
+        // Make sure child() returns the right mocked instances
         every { mockStorageRef.child("path1") } returns mockImageRef1
         every { mockStorageRef.child("path2") } returns mockImageRef2
 
+        // Also make sure delete() returns a completed task
         every { mockImageRef1.delete() } returns Tasks.forResult(null)
         every { mockImageRef2.delete() } returns Tasks.forResult(null)
 
-        // Call the function
+        // Now call the function
         deleteImagesFromCloudStorage(imagePaths)
 
-        // Verify that deletes were actually triggered
+        // Verify
         verify(exactly = 1) { mockImageRef1.delete() }
         verify(exactly = 1) { mockImageRef2.delete() }
     }
-
 
     @Test
     fun loadCloudStoredImageIntoImageViewLoadsImage() {

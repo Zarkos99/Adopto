@@ -30,25 +30,36 @@ class TestPreferenceVectorUtilities {
             animal_size = "Medium"
         )
 
-        val vector = VectorUtils.animalToVector(animal)
-
-        // Dog → 1.0 (index 0 + 1), Medium → 2.0, age is directly used
-        assertEquals(listOf(1.0, 3.0, 2.0), vector)
-    }
-
-    @Test
-    fun testAnimalToVector_withUnknownTypeAndSize_defaultsToZero() {
-        val animal = Animal(
-            animal_id = "a2",
-            animal_type = "Lizard", // not in initialized list
-            animal_age = 5.0,
-            animal_size = "Giant"   // not in SIZE_ENCODING
+        val expected = listOf(
+            VectorUtils.TYPE_ENCODING[AnimalTypes.DOG] ?: 0.0, // = 1.0
+            3.0,
+            VectorUtils.SIZE_ENCODING[AnimalSizes.MEDIUM] ?: 0.0 // = 3.0
         )
 
-        val vector = VectorUtils.animalToVector(animal)
-
-        assertEquals(listOf(0.0, 5.0, 0.0), vector)
+        val actual = VectorUtils.animalToVector(animal)
+        assertEquals(expected, actual)
     }
+
+
+    @Test
+    fun testAnimalToVector_withUnknownTypeAndSize_defaultsToOtherAndMedium() {
+        val animal = Animal(
+            animal_id = "a2",
+            animal_type = "Lizard", // Normalized to "Other"
+            animal_age = 5.0,
+            animal_size = "Giant"   // Normalized to "Medium"
+        )
+
+        val expectedVector = listOf(
+            VectorUtils.TYPE_ENCODING[AnimalTypes.OTHER] ?: 0.0,
+            5.0,
+            VectorUtils.SIZE_ENCODING[AnimalSizes.MEDIUM] ?: 0.0
+        )
+
+        val actualVector = VectorUtils.animalToVector(animal)
+        assertEquals(expectedVector, actualVector)
+    }
+
 
     @Test
     fun testAverageVectors_computesMeanCorrectly() {

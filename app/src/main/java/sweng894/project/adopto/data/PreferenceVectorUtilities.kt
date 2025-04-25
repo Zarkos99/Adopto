@@ -7,13 +7,13 @@ object VectorUtils {
     private const val TAG = "VectorUtils"
 
     // Dynamically allocate unique values for encoding
-    private val SIZE_ENCODING: Map<String, Double> by lazy {
+    val SIZE_ENCODING: Map<String, Double> by lazy {
         AnimalSizes.all.mapIndexed { index, size ->
             size to (index + 1).toDouble()
         }.toMap()
     }
-    
-    private val TYPE_ENCODING: Map<String, Double> by lazy {
+
+    val TYPE_ENCODING: Map<String, Double> by lazy {
         AnimalTypes.all.mapIndexed { index, type ->
             type to (index + 1).toDouble()
         }.toMap()
